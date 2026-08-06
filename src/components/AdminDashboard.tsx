@@ -402,10 +402,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
         {/* 3. CALENDAR VIEW MODE */}
         {viewMode === 'month' && (
-          <div className="bg-white border border-[#EAE3DC] p-4 sm:p-6 space-y-4 shadow-sm">
+          <div className="bg-white border border-neutral-300 p-4 sm:p-6 space-y-4 shadow-sm">
             
             {/* Month Header Navigation */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EAE3DC]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-300">
               <div className="flex items-center gap-3">
                 <h2 className="font-serif-luxury text-xl sm:text-2xl text-neutral-900 uppercase tracking-wider font-light">
                   {monthNames[month]} <span className="text-[#8C6B4D] font-mono font-bold">{year}</span>
@@ -421,14 +421,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleNavigateMonth('prev')}
-                  className="p-2 border border-[#E2D9CE] hover:border-[#2C221C] text-neutral-700 hover:text-neutral-900 transition-colors bg-white"
+                  className="p-2 border border-neutral-300 hover:border-[#2C221C] text-neutral-700 hover:text-neutral-900 transition-colors bg-white"
                   aria-label="Mes anterior"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleNavigateMonth('next')}
-                  className="p-2 border border-[#E2D9CE] hover:border-[#2C221C] text-neutral-700 hover:text-neutral-900 transition-colors bg-white"
+                  className="p-2 border border-neutral-300 hover:border-[#2C221C] text-neutral-700 hover:text-neutral-900 transition-colors bg-white"
                   aria-label="Mes siguiente"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -437,12 +437,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             </div>
 
             {/* Days of week header */}
-            <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center">
+            <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center pb-2 border-b border-neutral-200">
               {daysOfWeek.map((day, idx) => (
                 <div 
                   key={day} 
                   className={`py-2 text-[10px] sm:text-xs uppercase tracking-widest font-bold ${
-                    idx >= 5 ? 'text-[#8C6B4D]' : 'text-neutral-500'
+                    idx >= 5 ? 'text-[#8C6B4D]' : 'text-neutral-700'
                   }`}
                 >
                   {day}
@@ -468,10 +468,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     }}
                     className={`min-h-[90px] sm:min-h-[120px] p-1.5 sm:p-2 border transition-all duration-200 cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
                       dayObj.isToday
-                        ? 'border-[#B5916A] bg-[#FFFBF5] ring-2 ring-[#B5916A]/40'
+                        ? 'border-2 border-[#8C6B4D] bg-[#FFFBF5] ring-2 ring-[#8C6B4D]/30'
                         : dayObj.isCurrentMonth
-                        ? 'border-[#EAE3DC] bg-white hover:border-[#B5916A] hover:bg-[#FAF8F5]'
-                        : 'border-neutral-200 bg-neutral-100/50 opacity-40'
+                        ? 'border-neutral-300 sm:border-neutral-400 bg-white hover:border-[#8C6B4D] hover:bg-[#FAF8F5]'
+                        : 'border-neutral-200 bg-neutral-100/60 opacity-50'
                     }`}
                   >
                     {/* Day number & indicators */}
