@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getImageUrl } from './utils/imageUtils';
 import { 
   Scissors, 
   Paintbrush, 
@@ -112,42 +113,42 @@ const GALLERY: GalleryItem[] = [
     title: 'Corte Shag Moderno',
     service: 'Corte y Estilo',
     stylist: 'Carlos',
-    image: '/assets/images/corte_estilo.jpg'
+    image: getImageUrl('corte_estilo.jpg')
   },
   {
     id: 'g2',
     title: 'Balayage Caramelo',
     service: 'Coloración',
     stylist: 'Carlos',
-    image: '/assets/images/color.jpg'
+    image: getImageUrl('color.jpg')
   },
   {
     id: 'g3',
     title: 'Ritual de Reconstrucción Kérastase',
     service: 'Tratamiento Kérastase',
     stylist: 'Diego',
-    image: '/assets/images/tratamiento_kerastase.jpg'
+    image: getImageUrl('tratamiento_kerastase.jpg')
   },
   {
     id: 'g4',
     title: 'Manicure Minimal Champagne',
     service: 'Manicure y Pedicure',
     stylist: 'Fernando',
-    image: '/assets/images/manicura.jpg'
+    image: getImageUrl('manicura.jpg')
   },
   {
     id: 'g5',
     title: 'Maquillaje Social Elegante',
     service: 'Maquillaje',
     stylist: 'Diego',
-    image: '/assets/images/maquillaje.jpg'
+    image: getImageUrl('maquillaje.jpg')
   },
   {
     id: 'g6',
     title: 'Alisado Orgánico Espejo',
     service: 'Alisado',
     stylist: 'Fernando',
-    image: '/assets/images/alisado.jpg'
+    image: getImageUrl('alisado.jpg')
   }
 ];
 
@@ -392,17 +393,10 @@ _Solicitado desde el sitio web de CF Portadas_`;
         {/* Background Image with Dark Overlay */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/assets/images/hero.png" 
+            src={getImageUrl('hero.png')} 
             alt="Interior de CF Portadas Salón de Belleza" 
             className="w-full h-full object-cover object-center filter contrast-110 brightness-[0.38] sepia-[15%]"
             referrerPolicy="no-referrer"
-            onError={(e) => {
-              const target = e.currentTarget;
-              if (!target.dataset.tried) {
-                target.dataset.tried = 'true';
-                target.src = '/src/assets/images/hero.png';
-              }
-            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/50 to-transparent" />
           <div className="absolute inset-0 bg-black/45" />
