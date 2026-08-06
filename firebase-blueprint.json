@@ -1,0 +1,22 @@
+{
+  "entities": {
+    "Appointment": {
+      "collectionName": "appointments",
+      "fields": {
+        "clientName": { "type": "string", "required": true },
+        "clientPhone": { "type": "string", "required": true },
+        "clientEmail": { "type": "string", "required": false },
+        "serviceId": { "type": "string", "required": true },
+        "serviceName": { "type": "string", "required": true },
+        "stylistId": { "type": "string", "required": true },
+        "stylistName": { "type": "string", "required": true },
+        "date": { "type": "string", "required": true },
+        "time": { "type": "string", "required": true },
+        "durationMinutes": { "type": "number", "required": true },
+        "status": { "type": "string", "required": true },
+        "notes": { "type": "string", "required": false },
+        "createdAt": { "type": "string", "required": true }
+      }
+    }
+  }
+}

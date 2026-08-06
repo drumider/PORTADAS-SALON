@@ -26,7 +26,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { Appointment, AppointmentStatus } from '../types';
-import { getStoredAppointments, saveAppointment, deleteAppointment, updateAppointmentStatus, setAdminAuthenticated } from '../utils/storage';
+import { getStoredAppointments, saveAppointment, deleteAppointment, updateAppointmentStatus, setAdminAuthenticated, subscribeToAppointments } from '../utils/storage';
 import { AppointmentModal } from './AppointmentModal';
 import { SERVICES } from '../constants';
 
@@ -59,7 +59,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   };
 
   useEffect(() => {
-    refreshAppointments();
+    const unsubscribe = subscribeToAppointments((updatedApps) => {
+      setAppointments(updatedApps);
+    });
+    return () => unsubscribe();
   }, []);
 
   // Filtered appointments list
