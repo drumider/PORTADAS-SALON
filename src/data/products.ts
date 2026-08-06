@@ -23,7 +23,7 @@ export const PRODUCTS: Product[] = [
     price: '₡26,000',
     priceNumber: 26000,
     description: 'Laca de fijación extra fuerte. Máximo control de larga duración sin dejar residuos ni acartonar el cabello. Ideal para peinados y estructuración elaborada.',
-    image: '/src/assets/images/biotop_101_spray_clean_1786048941070.jpg',
+    image: '/assets/images/biotop_101_spray_clean_1786048941070.jpg',
     tag: 'Fijación Extra Fuerte'
   },
   {
@@ -34,7 +34,7 @@ export const PRODUCTS: Product[] = [
     price: '₡26,000',
     priceNumber: 26000,
     description: 'Laca de fijación fuerte flexible. Aporta un acabado profesional con movimiento natural, brillo radiante y secado ultra rápido.',
-    image: '/src/assets/images/biotop_101_black_spray_1786049124579.jpg',
+    image: '/assets/images/biotop_101_black_spray_1786049124579.jpg',
     tag: 'Fijación Fuerte Natural'
   },
   {
@@ -45,7 +45,7 @@ export const PRODUCTS: Product[] = [
     price: '₡26,000',
     priceNumber: 26000,
     description: 'Laca de fijación suave y flexible. Aporta un acabado ligero, sedoso y manejable con protección anti-frizz ideal para movimiento cotidiano.',
-    image: '/src/assets/images/biotop_101_white_flex_spray_1786049206825.jpg',
+    image: '/assets/images/biotop_101_white_flex_spray_1786049206825.jpg',
     tag: 'Fijación Suave Flexible'
   },
   {
@@ -56,7 +56,7 @@ export const PRODUCTS: Product[] = [
     price: '₡22,000',
     priceNumber: 22000,
     description: 'Spray protector térmico y barrera anti-humedad de alto rendimiento. Mantiene el alisado y peinado impecable en climas húmedos.',
-    image: '/src/assets/images/biotop_top_coat_spray_1786049490783.jpg',
+    image: '/assets/images/biotop_top_coat_spray_1786049490783.jpg',
     tag: 'Escudo Anti-Humedad'
   },
   {
@@ -67,7 +67,7 @@ export const PRODUCTS: Product[] = [
     price: '₡18,000',
     priceNumber: 18000,
     description: 'Polvo voluminizador y texturizador de raíces. Otorga elevación instantánea, textura mate y cuerpo duradero sin apelmazar.',
-    image: '/src/assets/images/biotop_volume_powder_1786049454311.jpg',
+    image: '/assets/images/biotop_volume_powder_1786049454311.jpg',
     tag: 'Efecto Volumen & Textura'
   },
   {
@@ -78,7 +78,7 @@ export const PRODUCTS: Product[] = [
     price: '₡17,000',
     priceNumber: 17000,
     description: 'Tratamiento en crema alisante y sellador anti-frizz. Controla el encrespamiento, aporta sedosidad táctil y peinabilidad superior.',
-    image: '/src/assets/images/biotop_antifrizz_tube_1786049434206.jpg',
+    image: '/assets/images/biotop_antifrizz_tube_1786049434206.jpg',
     tag: 'Crema Alisante Anti-Frizz'
   },
   {
@@ -89,7 +89,7 @@ export const PRODUCTS: Product[] = [
     price: '₡16,000',
     priceNumber: 16000,
     description: 'Cera modeladora a base de agua para textura y definición. Permite moldear y reestructurar el peinado con acabado limpio y flexible.',
-    image: '/src/assets/images/biotop_aqua_wax_1786049473733.jpg',
+    image: '/assets/images/biotop_aqua_wax_1786049473733.jpg',
     tag: 'Cera Soluble en Agua'
   },
   {
@@ -100,7 +100,7 @@ export const PRODUCTS: Product[] = [
     price: '₡10,000',
     priceNumber: 10000,
     description: 'Formato compacto de bolsillo de la laca extra fuerte BIOTOP 101. Ideal para retoques rápidos de peinado en cualquier lugar.',
-    image: '/src/assets/images/biotop_101_spray_clean_1786048941070.jpg',
+    image: '/assets/images/biotop_101_spray_clean_1786048941070.jpg',
     tag: 'Formato Mini 75ml'
   },
   {
@@ -111,7 +111,7 @@ export const PRODUCTS: Product[] = [
     price: '₡10,000',
     priceNumber: 10000,
     description: 'Formato travel size de la laca de fijación fuerte flexible. Cabello perfecto y protegido contra la humedad durante todo el día.',
-    image: '/src/assets/images/biotop_101_black_spray_1786049124579.jpg',
+    image: '/assets/images/biotop_101_black_spray_1786049124579.jpg',
     tag: 'Formato Mini 75ml'
   },
   {
@@ -122,7 +122,7 @@ export const PRODUCTS: Product[] = [
     price: '₡18,000',
     priceNumber: 18000,
     description: 'Gel esculpidor de fijación firme para estilo y control impecables sin residuos ni peso.',
-    image: '/src/assets/images/biotop_101_firm_hold_gel_1786051944804.jpg',
+    image: '/assets/images/biotop_101_firm_hold_gel_1786051944804.jpg',
     tag: 'Gel Esculpidor'
   },
   {
@@ -133,7 +133,7 @@ export const PRODUCTS: Product[] = [
     price: '₡20,000',
     priceNumber: 20000,
     description: 'Crema de acabado para suavidad extrema y brillo deslumbrante al instante.',
-    image: '/src/assets/images/biotop_101_finishing_cream_1786051966095.jpg',
+    image: '/assets/images/biotop_101_finishing_cream_1786051966095.jpg',
     tag: 'Crema de Acabado & Brillo'
   },
   {
@@ -144,7 +144,7 @@ export const PRODUCTS: Product[] = [
     price: '₡21,000',
     priceNumber: 21000,
     description: 'Champú reparador con queratina pura y col rizada (Kale) para cabello más fuerte y suave.',
-    image: '/src/assets/images/biotop_700_shampoo_1786051983793.jpg',
+    image: '/assets/images/biotop_700_shampoo_1786051983793.jpg',
     tag: 'Línea 700 Keratin & Kale'
   },
   {
@@ -155,7 +155,7 @@ export const PRODUCTS: Product[] = [
     price: '₡23,000',
     priceNumber: 23000,
     description: 'Acondicionador nutritivo para reparación profunda, desenredo inmediato y elasticidad.',
-    image: '/src/assets/images/biotop_700_conditioner_1786052000164.jpg',
+    image: '/assets/images/biotop_700_conditioner_1786052000164.jpg',
     tag: 'Línea 700 Keratin & Kale'
   },
   {
@@ -166,7 +166,7 @@ export const PRODUCTS: Product[] = [
     price: '₡35,000',
     priceNumber: 35000,
     description: 'Mascarilla intensiva de restauración para cabello seco o procesado químicamente.',
-    image: '/src/assets/images/biotop_700_hair_mask_1786052019689.jpg',
+    image: '/assets/images/biotop_700_hair_mask_1786052019689.jpg',
     tag: 'Mascarilla Reparación Extrema'
   },
   {
@@ -177,7 +177,7 @@ export const PRODUCTS: Product[] = [
     price: '₡43,000',
     priceNumber: 43000,
     description: 'Crema para peinar de tacto sedoso que aporta brillo espejo, suavidad y protección térmica.',
-    image: '/src/assets/images/biotop_700_silky_touch_1786052038071.jpg',
+    image: '/assets/images/biotop_700_silky_touch_1786052038071.jpg',
     tag: 'Crema de Peinado Sedosa'
   },
   {
@@ -188,7 +188,7 @@ export const PRODUCTS: Product[] = [
     price: '₡25,000',
     priceNumber: 25000,
     description: 'Aceite de tratamiento reparador profundo con queratina y kale. Fortalece, restaura la fibra capilar dañada y aporta brillo inmediato.',
-    image: '/src/assets/images/biotop_700_repair_oil_1786052240248.jpg',
+    image: '/assets/images/biotop_700_repair_oil_1786052240248.jpg',
     tag: 'Tratamiento Reparador 30ml'
   },
   {
@@ -199,7 +199,7 @@ export const PRODUCTS: Product[] = [
     price: '₡40,000',
     priceNumber: 40000,
     description: 'Exclusivo cofre de regalo BIOTOP 700 que incluye Champú Reparador, Acondicionador y Sérum/Aceite de Queratina y Kale para una restauración completa.',
-    image: '/src/assets/images/biotop_700_cofre_box_1786052251265.jpg',
+    image: '/assets/images/biotop_700_cofre_box_1786052251265.jpg',
     tag: 'Cofre de Lujo BIOTOP'
   },
   {
@@ -210,7 +210,7 @@ export const PRODUCTS: Product[] = [
     price: '₡40,000',
     priceNumber: 40000,
     description: 'Exclusivo cofre de regalo BIOTOP 911 que incluye Champú Nutritivo de Quinua, Acondicionador y Sérum Capilar para recuperar la elasticidad.',
-    image: '/src/assets/images/biotop_911_cofre_box_1786052273899.jpg',
+    image: '/assets/images/biotop_911_cofre_box_1786052273899.jpg',
     tag: 'Cofre de Lujo BIOTOP'
   },
   {
@@ -221,7 +221,7 @@ export const PRODUCTS: Product[] = [
     price: '₡35,000',
     priceNumber: 35000,
     description: 'Acondicionador nutritivo de gran formato 500ml con extracto de quinua pura. Hidratación profunda y suavidad para cabello seco.',
-    image: '/src/assets/images/biotop_911_conditioner_500_1786052290087.jpg',
+    image: '/assets/images/biotop_911_conditioner_500_1786052290087.jpg',
     tag: 'Acondicionador 500ml'
   },
   {
@@ -232,7 +232,7 @@ export const PRODUCTS: Product[] = [
     price: '₡35,000',
     priceNumber: 35000,
     description: 'Tratamiento en spray multibeneficio sin enjuague. Desencrespa, protege contra el calor, aporta brillo deslumbrante y desenreda.',
-    image: '/src/assets/images/biotop_911_all_in_one_1786052299613.jpg',
+    image: '/assets/images/biotop_911_all_in_one_1786052299613.jpg',
     tag: 'Multibeneficio All In One'
   }
 ];

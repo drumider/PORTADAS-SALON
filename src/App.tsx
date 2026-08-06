@@ -105,49 +105,49 @@ const STYLISTS: Stylist[] = [
   { id: 'cualquiera', name: 'Cualquier profesional', role: 'El primero disponible para tu comodidad', avatarLetter: '★' }
 ];
 
-// Generated image assets (referenced strictly from real paths returned by tool)
+// Generated image assets (referenced strictly from real public paths)
 const GALLERY: GalleryItem[] = [
   {
     id: 'g1',
     title: 'Corte Shag Moderno',
     service: 'Corte y Estilo',
     stylist: 'Carlos',
-    image: '/src/assets/images/corte_estilo.jpg'
+    image: '/assets/images/corte_estilo.jpg'
   },
   {
     id: 'g2',
     title: 'Balayage Caramelo',
     service: 'Coloración',
     stylist: 'Carlos',
-    image: '/src/assets/images/color.jpg'
+    image: '/assets/images/color.jpg'
   },
   {
     id: 'g3',
     title: 'Ritual de Reconstrucción Kérastase',
     service: 'Tratamiento Kérastase',
     stylist: 'Diego',
-    image: '/src/assets/images/tratamiento_kerastase.jpg'
+    image: '/assets/images/tratamiento_kerastase.jpg'
   },
   {
     id: 'g4',
     title: 'Manicure Minimal Champagne',
     service: 'Manicure y Pedicure',
     stylist: 'Fernando',
-    image: '/src/assets/images/manicura.jpg'
+    image: '/assets/images/manicura.jpg'
   },
   {
     id: 'g5',
     title: 'Maquillaje Social Elegante',
     service: 'Maquillaje',
     stylist: 'Diego',
-    image: '/src/assets/images/maquillaje.jpg'
+    image: '/assets/images/maquillaje.jpg'
   },
   {
     id: 'g6',
     title: 'Alisado Orgánico Espejo',
     service: 'Alisado',
     stylist: 'Fernando',
-    image: '/src/assets/images/alisado.jpg'
+    image: '/assets/images/alisado.jpg'
   }
 ];
 
@@ -392,10 +392,17 @@ _Solicitado desde el sitio web de CF Portadas_`;
         {/* Background Image with Dark Overlay */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/src/assets/images/hero.png" 
+            src="/assets/images/hero.png" 
             alt="Interior de CF Portadas Salón de Belleza" 
             className="w-full h-full object-cover object-center filter contrast-110 brightness-[0.38] sepia-[15%]"
             referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.dataset.tried) {
+                target.dataset.tried = 'true';
+                target.src = '/src/assets/images/hero.png';
+              }
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/50 to-transparent" />
           <div className="absolute inset-0 bg-black/45" />
@@ -642,6 +649,17 @@ _Solicitado desde el sitio web de CF Portadas_`;
                     alt={item.title} 
                     className="w-full h-full object-cover object-center filter contrast-105 brightness-95 group-hover:scale-105 group-hover:brightness-105 transition-all duration-700 ease-out"
                     referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.dataset.tried) {
+                        target.dataset.tried = 'true';
+                        if (item.image.startsWith('/assets/')) {
+                          target.src = item.image.replace('/assets/', '/src/assets/');
+                        } else if (item.image.startsWith('/src/assets/')) {
+                          target.src = item.image.replace('/src/assets/', '/assets/');
+                        }
+                      }
+                    }}
                   />
                 </div>
 

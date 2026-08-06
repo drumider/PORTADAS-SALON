@@ -81,6 +81,17 @@ Por favor me confirman disponibilidad para retiro en el salón o envío. ¡Mucha
                   alt={product.name}
                   className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter contrast-105"
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.dataset.tried) {
+                      target.dataset.tried = 'true';
+                      if (product.image.startsWith('/assets/')) {
+                        target.src = product.image.replace('/assets/', '/src/assets/');
+                      } else if (product.image.startsWith('/src/assets/')) {
+                        target.src = product.image.replace('/src/assets/', '/assets/');
+                      }
+                    }
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-warm-card via-transparent to-transparent opacity-80" />
 
