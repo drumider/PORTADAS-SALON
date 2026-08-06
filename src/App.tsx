@@ -397,6 +397,13 @@ _Solicitado desde el sitio web de CF Portadas_`;
             alt="Interior de CF Portadas Salón de Belleza" 
             className="w-full h-full object-cover object-center filter contrast-110 brightness-[0.38] sepia-[15%]"
             referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.dataset.failed) {
+                target.dataset.failed = 'true';
+                target.src = '/assets/images/hero.png';
+              }
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/50 to-transparent" />
           <div className="absolute inset-0 bg-black/45" />
@@ -645,13 +652,10 @@ _Solicitado desde el sitio web de CF Portadas_`;
                     referrerPolicy="no-referrer"
                     onError={(e) => {
                       const target = e.currentTarget;
-                      if (!target.dataset.tried) {
-                        target.dataset.tried = 'true';
-                        if (item.image.startsWith('/assets/')) {
-                          target.src = item.image.replace('/assets/', '/src/assets/');
-                        } else if (item.image.startsWith('/src/assets/')) {
-                          target.src = item.image.replace('/src/assets/', '/assets/');
-                        }
+                      const filename = item.image.split('/').pop();
+                      if (filename && !target.dataset.failed) {
+                        target.dataset.failed = 'true';
+                        target.src = `/assets/images/${filename}`;
                       }
                     }}
                   />
