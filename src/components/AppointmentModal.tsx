@@ -86,69 +86,69 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="w-full max-w-lg bg-warm-card border border-gold-champagne/40 shadow-2xl overflow-hidden relative"
+          className="w-full max-w-lg bg-white border border-[#D8CEB8] shadow-2xl overflow-hidden relative"
         >
           {/* Header */}
-          <div className="bg-dark-bg border-b border-warm-border p-5 flex items-center justify-between">
+          <div className="bg-[#FAF8F5] border-b border-[#EAE3DC] p-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 border border-gold-champagne/30 bg-gold-champagne/10 flex items-center justify-center text-gold-champagne">
+              <div className="w-8 h-8 border border-[#B5916A]/40 bg-[#B5916A]/10 flex items-center justify-center text-[#8C6B4D]">
                 <Scissors className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-neutral-900 uppercase tracking-wider">
                   {isEditing ? 'Editar Cita' : 'Nueva Cita Manual (Teléfono / Presencial)'}
                 </h3>
-                <p className="text-[10px] text-gold-champagne uppercase tracking-widest font-light">
+                <p className="text-[10px] text-[#8C6B4D] uppercase tracking-widest font-bold">
                   CF Portadas · Administración
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors p-1"
+              className="text-neutral-400 hover:text-neutral-900 transition-colors p-1"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+          <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto bg-white">
             {/* Client Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-gold-champagne/80 font-light mb-1">
+                <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold mb-1">
                   Nombre Cliente *
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <User className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
                     placeholder="ej. María Rodríguez"
-                    className="w-full bg-dark-bg border border-warm-border focus:border-gold-champagne text-white text-xs pl-9 pr-3 py-2.5 outline-none font-medium"
+                    className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs pl-9 pr-3 py-2.5 outline-none font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-gold-champagne/80 font-light mb-1">
+                <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold mb-1">
                   Teléfono / WhatsApp *
                 </label>
                 <div className="relative">
-                  <Phone className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Phone className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
                     value={clientPhone}
                     onChange={(e) => setClientPhone(e.target.value)}
                     placeholder="ej. 8888 8888"
-                    className="w-full bg-dark-bg border border-warm-border focus:border-gold-champagne text-white text-xs pl-9 pr-3 py-2.5 outline-none font-mono"
+                    className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs pl-9 pr-3 py-2.5 outline-none font-mono"
                   />
                 </div>
               </div>
@@ -156,17 +156,17 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
             {/* Email (Optional) */}
             <div>
-              <label className="block text-[10px] uppercase tracking-wider text-gray-light/60 font-light mb-1">
+              <label className="block text-[10px] uppercase tracking-wider text-neutral-600 font-medium mb-1">
                 Correo Electrónico (Opcional)
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   value={clientEmail}
                   onChange={(e) => setClientEmail(e.target.value)}
                   placeholder="ej. cliente@correo.com"
-                  className="w-full bg-dark-bg border border-warm-border focus:border-gold-champagne text-white text-xs pl-9 pr-3 py-2.5 outline-none"
+                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs pl-9 pr-3 py-2.5 outline-none"
                 />
               </div>
             </div>
@@ -174,13 +174,13 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
             {/* Service & Stylist */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-gold-champagne/80 font-light mb-1">
+                <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold mb-1">
                   Servicio Solicitado
                 </label>
                 <select
                   value={serviceId}
                   onChange={(e) => setServiceId(e.target.value)}
-                  className="w-full bg-dark-bg border border-warm-border focus:border-gold-champagne text-white text-xs px-3 py-2.5 outline-none uppercase font-serif-luxury"
+                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-3 py-2.5 outline-none uppercase font-serif-luxury font-medium"
                 >
                   {SERVICES.map(s => (
                     <option key={s.id} value={s.id}>
@@ -191,13 +191,13 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-gold-champagne/80 font-light mb-1">
+                <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold mb-1">
                   Especialista / Estilista
                 </label>
                 <select
                   value={stylistId}
                   onChange={(e) => setStylistId(e.target.value)}
-                  className="w-full bg-dark-bg border border-warm-border focus:border-gold-champagne text-white text-xs px-3 py-2.5 outline-none uppercase font-serif-luxury"
+                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-3 py-2.5 outline-none uppercase font-serif-luxury font-medium"
                 >
                   {STYLISTS.map(st => (
                     <option key={st.id} value={st.id}>
@@ -211,31 +211,31 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
             {/* Date & Time */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-gold-champagne/80 font-light mb-1">
+                <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold mb-1">
                   Fecha *
                 </label>
                 <div className="relative">
-                  <Calendar className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Calendar className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="date"
                     required
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full bg-dark-bg border border-warm-border focus:border-gold-champagne text-white text-xs pl-9 pr-3 py-2.5 outline-none font-mono"
+                    className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs pl-9 pr-3 py-2.5 outline-none font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-gold-champagne/80 font-light mb-1">
+                <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold mb-1">
                   Hora *
                 </label>
                 <div className="relative">
-                  <Clock className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Clock className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <select
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="w-full bg-dark-bg border border-warm-border focus:border-gold-champagne text-white text-xs pl-9 pr-3 py-2.5 outline-none font-mono"
+                    className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs pl-9 pr-3 py-2.5 outline-none font-mono"
                   >
                     {['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'].map(t => (
                       <option key={t} value={t}>{t} AM/PM</option>
@@ -247,7 +247,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
             {/* Status */}
             <div>
-              <label className="block text-[10px] uppercase tracking-wider text-gold-champagne/80 font-light mb-1">
+              <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold mb-1">
                 Estado de la Cita
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -256,16 +256,16 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     key={st}
                     type="button"
                     onClick={() => setStatus(st)}
-                    className={`text-[10px] uppercase tracking-wider py-2 px-2 border font-medium transition-all ${
+                    className={`text-[10px] uppercase tracking-wider py-2 px-2 border font-bold transition-all ${
                       status === st
                         ? st === 'Confirmada'
-                          ? 'border-emerald-500 bg-emerald-950/40 text-emerald-400'
+                          ? 'border-emerald-400 bg-emerald-100 text-emerald-950'
                           : st === 'Pendiente'
-                          ? 'border-amber-500 bg-amber-950/40 text-amber-300'
+                          ? 'border-amber-400 bg-amber-100 text-amber-950'
                           : st === 'Completada'
-                          ? 'border-blue-500 bg-blue-950/40 text-blue-300'
-                          : 'border-red-500 bg-red-950/40 text-red-300'
-                        : 'border-neutral-800 bg-dark-bg text-neutral-400 hover:text-white'
+                          ? 'border-blue-400 bg-blue-100 text-blue-950'
+                          : 'border-red-400 bg-red-100 text-red-950'
+                        : 'border-[#E2D9CE] bg-[#FAF8F5] text-neutral-600 hover:text-neutral-900'
                     }`}
                   >
                     {st}
@@ -276,7 +276,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
             {/* Notes */}
             <div>
-              <label className="block text-[10px] uppercase tracking-wider text-gray-light/60 font-light mb-1">
+              <label className="block text-[10px] uppercase tracking-wider text-neutral-600 font-medium mb-1">
                 Notas / Observaciones Específicas
               </label>
               <textarea
@@ -284,12 +284,12 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Preferencias del cliente, tratamientos previos o recordatorios..."
-                className="w-full bg-dark-bg border border-warm-border focus:border-gold-champagne text-white text-xs p-3 outline-none resize-none"
+                className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs p-3 outline-none resize-none"
               />
             </div>
 
             {/* Actions */}
-            <div className="pt-4 border-t border-warm-border flex items-center justify-between gap-3">
+            <div className="pt-4 border-t border-[#EAE3DC] flex items-center justify-between gap-3">
               {isEditing && onDelete ? (
                 confirmDelete ? (
                   <div className="flex items-center gap-2">
@@ -307,7 +307,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(false)}
-                      className="text-xs text-gray-400 hover:text-white px-2 py-1"
+                      className="text-xs text-neutral-500 hover:text-neutral-900 px-2 py-1"
                     >
                       Cancelar
                     </button>
@@ -316,7 +316,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(true)}
-                    className="text-xs uppercase tracking-wider text-red-400 hover:text-red-300 flex items-center gap-1.5 px-3 py-2 border border-red-900/50 hover:bg-red-950/30 transition-colors"
+                    className="text-xs uppercase tracking-wider text-red-600 hover:text-red-800 flex items-center gap-1.5 px-3 py-2 border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Eliminar Cita</span>
@@ -328,13 +328,13 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="text-xs uppercase tracking-wider text-gray-400 hover:text-white px-4 py-2.5"
+                  className="text-xs uppercase tracking-wider text-neutral-600 hover:text-neutral-900 px-4 py-2.5 font-medium"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="bg-gold-champagne text-dark-bg hover:bg-white text-xs uppercase tracking-[0.15em] font-bold px-5 py-2.5 flex items-center gap-2 transition-colors shadow-md"
+                  className="bg-[#2C221C] hover:bg-[#A68358] text-white text-xs uppercase tracking-[0.15em] font-bold px-5 py-2.5 flex items-center gap-2 transition-colors shadow-sm"
                 >
                   <Save className="w-4 h-4" />
                   <span>{isEditing ? 'Guardar Cambios' : 'Agendar Cita'}</span>

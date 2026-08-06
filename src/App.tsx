@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { saveAppointment, isAdminAuthenticated } from './utils/storage';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminDashboard } from './components/AdminDashboard';
+import { ProductsSection } from './components/ProductsSection';
 
 // Type definitions
 interface Service {
@@ -152,7 +153,7 @@ const GALLERY: GalleryItem[] = [
 
 export default function App() {
   // Navigation & Interactive states
-  const [activeTab, setActiveTab] = useState<'inicio' | 'servicios' | 'galeria' | 'contacto'>('inicio');
+  const [activeTab, setActiveTab] = useState<'inicio' | 'servicios' | 'productos' | 'galeria' | 'contacto'>('inicio');
   const [activeLightbox, setActiveLightbox] = useState<GalleryItem | null>(null);
 
   // Booking Assistant Form State
@@ -174,7 +175,7 @@ export default function App() {
   // Track active section on scroll
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['inicio', 'servicios', 'galeria', 'contacto'];
+      const sections = ['inicio', 'servicios', 'productos', 'galeria', 'contacto'];
       const scrollPosition = window.scrollY + 200;
 
       for (const section of sections) {
@@ -354,7 +355,7 @@ _Solicitado desde el sitio web de CF Portadas_`;
           </div>
 
           <nav className="hidden md:flex space-x-8 items-center">
-            {['inicio', 'servicios', 'galeria', 'contacto'].map((section) => (
+            {['inicio', 'servicios', 'productos', 'galeria', 'contacto'].map((section) => (
               <button
                 key={section}
                 onClick={() => scrollToSection(section)}
@@ -600,7 +601,10 @@ _Solicitado desde el sitio web de CF Portadas_`;
         </div>
       </section>
 
-      {/* 4. GALERÍA EDITORIAL */}
+      {/* 4. PRODUCTOS DE SALÓN POR MARCA */}
+      <ProductsSection />
+
+      {/* 5. GALERÍA EDITORIAL */}
       <section id="galeria" className="py-24 sm:py-32 relative z-10 bg-dark-bg overflow-hidden">
         {/* Luminous backdrop */}
         <div className="absolute left-1/3 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gold-champagne/3 rounded-full filter blur-[120px] pointer-events-none" />
@@ -894,7 +898,7 @@ _Solicitado desde el sitio web de CF Portadas_`;
                       <ExternalLink className="w-3.5 h-3.5 opacity-80" />
                     </a>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
                       <button
                         type="button"
                         onClick={resetForm}
@@ -902,21 +906,6 @@ _Solicitado desde el sitio web de CF Portadas_`;
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Agendar Otra Cita</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (isAdminAuthenticated()) {
-                            setIsAdminViewActive(true);
-                          } else {
-                            setIsAdminLoginOpen(true);
-                          }
-                        }}
-                        className="w-full bg-neutral-900 border border-warm-border hover:border-gray-400 text-gray-300 hover:text-white text-xs uppercase tracking-wider py-3 px-3 transition-colors font-medium flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>Ver Agenda en Sistema</span>
                       </button>
                     </div>
                   </div>

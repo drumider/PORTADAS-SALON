@@ -221,41 +221,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const getStatusColor = (status: AppointmentStatus) => {
     switch (status) {
       case 'Confirmada':
-        return 'bg-emerald-950/60 text-emerald-400 border-emerald-500/40';
+        return 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold';
       case 'Pendiente':
-        return 'bg-amber-950/60 text-amber-300 border-amber-500/40';
+        return 'bg-amber-100 text-amber-900 border-amber-300 font-bold';
       case 'Completada':
-        return 'bg-blue-950/60 text-blue-300 border-blue-500/40';
+        return 'bg-blue-100 text-blue-900 border-blue-300 font-bold';
       case 'Cancelada':
-        return 'bg-red-950/60 text-red-400 border-red-500/40';
+        return 'bg-red-100 text-red-900 border-red-300 font-bold';
       default:
-        return 'bg-neutral-900 text-neutral-300 border-neutral-700';
+        return 'bg-neutral-100 text-neutral-800 border-neutral-300';
     }
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white font-sans selection:bg-gold-champagne selection:text-dark-bg pb-20">
+    <div className="min-h-screen bg-[#FAF8F5] text-neutral-900 font-sans selection:bg-gold-champagne selection:text-dark-bg pb-20">
       
       {/* Top Navigation / Dashboard Header */}
-      <header className="bg-warm-card border-b border-warm-border sticky top-0 z-30 shadow-xl">
+      <header className="bg-white border-b border-[#E8DFD8] sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           
           {/* Brand Badge */}
           <div className="flex items-center gap-4">
             <div className="relative flex items-center pr-2">
-              <span className="font-logo-doulaise text-3xl text-gold-champagne transform -rotate-[10deg] leading-none">
+              <span className="font-logo-doulaise text-3xl text-[#B5916A] transform -rotate-[10deg] leading-none">
                 cf
               </span>
-              <span className="font-logo-sans text-base tracking-[0.2em] text-white font-light uppercase pl-1">
+              <span className="font-logo-sans text-base tracking-[0.2em] text-neutral-900 font-semibold uppercase pl-1">
                 PORTADAS
               </span>
             </div>
-            <div className="h-6 w-[1px] bg-warm-border hidden sm:block" />
+            <div className="h-6 w-[1px] bg-[#E8DFD8] hidden sm:block" />
             <div>
-              <span className="text-[10px] tracking-[0.25em] text-gold-champagne font-semibold uppercase block">
+              <span className="text-[10px] tracking-[0.25em] text-[#8C6B4D] font-bold uppercase block">
                 Panel de Administración
               </span>
-              <p className="text-[11px] text-gray-light/40 font-light">
+              <p className="text-[11px] text-neutral-500 font-light">
                 Gestión Integral de Agenda y Citas · Escazú
               </p>
             </div>
@@ -265,7 +265,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => handleCreateNew()}
-              className="bg-gold-champagne text-dark-bg hover:bg-white text-xs uppercase tracking-[0.15em] font-bold px-4 py-2.5 flex items-center gap-2 transition-all shadow-md shadow-gold-champagne/10"
+              className="bg-[#2C221C] hover:bg-[#A68358] text-white text-xs uppercase tracking-[0.15em] font-bold px-4 py-2.5 flex items-center gap-2 transition-all shadow-sm"
             >
               <Plus className="w-4 h-4" />
               <span>Nueva Cita</span>
@@ -276,7 +276,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 setAdminAuthenticated(false);
                 onLogout();
               }}
-              className="border border-warm-border hover:border-red-500/50 text-gray-light/70 hover:text-red-400 text-xs uppercase tracking-wider px-3.5 py-2.5 flex items-center gap-2 transition-colors bg-dark-bg"
+              className="border border-[#DCD3C9] hover:border-red-400 text-neutral-700 hover:text-red-600 text-xs uppercase tracking-wider px-3.5 py-2.5 flex items-center gap-2 transition-colors bg-white shadow-sm"
               title="Cerrar sesión de administración"
             >
               <LogOut className="w-4 h-4" />
@@ -292,60 +292,60 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
         {/* 1. Quick Stats Banner */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-warm-card border border-warm-border p-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-16 h-16 bg-gold-champagne/5 rounded-bl-full pointer-events-none" />
-            <span className="text-[10px] uppercase tracking-widest text-gold-champagne font-light">Citas para Hoy</span>
+          <div className="bg-white border border-[#EAE3DC] p-4 relative overflow-hidden shadow-sm">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-[#B5916A]/10 rounded-bl-full pointer-events-none" />
+            <span className="text-[10px] uppercase tracking-widest text-[#8C6B4D] font-bold">Citas para Hoy</span>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="text-2xl sm:text-3xl font-mono font-bold text-white">{stats.todayCount}</span>
-              <CalendarIcon className="w-5 h-5 text-gold-champagne/60" />
+              <span className="text-2xl sm:text-3xl font-mono font-bold text-neutral-900">{stats.todayCount}</span>
+              <CalendarIcon className="w-5 h-5 text-[#8C6B4D]" />
             </div>
           </div>
 
-          <div className="bg-warm-card border border-warm-border p-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/5 rounded-bl-full pointer-events-none" />
-            <span className="text-[10px] uppercase tracking-widest text-amber-400 font-light">Pendientes</span>
+          <div className="bg-white border border-[#EAE3DC] p-4 relative overflow-hidden shadow-sm">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/10 rounded-bl-full pointer-events-none" />
+            <span className="text-[10px] uppercase tracking-widest text-amber-700 font-bold">Pendientes</span>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="text-2xl sm:text-3xl font-mono font-bold text-amber-300">{stats.pendingCount}</span>
-              <AlertCircle className="w-5 h-5 text-amber-400/60" />
+              <span className="text-2xl sm:text-3xl font-mono font-bold text-amber-700">{stats.pendingCount}</span>
+              <AlertCircle className="w-5 h-5 text-amber-600" />
             </div>
           </div>
 
-          <div className="bg-warm-card border border-warm-border p-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/5 rounded-bl-full pointer-events-none" />
-            <span className="text-[10px] uppercase tracking-widest text-emerald-400 font-light">Confirmadas</span>
+          <div className="bg-white border border-[#EAE3DC] p-4 relative overflow-hidden shadow-sm">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-bl-full pointer-events-none" />
+            <span className="text-[10px] uppercase tracking-widest text-emerald-800 font-bold">Confirmadas</span>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="text-2xl sm:text-3xl font-mono font-bold text-emerald-400">{stats.confirmedCount}</span>
-              <CheckCircle className="w-5 h-5 text-emerald-400/60" />
+              <span className="text-2xl sm:text-3xl font-mono font-bold text-emerald-700">{stats.confirmedCount}</span>
+              <CheckCircle className="w-5 h-5 text-emerald-600" />
             </div>
           </div>
 
-          <div className="bg-warm-card border border-warm-border p-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/5 rounded-bl-full pointer-events-none" />
-            <span className="text-[10px] uppercase tracking-widest text-blue-400 font-light">Total Registradas</span>
+          <div className="bg-white border border-[#EAE3DC] p-4 relative overflow-hidden shadow-sm">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 rounded-bl-full pointer-events-none" />
+            <span className="text-[10px] uppercase tracking-widest text-blue-800 font-bold">Total Registradas</span>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="text-2xl sm:text-3xl font-mono font-bold text-white">{stats.totalCount}</span>
-              <Scissors className="w-5 h-5 text-blue-400/60" />
+              <span className="text-2xl sm:text-3xl font-mono font-bold text-neutral-900">{stats.totalCount}</span>
+              <Scissors className="w-5 h-5 text-blue-600" />
             </div>
           </div>
         </div>
 
         {/* 2. Control Toolbar (Search, View Modes & Filters) */}
-        <div className="bg-warm-card border border-warm-border p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        <div className="bg-white border border-[#EAE3DC] p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-sm">
           
           {/* Search bar */}
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar por cliente, teléfono o servicio..."
-              className="w-full bg-dark-bg border border-warm-border focus:border-gold-champagne text-white text-xs pl-10 pr-4 py-2.5 outline-none font-medium"
+              className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 placeholder:text-neutral-400 text-xs pl-10 pr-4 py-2.5 outline-none font-medium"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-800"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -356,12 +356,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           <div className="flex flex-wrap items-center gap-3">
             
             {/* Status Filter */}
-            <div className="flex items-center gap-1 bg-dark-bg border border-warm-border px-2 py-1">
-              <Filter className="w-3.5 h-3.5 text-gold-champagne shrink-0" />
+            <div className="flex items-center gap-1 bg-[#FAF8F5] border border-[#E2D9CE] px-2 py-1">
+              <Filter className="w-3.5 h-3.5 text-[#8C6B4D] shrink-0" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-transparent text-white text-xs py-1 px-1 outline-none uppercase font-serif-luxury"
+                className="bg-transparent text-neutral-900 text-xs py-1 px-1 outline-none font-bold uppercase font-serif-luxury"
               >
                 <option value="all">Todos los Estados</option>
                 <option value="Confirmada">Confirmadas</option>
@@ -372,11 +372,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             </div>
 
             {/* View switcher buttons */}
-            <div className="flex items-center border border-warm-border bg-dark-bg p-0.5">
+            <div className="flex items-center border border-[#E2D9CE] bg-[#FAF8F5] p-0.5">
               <button
                 onClick={() => setViewMode('month')}
                 className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors flex items-center gap-1 ${
-                  viewMode === 'month' ? 'bg-gold-champagne text-dark-bg' : 'text-gray-light/60 hover:text-white'
+                  viewMode === 'month' ? 'bg-[#2C221C] text-white' : 'text-neutral-600 hover:text-neutral-900'
                 }`}
               >
                 <Grid className="w-3.5 h-3.5" />
@@ -385,7 +385,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               <button
                 onClick={() => setViewMode('list')}
                 className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors flex items-center gap-1 ${
-                  viewMode === 'list' ? 'bg-gold-champagne text-dark-bg' : 'text-gray-light/60 hover:text-white'
+                  viewMode === 'list' ? 'bg-[#2C221C] text-white' : 'text-neutral-600 hover:text-neutral-900'
                 }`}
               >
                 <List className="w-3.5 h-3.5" />
@@ -399,17 +399,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
         {/* 3. CALENDAR VIEW MODE */}
         {viewMode === 'month' && (
-          <div className="bg-warm-card border border-warm-border p-4 sm:p-6 space-y-4">
+          <div className="bg-white border border-[#EAE3DC] p-4 sm:p-6 space-y-4 shadow-sm">
             
             {/* Month Header Navigation */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-warm-border">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EAE3DC]">
               <div className="flex items-center gap-3">
-                <h2 className="font-serif-luxury text-xl sm:text-2xl text-white uppercase tracking-wider font-light">
-                  {monthNames[month]} <span className="text-gold-champagne font-mono font-semibold">{year}</span>
+                <h2 className="font-serif-luxury text-xl sm:text-2xl text-neutral-900 uppercase tracking-wider font-light">
+                  {monthNames[month]} <span className="text-[#8C6B4D] font-mono font-bold">{year}</span>
                 </h2>
                 <button
                   onClick={() => handleNavigateMonth('today')}
-                  className="text-[10px] uppercase font-mono tracking-widest px-2.5 py-1 border border-gold-champagne/30 text-gold-champagne hover:bg-gold-champagne hover:text-dark-bg transition-colors"
+                  className="text-[10px] uppercase font-mono tracking-widest px-2.5 py-1 border border-[#B5916A] text-[#8C6B4D] font-bold hover:bg-[#2C221C] hover:text-white transition-colors"
                 >
                   Hoy
                 </button>
@@ -418,14 +418,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleNavigateMonth('prev')}
-                  className="p-2 border border-warm-border hover:border-gold-champagne text-gray-300 hover:text-gold-champagne transition-colors"
+                  className="p-2 border border-[#E2D9CE] hover:border-[#2C221C] text-neutral-700 hover:text-neutral-900 transition-colors bg-white"
                   aria-label="Mes anterior"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleNavigateMonth('next')}
-                  className="p-2 border border-warm-border hover:border-gold-champagne text-gray-300 hover:text-gold-champagne transition-colors"
+                  className="p-2 border border-[#E2D9CE] hover:border-[#2C221C] text-neutral-700 hover:text-neutral-900 transition-colors bg-white"
                   aria-label="Mes siguiente"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -439,7 +439,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 <div 
                   key={day} 
                   className={`py-2 text-[10px] sm:text-xs uppercase tracking-widest font-bold ${
-                    idx >= 5 ? 'text-gold-champagne/80' : 'text-gray-light/50'
+                    idx >= 5 ? 'text-[#8C6B4D]' : 'text-neutral-500'
                   }`}
                 >
                   {day}
@@ -465,22 +465,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     }}
                     className={`min-h-[90px] sm:min-h-[120px] p-1.5 sm:p-2 border transition-all duration-200 cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
                       dayObj.isToday
-                        ? 'border-gold-champagne bg-gold-champagne/5 ring-1 ring-gold-champagne/50'
+                        ? 'border-[#B5916A] bg-[#FFFBF5] ring-2 ring-[#B5916A]/40'
                         : dayObj.isCurrentMonth
-                        ? 'border-warm-border bg-dark-bg/60 hover:border-gold-champagne/50 hover:bg-dark-bg'
-                        : 'border-neutral-900/40 bg-black/20 opacity-40'
+                        ? 'border-[#EAE3DC] bg-white hover:border-[#B5916A] hover:bg-[#FAF8F5]'
+                        : 'border-neutral-200 bg-neutral-100/50 opacity-40'
                     }`}
                   >
                     {/* Day number & indicators */}
                     <div className="flex items-center justify-between mb-1">
                       <span className={`text-xs sm:text-sm font-mono font-bold ${
-                        dayObj.isToday ? 'text-gold-champagne scale-110' : dayObj.isCurrentMonth ? 'text-white' : 'text-gray-600'
+                        dayObj.isToday ? 'text-[#8C6B4D] scale-110' : dayObj.isCurrentMonth ? 'text-neutral-900' : 'text-neutral-400'
                       }`}>
                         {dayObj.dayNum}
                       </span>
 
                       {hasApps && (
-                        <span className="text-[9px] font-mono px-1.5 py-0.5 bg-gold-champagne/20 text-gold-champagne border border-gold-champagne/30 rounded-none font-bold">
+                        <span className="text-[9px] font-mono px-1.5 py-0.5 bg-[#8C6B4D]/10 text-[#8C6B4D] border border-[#8C6B4D]/30 rounded-none font-bold">
                           {dayApps.length} {dayApps.length === 1 ? 'cita' : 'citas'}
                         </span>
                       )}
@@ -504,14 +504,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                       ))}
 
                       {dayApps.length > 3 && (
-                        <div className="text-[8px] text-gold-champagne uppercase font-mono text-center font-bold">
+                        <div className="text-[8px] text-[#8C6B4D] uppercase font-mono text-center font-bold">
                           + {dayApps.length - 3} más...
                         </div>
                       )}
                     </div>
 
                     {/* Quick add trigger on hover */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] uppercase tracking-wider text-gold-champagne/80 font-mono text-right mt-1">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] uppercase tracking-wider text-[#8C6B4D] font-mono text-right mt-1 font-bold">
                       + Agendar
                     </div>
                   </div>
@@ -524,40 +524,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
         {/* 4. LIST / AGENDA VIEW MODE */}
         {viewMode === 'list' && (
-          <div className="bg-warm-card border border-warm-border p-4 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between pb-4 border-b border-warm-border">
-              <h2 className="font-serif-luxury text-lg text-white uppercase tracking-wider font-light">
+          <div className="bg-white border border-[#EAE3DC] p-4 sm:p-6 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between pb-4 border-b border-[#EAE3DC]">
+              <h2 className="font-serif-luxury text-lg text-neutral-900 uppercase tracking-wider font-light">
                 Listado Cronológico de Citas ({filteredAppointments.length})
               </h2>
             </div>
 
             {filteredAppointments.length === 0 ? (
-              <div className="py-16 text-center text-gray-light/40 font-light text-xs">
+              <div className="py-16 text-center text-neutral-500 font-light text-xs">
                 No se encontraron citas con los filtros seleccionados.
               </div>
             ) : (
-              <div className="divide-y divide-warm-border/60">
+              <div className="divide-y divide-[#EAE3DC]">
                 {filteredAppointments
                   .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
                   .map(app => (
                     <div
                       key={app.id}
-                      className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-dark-bg/50 px-3 transition-colors"
+                      className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-[#FAF8F5] px-3 transition-colors"
                     >
                       {/* Left: Date & Client details */}
                       <div className="flex items-start gap-4">
-                        <div className="bg-dark-bg border border-gold-champagne/30 p-2 text-center min-w-[70px] shrink-0">
-                          <span className="text-[10px] text-gold-champagne uppercase tracking-widest font-mono block">
+                        <div className="bg-[#FAF8F5] border border-[#E2D9CE] p-2 text-center min-w-[70px] shrink-0">
+                          <span className="text-[10px] text-[#8C6B4D] uppercase tracking-widest font-mono font-bold block">
                             {app.date}
                           </span>
-                          <span className="text-sm font-mono font-bold text-white block mt-0.5">
+                          <span className="text-sm font-mono font-bold text-neutral-900 block mt-0.5">
                             {app.time}
                           </span>
                         </div>
 
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-semibold text-white uppercase font-serif-luxury">
+                            <h4 className="text-sm font-bold text-neutral-900 uppercase font-serif-luxury">
                               {app.clientName}
                             </h4>
                             <span className={`text-[9px] uppercase font-mono px-2 py-0.5 border ${getStatusColor(app.status)}`}>
@@ -565,14 +565,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                             </span>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-light/70 font-light mt-1">
-                            <span className="text-gold-champagne">{app.serviceName}</span>
-                            <span>• Estilista: <strong className="text-white">{app.stylistName}</strong></span>
-                            <span>• Tel: <strong className="text-white font-mono">{app.clientPhone}</strong></span>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-600 font-light mt-1">
+                            <span className="text-[#8C6B4D] font-medium">{app.serviceName}</span>
+                            <span>• Estilista: <strong className="text-neutral-900">{app.stylistName}</strong></span>
+                            <span>• Tel: <strong className="text-neutral-900 font-mono">{app.clientPhone}</strong></span>
                           </div>
 
                           {app.notes && (
-                            <p className="text-[11px] text-gray-light/50 italic mt-1 max-w-lg">
+                            <p className="text-[11px] text-neutral-500 italic mt-1 max-w-lg">
                               "{app.notes}"
                             </p>
                           )}
@@ -585,7 +585,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                           href={`https://wa.me/506${app.clientPhone.replace(/\D/g, '')}?text=Hola%20${encodeURIComponent(app.clientName)},%20te%20escribimos%20de%20CF%20Portadas%20sobre%20tu%20cita%20de%20${encodeURIComponent(app.serviceName)}%20el%20${app.date}%20a%20las%20${app.time}.`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-950/40 transition-colors"
+                          className="p-2 border border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
                           title="Contactar por WhatsApp"
                         >
                           <MessageSquare className="w-4 h-4" />
@@ -593,7 +593,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
                         <button
                           onClick={() => handleEditAppointment(app)}
-                          className="p-2 border border-warm-border text-gray-300 hover:text-gold-champagne hover:border-gold-champagne transition-colors"
+                          className="p-2 border border-[#E2D9CE] text-neutral-700 hover:text-[#8C6B4D] hover:border-[#8C6B4D] bg-white transition-colors"
                           title="Editar Cita"
                         >
                           <Edit3 className="w-4 h-4" />
@@ -611,7 +611,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                             </button>
                             <button
                               onClick={() => setDeletingId(null)}
-                              className="px-2 py-1 text-gray-400 hover:text-white text-[10px]"
+                              className="px-2 py-1 text-neutral-500 hover:text-neutral-900 text-[10px]"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -619,7 +619,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                         ) : (
                           <button
                             onClick={() => setDeletingId(app.id)}
-                            className="p-2 border border-warm-border text-gray-400 hover:text-red-400 hover:border-red-500/50 transition-colors"
+                            className="p-2 border border-[#E2D9CE] text-neutral-400 hover:text-red-600 hover:border-red-300 bg-white transition-colors"
                             title="Eliminar Cita"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -638,53 +638,53 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       {/* DAY DETAIL MODAL */}
       <AnimatePresence>
         {dayDetailModalDate && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-2xl bg-warm-card border border-gold-champagne/40 shadow-2xl overflow-hidden relative max-h-[85vh] flex flex-col"
+              className="w-full max-w-2xl bg-white border border-[#D8CEB8] shadow-2xl overflow-hidden relative max-h-[85vh] flex flex-col"
             >
-              <div className="bg-dark-bg border-b border-warm-border p-5 flex items-center justify-between">
+              <div className="bg-[#FAF8F5] border-b border-[#EAE3DC] p-5 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-gold-champagne uppercase tracking-widest font-mono">
+                  <span className="text-[10px] text-[#8C6B4D] uppercase tracking-widest font-mono font-bold">
                     Agenda del Día
                   </span>
-                  <h3 className="font-serif-luxury text-xl text-white uppercase tracking-wider font-light mt-0.5">
+                  <h3 className="font-serif-luxury text-xl text-neutral-900 uppercase tracking-wider font-bold mt-0.5">
                     {dayDetailModalDate}
                   </h3>
                 </div>
                 <button
                   onClick={() => setDayDetailModalDate(null)}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="text-neutral-400 hover:text-neutral-900 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Day's appointments list */}
-              <div className="p-6 overflow-y-auto space-y-3 flex-1">
+              <div className="p-6 overflow-y-auto space-y-3 flex-1 bg-white">
                 {(!appointmentsByDate[dayDetailModalDate] || appointmentsByDate[dayDetailModalDate].length === 0) ? (
-                  <div className="py-12 text-center text-gray-light/40 font-light text-xs">
+                  <div className="py-12 text-center text-neutral-500 font-light text-xs">
                     No hay citas registradas para este día.
                   </div>
                 ) : (
                   appointmentsByDate[dayDetailModalDate].map(app => (
                     <div
                       key={app.id}
-                      className="bg-dark-bg border border-warm-border p-4 space-y-3 relative group hover:border-gold-champagne/40 transition-colors"
+                      className="bg-[#FAF8F5] border border-[#EAE3DC] p-4 space-y-3 relative group hover:border-[#B5916A] transition-colors"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-center gap-3">
-                          <span className="text-base font-mono font-bold text-gold-champagne">
+                          <span className="text-base font-mono font-bold text-[#8C6B4D]">
                             {app.time}
                           </span>
                           <div>
-                            <h4 className="text-sm font-semibold text-white uppercase font-serif-luxury">
+                            <h4 className="text-sm font-bold text-neutral-900 uppercase font-serif-luxury">
                               {app.clientName}
                             </h4>
-                            <p className="text-xs text-gray-light/70">
-                              {app.serviceName} • <span className="text-white font-medium">{app.stylistName}</span>
+                            <p className="text-xs text-neutral-600">
+                              {app.serviceName} • <span className="text-neutral-900 font-medium">{app.stylistName}</span>
                             </p>
                           </div>
                         </div>
@@ -704,9 +704,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-warm-border/50 text-xs">
-                        <span className="text-gray-light/60 font-mono">
-                          Tel: <strong className="text-white">{app.clientPhone}</strong>
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#E2D9CE] text-xs">
+                        <span className="text-neutral-600 font-mono">
+                          Tel: <strong className="text-neutral-900">{app.clientPhone}</strong>
                         </span>
 
                         <div className="flex items-center gap-2">
@@ -714,7 +714,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                             href={`https://wa.me/506${app.clientPhone.replace(/\D/g, '')}?text=Hola%20${encodeURIComponent(app.clientName)},%20te%20escribimos%20de%20CF%20Portadas%20sobre%20tu%20cita%20de%20${encodeURIComponent(app.serviceName)}%20el%20${app.date}%20a%20las%20${app.time}.`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[10px] text-emerald-400 hover:text-white uppercase font-bold flex items-center gap-1"
+                            className="text-[10px] text-emerald-700 hover:text-emerald-900 uppercase font-bold flex items-center gap-1"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
                             <span>WhatsApp</span>
@@ -725,7 +725,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                               setDayDetailModalDate(null);
                               handleEditAppointment(app);
                             }}
-                            className="text-[10px] text-gold-champagne hover:text-white uppercase font-bold flex items-center gap-1 ml-2"
+                            className="text-[10px] text-[#8C6B4D] hover:text-neutral-900 uppercase font-bold flex items-center gap-1 ml-2"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                             <span>Editar</span>
@@ -742,7 +742,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                               </button>
                               <button
                                 onClick={() => setDeletingId(null)}
-                                className="text-[10px] text-gray-400 hover:text-white"
+                                className="text-[10px] text-neutral-500 hover:text-neutral-900"
                               >
                                 Cancelar
                               </button>
@@ -750,7 +750,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                           ) : (
                             <button
                               onClick={() => setDeletingId(app.id)}
-                              className="text-[10px] text-red-400 hover:text-red-300 uppercase font-bold flex items-center gap-1 ml-2"
+                              className="text-[10px] text-red-600 hover:text-red-800 uppercase font-bold flex items-center gap-1 ml-2"
                               title="Borrar cita"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -761,7 +761,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                       </div>
 
                       {app.notes && (
-                        <p className="text-[11px] text-gray-light/50 italic bg-black/30 p-2 border border-neutral-900">
+                        <p className="text-[11px] text-neutral-600 italic bg-white p-2 border border-[#E2D9CE]">
                           Nota: {app.notes}
                         </p>
                       )}
@@ -771,10 +771,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               </div>
 
               {/* Day Modal Footer */}
-              <div className="bg-dark-bg border-t border-warm-border p-4 flex items-center justify-between">
+              <div className="bg-[#FAF8F5] border-t border-[#EAE3DC] p-4 flex items-center justify-between">
                 <button
                   onClick={() => setDayDetailModalDate(null)}
-                  className="text-xs uppercase text-gray-400 hover:text-white"
+                  className="text-xs uppercase font-medium text-neutral-600 hover:text-neutral-900"
                 >
                   Cerrar
                 </button>
@@ -784,7 +784,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     setDayDetailModalDate(null);
                     handleCreateNew(d);
                   }}
-                  className="bg-gold-champagne text-dark-bg hover:bg-white text-xs uppercase tracking-wider font-bold px-4 py-2 flex items-center gap-1.5 transition-colors"
+                  className="bg-[#2C221C] text-white hover:bg-[#A68358] text-xs uppercase tracking-wider font-bold px-4 py-2 flex items-center gap-1.5 transition-colors shadow-sm"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Agregar Cita para este día</span>
