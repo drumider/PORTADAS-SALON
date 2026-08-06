@@ -1,0 +1,6 @@
+{
+  "name": "CF Portadas",
+  "description": "CF Portadas Salón y Spa - Asama Plaza, Escazú. Boutique de belleza de lujo con servicios premium de cabello, coloración, manicure y tratamientos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
