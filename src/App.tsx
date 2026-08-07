@@ -438,7 +438,7 @@ _Solicitado desde el sitio web de CF Portadas_`;
               const target = e.currentTarget;
               if (!target.dataset.failed) {
                 target.dataset.failed = 'true';
-                target.src = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1920&q=80';
+                target.src = '/assets/images/hero.png';
               }
             }}
           />
