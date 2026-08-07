@@ -1359,7 +1359,7 @@ _Solicitado desde el sitio web de CF Portadas_`;
                     {/* Date Selector */}
                     <div className="space-y-2">
                       <span className="text-[10px] uppercase tracking-wider text-gray-light/50 font-mono block">Selecciona un día:</span>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-none sm:grid sm:grid-cols-4 snap-x">
                         {availableDates.map((date) => {
                           const isOff = isStylistOffOnDate(selectedStylist, date.rawValue);
                           return (
@@ -1369,11 +1369,11 @@ _Solicitado desde el sitio web de CF Portadas_`;
                                 if (isOff) return;
                                 setBookingDate(date.rawValue);
                               }}
-                              className={`p-3 border text-center transition-all duration-300 ${
+                              className={`p-3 border text-center transition-all duration-300 min-w-[100px] sm:min-w-0 shrink-0 sm:shrink snap-start ${
                                 isOff 
                                   ? 'border-neutral-800/40 bg-neutral-900/30 opacity-20 cursor-not-allowed pointer-events-none' 
                                   : bookingDate === date.rawValue 
-                                    ? 'border-gold-champagne bg-dark-bg text-white shadow-[0_0_15px_rgba(212,175,55,0.05)] cursor-pointer' 
+                                    ? 'border-gold-champagne bg-dark-bg text-white shadow-[0_0_15px_rgba(212,175,55,0.05)] cursor-pointer ring-1 ring-gold-champagne/50' 
                                     : 'border-warm-border hover:border-gold-champagne/30 bg-dark-bg/60 cursor-pointer'
                               }`}
                             >
@@ -1397,7 +1397,7 @@ _Solicitado desde el sitio web de CF Portadas_`;
                             Horarios Disponibles (9:00 AM - 7:00 PM):
                           </span>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-64 overflow-y-auto p-1 pr-2 custom-scrollbar">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-64 overflow-y-auto p-1 pr-2 custom-scrollbar">
                           {TIME_SLOTS.map((time) => {
                             const isOccupied = isSlotOccupied(time, bookingDate, selectedStylist?.id || '');
                             const isSelected = bookingTime === time;

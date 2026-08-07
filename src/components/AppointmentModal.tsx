@@ -87,37 +87,42 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="w-full max-w-lg bg-white border border-[#D8CEB8] shadow-2xl overflow-hidden relative"
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 100 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="w-full max-w-lg bg-white border-t sm:border border-[#D8CEB8] shadow-2xl overflow-hidden relative rounded-t-2xl sm:rounded-none max-h-[92vh] sm:max-h-[90vh] flex flex-col"
         >
+          {/* Mobile Handle Bar */}
+          <div className="w-12 h-1 bg-neutral-300 rounded-full mx-auto mt-2.5 sm:hidden" />
+
           {/* Header */}
-          <div className="bg-[#FAF8F5] border-b border-[#EAE3DC] p-5 flex items-center justify-between">
+          <div className="bg-[#FAF8F5] border-b border-[#EAE3DC] p-4 sm:p-5 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 border border-[#B5916A]/40 bg-[#B5916A]/10 flex items-center justify-center text-[#8C6B4D]">
+              <div className="w-8 h-8 border border-[#B5916A]/40 bg-[#B5916A]/10 flex items-center justify-center text-[#8C6B4D] shrink-0">
                 <Scissors className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-neutral-900 uppercase tracking-wider">
-                  {isEditing ? 'Editar Cita' : 'Nueva Cita Manual (Teléfono / Presencial)'}
+                <h3 className="text-xs sm:text-sm font-bold text-neutral-900 uppercase tracking-wider">
+                  {isEditing ? 'Editar Cita' : 'Nueva Cita Manual'}
                 </h3>
-                <p className="text-[10px] text-[#8C6B4D] uppercase tracking-widest font-bold">
+                <p className="text-[9px] sm:text-[10px] text-[#8C6B4D] uppercase tracking-widest font-bold">
                   CF Portadas · Administración
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-neutral-400 hover:text-neutral-900 transition-colors p-1"
+              className="text-neutral-400 hover:text-neutral-900 transition-colors p-2"
+              aria-label="Cerrar modal"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto bg-white">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto bg-white flex-1">
             {/* Client Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -132,7 +137,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
                     placeholder="ej. María Rodríguez"
-                    className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs pl-9 pr-3 py-2.5 outline-none font-medium"
+                    className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-base sm:text-xs pl-9 pr-3 py-2.5 outline-none font-medium"
                   />
                 </div>
               </div>
@@ -144,12 +149,12 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 <div className="relative">
                   <Phone className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
-                    type="text"
+                    type="tel"
                     required
                     value={clientPhone}
                     onChange={(e) => setClientPhone(e.target.value)}
                     placeholder="ej. 8888 8888"
-                    className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs pl-9 pr-3 py-2.5 outline-none font-mono"
+                    className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-base sm:text-xs pl-9 pr-3 py-2.5 outline-none font-mono"
                   />
                 </div>
               </div>
@@ -167,7 +172,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   value={clientEmail}
                   onChange={(e) => setClientEmail(e.target.value)}
                   placeholder="ej. cliente@correo.com"
-                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs pl-9 pr-3 py-2.5 outline-none"
+                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-base sm:text-xs pl-9 pr-3 py-2.5 outline-none"
                 />
               </div>
             </div>
@@ -187,13 +192,13 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   value={serviceSearch}
                   onChange={(e) => setServiceSearch(e.target.value)}
                   placeholder="Filtrar por código o nombre (ej. 218)..."
-                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-[11px] px-2.5 py-1.5 outline-none font-sans"
+                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-2.5 py-1.5 outline-none font-sans"
                 />
 
                 <select
                   value={serviceId}
                   onChange={(e) => setServiceId(e.target.value)}
-                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-2.5 py-2 outline-none font-medium"
+                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-2.5 py-2.5 outline-none font-medium"
                 >
                   {SERVICES.filter(s => {
                     if (!serviceSearch.trim()) return true;
@@ -214,7 +219,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 <select
                   value={stylistId}
                   onChange={(e) => setStylistId(e.target.value)}
-                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-3 py-2.5 outline-none font-medium mt-[25px]"
+                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-3 py-2.5 outline-none font-medium"
                 >
                   {(() => {
                     const selectedServiceObj = SERVICES.find(s => s.id === serviceId);
@@ -246,7 +251,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     required
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs pl-9 pr-3 py-2.5 outline-none font-mono"
+                    className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-base sm:text-xs pl-9 pr-3 py-2.5 outline-none font-mono"
                   />
                 </div>
               </div>
@@ -286,7 +291,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     key={st}
                     type="button"
                     onClick={() => setStatus(st)}
-                    className={`text-[10px] uppercase tracking-wider py-2 px-2 border font-bold transition-all ${
+                    className={`text-[10px] uppercase tracking-wider py-2.5 px-2 border font-bold transition-all text-center ${
                       status === st
                         ? st === 'Confirmada'
                           ? 'border-emerald-400 bg-emerald-100 text-emerald-950'
@@ -319,7 +324,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
             </div>
 
             {/* Actions */}
-            <div className="pt-4 border-t border-[#EAE3DC] flex items-center justify-between gap-3">
+            <div className="pt-4 border-t border-[#EAE3DC] flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 sticky bottom-0 bg-white py-2">
               {isEditing && onDelete ? (
                 confirmDelete ? (
                   <div className="flex items-center gap-2">
@@ -329,7 +334,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         onDelete(initialAppointment!.id!);
                         onClose();
                       }}
-                      className="text-xs uppercase tracking-wider text-white bg-red-600 hover:bg-red-700 font-bold flex items-center gap-1.5 px-3 py-2 transition-colors animate-pulse"
+                      className="text-xs uppercase tracking-wider text-white bg-red-600 hover:bg-red-700 font-bold flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors animate-pulse w-full sm:w-auto"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>¡Sí, Borrar!</span>
@@ -346,25 +351,25 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(true)}
-                    className="text-xs uppercase tracking-wider text-red-600 hover:text-red-800 flex items-center gap-1.5 px-3 py-2 border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
+                    className="text-xs uppercase tracking-wider text-red-600 hover:text-red-800 flex items-center justify-center gap-1.5 px-3 py-2.5 border border-red-200 bg-red-50 hover:bg-red-100 transition-colors w-full sm:w-auto"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Eliminar Cita</span>
                   </button>
                 )
-              ) : <div />}
+              ) : <div className="hidden sm:block" />}
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="text-xs uppercase tracking-wider text-neutral-600 hover:text-neutral-900 px-4 py-2.5 font-medium"
+                  className="text-xs uppercase tracking-wider text-neutral-600 hover:text-neutral-900 px-4 py-2.5 font-medium flex-1 sm:flex-none text-center"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#2C221C] hover:bg-[#A68358] text-white text-xs uppercase tracking-[0.15em] font-bold px-5 py-2.5 flex items-center gap-2 transition-colors shadow-sm"
+                  className="bg-[#2C221C] hover:bg-[#A68358] text-white text-xs uppercase tracking-[0.15em] font-bold px-5 py-3 sm:py-2.5 flex items-center justify-center gap-2 transition-colors shadow-sm flex-1 sm:flex-none"
                 >
                   <Save className="w-4 h-4" />
                   <span>{isEditing ? 'Guardar Cambios' : 'Agendar Cita'}</span>

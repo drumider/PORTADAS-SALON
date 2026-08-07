@@ -375,10 +375,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             </div>
 
             {/* View switcher buttons */}
-            <div className="flex items-center border border-[#E2D9CE] bg-[#FAF8F5] p-0.5">
+            <div className="flex items-center border border-[#E2D9CE] bg-[#FAF8F5] p-0.5 w-full sm:w-auto overflow-x-auto">
               <button
                 onClick={() => setViewMode('month')}
-                className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors flex items-center gap-1 ${
+                className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors flex items-center gap-1 shrink-0 ${
                   viewMode === 'month' ? 'bg-[#2C221C] text-white' : 'text-neutral-600 hover:text-neutral-900'
                 }`}
               >
@@ -386,8 +386,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 <span>Mes</span>
               </button>
               <button
+                onClick={() => setViewMode('week')}
+                className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors flex items-center gap-1 shrink-0 ${
+                  viewMode === 'week' ? 'bg-[#2C221C] text-white' : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                <CalendarIcon className="w-3.5 h-3.5" />
+                <span>Semana</span>
+              </button>
+              <button
+                onClick={() => setViewMode('day')}
+                className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors flex items-center gap-1 shrink-0 ${
+                  viewMode === 'day' ? 'bg-[#2C221C] text-white' : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Día</span>
+              </button>
+              <button
                 onClick={() => setViewMode('list')}
-                className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors flex items-center gap-1 ${
+                className={`px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider transition-colors flex items-center gap-1 shrink-0 ${
                   viewMode === 'list' ? 'bg-[#2C221C] text-white' : 'text-neutral-600 hover:text-neutral-900'
                 }`}
               >
@@ -400,14 +418,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
         </div>
 
-        {/* 3. CALENDAR VIEW MODE */}
+        {/* 3. CALENDAR VIEW MODE - MONTH */}
         {viewMode === 'month' && (
-          <div className="bg-white border border-neutral-300 p-4 sm:p-6 space-y-4 shadow-sm">
+          <div className="bg-white border border-neutral-300 p-2 sm:p-6 space-y-4 shadow-sm overflow-x-hidden">
             
             {/* Month Header Navigation */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-300">
-              <div className="flex items-center gap-3">
-                <h2 className="font-serif-luxury text-xl sm:text-2xl text-neutral-900 uppercase tracking-wider font-light">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-300">
+              <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
+                <h2 className="font-serif-luxury text-lg sm:text-2xl text-neutral-900 uppercase tracking-wider font-light">
                   {monthNames[month]} <span className="text-[#8C6B4D] font-mono font-bold">{year}</span>
                 </h2>
                 <button
@@ -418,7 +436,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 </button>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-end gap-2">
                 <button
                   onClick={() => handleNavigateMonth('prev')}
                   className="p-2 border border-neutral-300 hover:border-[#2C221C] text-neutral-700 hover:text-neutral-900 transition-colors bg-white"
@@ -436,16 +454,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               </div>
             </div>
 
-            {/* Days of week header */}
-            <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center pb-2 border-b border-neutral-200">
+            {/* Days of week header (Responsive headers) */}
+            <div className="grid grid-cols-7 gap-1 text-center pb-2 border-b border-neutral-200">
               {daysOfWeek.map((day, idx) => (
                 <div 
                   key={day} 
-                  className={`py-2 text-[10px] sm:text-xs uppercase tracking-widest font-bold ${
+                  className={`py-1 text-[10px] sm:text-xs uppercase tracking-wider font-bold ${
                     idx >= 5 ? 'text-[#8C6B4D]' : 'text-neutral-700'
                   }`}
                 >
-                  {day}
+                  <span className="hidden sm:inline">{day}</span>
+                  <span className="sm:hidden">{day.slice(0, 2)}</span>
                 </div>
               ))}
             </div>
@@ -466,16 +485,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                         handleCreateNew(dayObj.dateStr);
                       }
                     }}
-                    className={`min-h-[90px] sm:min-h-[120px] p-1.5 sm:p-2 border transition-all duration-200 cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
+                    className={`min-h-[60px] sm:min-h-[120px] p-1 sm:p-2 border transition-all duration-200 cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
                       dayObj.isToday
-                        ? 'border-2 border-[#8C6B4D] bg-[#FFFBF5] ring-2 ring-[#8C6B4D]/30'
+                        ? 'border-2 border-[#8C6B4D] bg-[#FFFBF5] ring-1 sm:ring-2 ring-[#8C6B4D]/30'
                         : dayObj.isCurrentMonth
                         ? 'border-neutral-300 sm:border-neutral-400 bg-white hover:border-[#8C6B4D] hover:bg-[#FAF8F5]'
                         : 'border-neutral-200 bg-neutral-100/60 opacity-50'
                     }`}
                   >
                     {/* Day number & indicators */}
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-0.5">
                       <span className={`text-xs sm:text-sm font-mono font-bold ${
                         dayObj.isToday ? 'text-[#8C6B4D] scale-110' : dayObj.isCurrentMonth ? 'text-neutral-900' : 'text-neutral-400'
                       }`}>
@@ -483,14 +502,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                       </span>
 
                       {hasApps && (
-                        <span className="text-[9px] font-mono px-1.5 py-0.5 bg-[#8C6B4D]/10 text-[#8C6B4D] border border-[#8C6B4D]/30 rounded-none font-bold">
+                        <span className="hidden sm:inline-block text-[9px] font-mono px-1.5 py-0.5 bg-[#8C6B4D]/10 text-[#8C6B4D] border border-[#8C6B4D]/30 rounded-none font-bold">
                           {dayApps.length} {dayApps.length === 1 ? 'cita' : 'citas'}
                         </span>
                       )}
                     </div>
 
-                    {/* Appointments list inside cell */}
-                    <div className="space-y-1 overflow-y-auto max-h-[60px] sm:max-h-[80px] custom-scrollbar">
+                    {/* MOBILE ONLY: Compact Colored Dots Indicator */}
+                    {hasApps && (
+                      <div className="flex sm:hidden flex-wrap items-center justify-center gap-0.5 my-1">
+                        {dayApps.map((app, idx) => {
+                          let dotBg = 'bg-emerald-500';
+                          if (app.status === 'Pendiente') dotBg = 'bg-amber-500';
+                          if (app.status === 'Completada') dotBg = 'bg-blue-500';
+                          if (app.status === 'Cancelada') dotBg = 'bg-red-500';
+                          return (
+                            <span 
+                              key={idx} 
+                              className={`w-2 h-2 rounded-full ${dotBg} inline-block`}
+                              title={`${app.time} - ${app.clientName}`}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* DESKTOP ONLY: Appointments list inside cell */}
+                    <div className="hidden sm:block space-y-1 overflow-y-auto max-h-[80px] custom-scrollbar">
                       {dayApps.slice(0, 3).map(app => (
                         <div
                           key={app.id}
@@ -514,7 +552,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     </div>
 
                     {/* Quick add trigger on hover */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] uppercase tracking-wider text-[#8C6B4D] font-mono text-right mt-1 font-bold">
+                    <div className="hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity text-[8px] uppercase tracking-wider text-[#8C6B4D] font-mono text-right mt-1 font-bold">
                       + Agendar
                     </div>
                   </div>
@@ -522,6 +560,198 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               })}
             </div>
 
+          </div>
+        )}
+
+        {/* 3.1 WEEK VIEW MODE */}
+        {viewMode === 'week' && (
+          <div className="bg-white border border-neutral-300 p-4 sm:p-6 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-300">
+              <h2 className="font-serif-luxury text-base sm:text-xl text-neutral-900 uppercase tracking-wider font-light">
+                Vista Semanal · <span className="text-[#8C6B4D] font-mono font-bold">{monthNames[month]} {year}</span>
+              </h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleNavigateMonth('prev')}
+                  className="p-1.5 border border-neutral-300 hover:border-[#2C221C] text-neutral-700 bg-white"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleNavigateMonth('today')}
+                  className="text-[10px] uppercase font-mono px-2 py-1 border border-[#B5916A] text-[#8C6B4D] font-bold"
+                >
+                  Hoy
+                </button>
+                <button
+                  onClick={() => handleNavigateMonth('next')}
+                  className="p-1.5 border border-neutral-300 hover:border-[#2C221C] text-neutral-700 bg-white"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* 7 Days of current selected date's week */}
+            <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+              {(() => {
+                const startOfWeek = new Date(currentDate);
+                const day = startOfWeek.getDay();
+                const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+                startOfWeek.setDate(diff);
+
+                const daysOfWeekArr = [];
+                for (let d = 0; d < 7; d++) {
+                  const curr = new Date(startOfWeek);
+                  curr.setDate(startOfWeek.getDate() + d);
+                  const dateStr = curr.toISOString().split('T')[0];
+                  daysOfWeekArr.push({
+                    dateStr,
+                    dayName: curr.toLocaleDateString('es-CR', { weekday: 'short' }),
+                    dayNum: curr.getDate(),
+                    monthName: curr.toLocaleDateString('es-CR', { month: 'short' }),
+                    isToday: dateStr === new Date().toISOString().split('T')[0]
+                  });
+                }
+
+                return daysOfWeekArr.map((dObj) => {
+                  const dayApps = appointmentsByDate[dObj.dateStr] || [];
+                  return (
+                    <div 
+                      key={dObj.dateStr}
+                      className={`border p-3 space-y-2 flex flex-col justify-between ${
+                        dObj.isToday ? 'border-[#8C6B4D] bg-[#FFFBF5]' : 'border-neutral-200 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-[#8C6B4D] block">{dObj.dayName}</span>
+                          <span className="text-base font-mono font-bold text-neutral-900">{dObj.dayNum} {dObj.monthName}</span>
+                        </div>
+                        <button
+                          onClick={() => handleCreateNew(dObj.dateStr)}
+                          className="w-6 h-6 border border-[#B5916A]/40 text-[#8C6B4D] flex items-center justify-center hover:bg-[#2C221C] hover:text-white transition-colors"
+                          title="Agregar cita este día"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-1.5 flex-1 min-h-[100px] overflow-y-auto max-h-[220px]">
+                        {dayApps.length === 0 ? (
+                          <div className="text-[10px] text-neutral-400 italic py-2 text-center">
+                            Sin citas
+                          </div>
+                        ) : (
+                          dayApps.map(app => (
+                            <div
+                              key={app.id}
+                              onClick={() => handleEditAppointment(app)}
+                              className={`p-2 border text-xs font-mono cursor-pointer transition-all hover:scale-[1.01] ${getStatusColor(app.status)}`}
+                            >
+                              <div className="flex items-center justify-between font-bold text-[10px]">
+                                <span>{app.time}</span>
+                                <span>{app.status}</span>
+                              </div>
+                              <div className="font-serif-luxury uppercase font-bold text-neutral-900 truncate mt-0.5">
+                                {app.clientName}
+                              </div>
+                              <div className="text-[9px] text-neutral-600 truncate">
+                                {app.serviceName}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* 3.2 DAY VIEW MODE */}
+        {viewMode === 'day' && (
+          <div className="bg-white border border-neutral-300 p-4 sm:p-6 space-y-4 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-neutral-300">
+              <div>
+                <span className="text-[10px] text-[#8C6B4D] uppercase tracking-widest font-mono font-bold">Vista por Día</span>
+                <h2 className="font-serif-luxury text-xl sm:text-2xl text-neutral-900 uppercase tracking-wider font-light">
+                  {selectedDayDate || currentDate.toISOString().split('T')[0]}
+                </h2>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={selectedDayDate || currentDate.toISOString().split('T')[0]}
+                  onChange={(e) => setSelectedDayDate(e.target.value)}
+                  className="bg-[#FAF8F5] border border-[#E2D9CE] text-neutral-900 text-xs px-3 py-1.5 font-mono outline-none"
+                />
+                <button
+                  onClick={() => setSelectedDayDate(new Date().toISOString().split('T')[0])}
+                  className="text-[10px] uppercase font-mono px-2.5 py-1.5 border border-[#B5916A] text-[#8C6B4D] font-bold hover:bg-[#2C221C] hover:text-white"
+                >
+                  Hoy
+                </button>
+                <button
+                  onClick={() => handleCreateNew(selectedDayDate || undefined)}
+                  className="bg-[#2C221C] text-white text-xs uppercase px-3 py-1.5 font-bold flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Cita</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Hourly Schedule Timeline for Selected Day */}
+            <div className="divide-y divide-neutral-200 border border-neutral-200 bg-[#FAF8F5]">
+              {['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'].map((timeSlot) => {
+                const currentDateApps = appointmentsByDate[selectedDayDate || ''] || [];
+                const slotApps = currentDateApps.filter(a => a.time.startsWith(timeSlot.slice(0, 2)));
+
+                return (
+                  <div key={timeSlot} className="flex flex-col sm:flex-row items-start sm:items-center p-3 gap-3 min-h-[64px]">
+                    <div className="w-20 font-mono font-bold text-xs text-[#8C6B4D] shrink-0">
+                      {timeSlot} hs
+                    </div>
+
+                    <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {slotApps.length === 0 ? (
+                        <button
+                          onClick={() => {
+                            setSelectedDayDate(selectedDayDate || new Date().toISOString().split('T')[0]);
+                            handleCreateNew(selectedDayDate || undefined);
+                          }}
+                          className="text-left text-[11px] text-neutral-400 hover:text-[#8C6B4D] border border-dashed border-neutral-300 hover:border-[#8C6B4D] p-2 bg-white/50 transition-colors"
+                        >
+                          + Disponible en {timeSlot}
+                        </button>
+                      ) : (
+                        slotApps.map(app => (
+                          <div
+                            key={app.id}
+                            onClick={() => handleEditAppointment(app)}
+                            className={`p-2.5 border text-xs cursor-pointer shadow-sm flex items-center justify-between ${getStatusColor(app.status)}`}
+                          >
+                            <div>
+                              <div className="font-serif-luxury font-bold uppercase text-neutral-900">
+                                {app.clientName}
+                              </div>
+                              <div className="text-[10px] text-neutral-700">
+                                {app.serviceName} • {app.stylistName}
+                              </div>
+                            </div>
+                            <span className="font-mono font-bold text-[10px]">{app.time}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -641,13 +871,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       {/* DAY DETAIL MODAL */}
       <AnimatePresence>
         {dayDetailModalDate && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-2xl bg-white border border-[#D8CEB8] shadow-2xl overflow-hidden relative max-h-[85vh] flex flex-col"
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              className="w-full max-w-2xl bg-white border-t sm:border border-[#D8CEB8] shadow-2xl overflow-hidden relative rounded-t-2xl sm:rounded-none max-h-[90vh] sm:max-h-[85vh] flex flex-col"
             >
+              {/* Mobile handle indicator */}
+              <div className="w-12 h-1 bg-neutral-300 rounded-full mx-auto mt-2.5 sm:hidden" />
               <div className="bg-[#FAF8F5] border-b border-[#EAE3DC] p-5 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-[#8C6B4D] uppercase tracking-widest font-mono font-bold">
