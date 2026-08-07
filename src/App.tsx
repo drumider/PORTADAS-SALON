@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { getImageUrl } from './utils/imageUtils';
 import { 
   Scissors, 
@@ -15,35 +15,27 @@ import {
   Instagram, 
   Facebook, 
   ChevronRight, 
+  ChevronDown,
+  ChevronUp,
   Calendar,
   CheckCircle,
   User,
   ExternalLink,
   Lock,
   ShieldCheck,
-  Plus
+  Plus,
+  Search,
+  Filter,
+  Tag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { saveAppointment, isAdminAuthenticated } from './utils/storage';
+import { saveAppointment, isAdminAuthenticated, subscribeToAppointments } from './utils/storage';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ProductsSection } from './components/ProductsSection';
-
-// Type definitions
-interface Service {
-  id: string;
-  name: string;
-  price: string;
-  icon: any;
-  description: string;
-}
-
-interface Stylist {
-  id: string;
-  name: string;
-  role: string;
-  avatarLetter: string;
-}
+import { Service, Stylist, Appointment } from './types';
+import { SERVICES, STYLISTS, TIME_SLOTS } from './constants';
+import { SERVICE_CATEGORIES } from './data/servicesData';
 
 interface GalleryItem {
   id: string;
@@ -52,59 +44,6 @@ interface GalleryItem {
   stylist: string;
   image: string;
 }
-
-// Data
-const SERVICES: Service[] = [
-  {
-    id: 'corte',
-    name: 'Corte y Estilo',
-    price: '₡18,000',
-    icon: Scissors,
-    description: 'Diseño de corte personalizado, lavado premium con masaje capilar y secado con estilo.'
-  },
-  {
-    id: 'color',
-    name: 'Coloración',
-    price: '₡35,000',
-    icon: Paintbrush,
-    description: 'Técnicas avanzadas de balayage, babylights, cobertura total de canas o baño de color premium.'
-  },
-  {
-    id: 'kerastase',
-    name: 'Tratamiento Kérastase',
-    price: '₡25,000',
-    icon: Sparkles,
-    description: 'Rituales Fusio-Dose y mascarillas intensivas personalizadas para restaurar la fibra capilar.'
-  },
-  {
-    id: 'manicure',
-    name: 'Manicure y Pedicure',
-    price: '₡15,000',
-    icon: Hand,
-    description: 'Cuidado completo de uñas, exfoliación profunda, hidratación y esmaltado permanente en gel.'
-  },
-  {
-    id: 'maquillaje',
-    name: 'Maquillaje',
-    price: '₡30,000',
-    icon: Heart,
-    description: 'Maquillaje profesional HD de larga duración para eventos especiales, novias y pasarela.'
-  },
-  {
-    id: 'alisado',
-    name: 'Alisado',
-    price: '₡45,000',
-    icon: Wind,
-    description: 'Alisados orgánicos libres de formol y queratinas brasileñas para un lacio sedoso de larga duración.'
-  }
-];
-
-const STYLISTS: Stylist[] = [
-  { id: 'carlos', name: 'Carlos', role: 'Estilista Master / Colorista', avatarLetter: 'C' },
-  { id: 'fernando', name: 'Fernando', role: 'Especialista en Alisados y Corte', avatarLetter: 'F' },
-  { id: 'diego', name: 'Diego', role: 'Master en Tratamientos y Estilo', avatarLetter: 'D' },
-  { id: 'cualquiera', name: 'Cualquier profesional', role: 'El primero disponible para tu comodidad', avatarLetter: '★' }
-];
 
 // Generated image assets (referenced strictly from real public paths)
 const GALLERY: GalleryItem[] = [
@@ -126,7 +65,7 @@ const GALLERY: GalleryItem[] = [
     id: 'g3',
     title: 'Ritual de Reconstrucción Kérastase',
     service: 'Tratamiento Kérastase',
-    stylist: 'Diego',
+    stylist: 'Junior',
     image: getImageUrl('tratamiento_kerastase.jpg')
   },
   {
@@ -140,7 +79,7 @@ const GALLERY: GalleryItem[] = [
     id: 'g5',
     title: 'Maquillaje Social Elegante',
     service: 'Maquillaje',
-    stylist: 'Diego',
+    stylist: 'Junior',
     image: getImageUrl('maquillaje.jpg')
   },
   {
@@ -168,10 +107,54 @@ export default function App() {
   const [customNote, setCustomNote] = useState<string>('');
   const [showBookingSuccess, setShowBookingSuccess] = useState<boolean>(false);
   const [latestAppointment, setLatestAppointment] = useState<any | null>(null);
+  const [existingAppointments, setExistingAppointments] = useState<Appointment[]>([]);
+
+  // Real-time listener for booked appointments to block occupied slots
+  useEffect(() => {
+    const unsubscribe = subscribeToAppointments((apps) => {
+      setExistingAppointments(apps);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Admin Panel & Secret Login States
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState<boolean>(false);
   const [isAdminViewActive, setIsAdminViewActive] = useState<boolean>(false);
+
+  // Search, Category Filters & Expand Bar for Services
+  const [isServicesExpanded, setIsServicesExpanded] = useState<boolean>(false);
+  const [servicesSearch, setServicesSearch] = useState<string>('');
+  const [servicesCategory, setServicesCategory] = useState<string>('Todos');
+
+  const [bookingSearch, setBookingSearch] = useState<string>('');
+  const [bookingCategory, setBookingCategory] = useState<string>('Todos');
+
+  // Filtered Services for Main Page
+  const filteredMainServices = useMemo(() => {
+    return SERVICES.filter((s) => {
+      const matchCat = servicesCategory === 'Todos' || s.category === servicesCategory;
+      const query = servicesSearch.toLowerCase().trim();
+      const matchQuery = !query || 
+        s.name.toLowerCase().includes(query) || 
+        (s.code && s.code.toLowerCase().includes(query)) ||
+        (s.description && s.description.toLowerCase().includes(query)) ||
+        (s.category && s.category.toLowerCase().includes(query));
+      return matchCat && matchQuery;
+    });
+  }, [servicesSearch, servicesCategory]);
+
+  // Filtered Services for Booking Widget
+  const filteredBookingServices = useMemo(() => {
+    return SERVICES.filter((s) => {
+      const matchCat = bookingCategory === 'Todos' || s.category === bookingCategory;
+      const query = bookingSearch.toLowerCase().trim();
+      const matchQuery = !query || 
+        s.name.toLowerCase().includes(query) || 
+        (s.code && s.code.toLowerCase().includes(query)) ||
+        (s.description && s.description.toLowerCase().includes(query));
+      return matchCat && matchQuery;
+    });
+  }, [bookingSearch, bookingCategory]);
 
   // Track active section on scroll
   useEffect(() => {
@@ -205,6 +188,15 @@ export default function App() {
     }
   };
 
+  // Helper to check if a stylist is off on a date string (YYYY-MM-DD)
+  const isStylistOffOnDate = (stylist?: Stylist | null, dateStr?: string) => {
+    if (!stylist || !stylist.offDays || !stylist.offDays.length || !dateStr) return false;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    if (!y || !m || !d) return false;
+    const dayOfWeek = new Date(y, m - 1, d).getDay();
+    return stylist.offDays.includes(dayOfWeek);
+  };
+
   // Generate date options (Next 7 business days excluding Sundays)
   const getNextDays = () => {
     const days = [];
@@ -222,7 +214,8 @@ export default function App() {
           rawValue: nextDay.toISOString().split('T')[0],
           formatted: nextDay.toLocaleDateString('es-CR', { weekday: 'short', day: 'numeric', month: 'short' }),
           dayName: nextDay.toLocaleDateString('es-CR', { weekday: 'long' }),
-          dayNumber: nextDay.getDate()
+          dayNumber: nextDay.getDate(),
+          dayOfWeek: nextDay.getDay()
         });
       }
       count++;
@@ -231,12 +224,56 @@ export default function App() {
   };
 
   const availableDates = getNextDays();
-  const timeSlots = ['09:00 AM', '10:30 AM', '12:00 PM', '01:30 PM', '03:00 PM', '04:30 PM', '06:00 PM'];
+
+  // Normalize time string into "HH:MM" 24h format for consistent comparison
+  const normalizeTime = (t: string): string => {
+    if (!t) return '';
+    let clean = t.trim().toUpperCase();
+    const isPM = clean.includes('PM');
+    const isAM = clean.includes('AM');
+    clean = clean.replace('AM', '').replace('PM', '').trim();
+    const parts = clean.split(':');
+    if (parts.length < 2) return t;
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1].padStart(2, '0');
+    
+    if (isPM && hours < 12) hours += 12;
+    if (isAM && hours === 12) hours = 0;
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+  };
+
+  // Check if a time slot is already booked for date & stylist
+  const isSlotOccupied = (timeSlotLabel: string, dateStr: string, stylistId: string): boolean => {
+    if (!dateStr || !stylistId) return false;
+    const slotNorm = normalizeTime(timeSlotLabel);
+
+    return existingAppointments.some((app) => {
+      if (app.status === 'Cancelada') return false;
+      if (app.date !== dateStr) return false;
+
+      const isSameStylist = 
+        stylistId === 'cualquiera' || 
+        app.stylistId === 'cualquiera' || 
+        app.stylistId === stylistId;
+
+      if (!isSameStylist) return false;
+
+      const appTimeNorm = normalizeTime(app.time);
+      return appTimeNorm === slotNorm;
+    });
+  };
 
   // Handle Reservation processing: saves to persistent DB & prepares WhatsApp confirmation
   const handleProcessBooking = (openWhatsApp: boolean = false) => {
     if (!selectedService || !selectedStylist || !bookingDate || !bookingTime || !clientName.trim() || !clientPhone.trim()) {
       alert('Por favor completa todos los campos requeridos (Nombre, Teléfono, Servicio, Especialista, Fecha y Hora).');
+      return;
+    }
+
+    if (isStylistOffOnDate(selectedStylist, bookingDate)) {
+      alert(`${selectedStylist.name} no atiende en la fecha seleccionada (${selectedStylist.offDaysText || 'Día de descanso'}). Por favor selecciona otra fecha u otro especialista.`);
+      setBookingStep(3);
       return;
     }
 
@@ -251,7 +288,7 @@ export default function App() {
       stylistName: selectedStylist.name,
       date: bookingDate,
       time: bookingTime.replace(' AM', '').replace(' PM', ''),
-      durationMinutes: 60,
+      durationMinutes: selectedService.durationMinutes || 60,
       status: 'Pendiente',
       notes: customNote.trim()
     });
@@ -486,86 +523,257 @@ _Solicitado desde el sitio web de CF Portadas_`;
         </div>
       </section>
 
-      {/* 2. SERVICIOS SECTION */}
-      <section id="servicios" className="py-24 sm:py-32 px-6 relative z-10 bg-dark-bg overflow-hidden">
+      {/* 2. SERVICIOS SECTION - EXPANDABLE BAR CATALOG */}
+      <section id="servicios" className="py-20 sm:py-28 px-6 relative z-10 bg-dark-bg overflow-hidden">
         {/* Soft Background Golden Glows */}
         <div className="absolute -left-32 top-40 w-[400px] h-[400px] bg-gold-champagne/5 rounded-full filter blur-[100px] pointer-events-none" />
         <div className="absolute -right-32 bottom-40 w-[400px] h-[400px] bg-gold-champagne/5 rounded-full filter blur-[100px] pointer-events-none" />
         
         <div className="max-w-7xl mx-auto relative z-10">
           {/* Header */}
-          <div className="text-center mb-20">
-            <span className="text-gold-champagne text-xs tracking-[0.3em] uppercase font-light">NUESTROS SERVICIOS</span>
-            <h2 className="font-serif-luxury text-3xl sm:text-4xl md:text-5xl text-white tracking-[0.15em] uppercase font-light mt-3 mb-6">
-              EXPERIENCIA BOUTIQUE
+          <div className="text-center mb-10">
+            <span className="text-gold-champagne text-xs tracking-[0.3em] uppercase font-light">MÚLTIPLES TRATAMIENTOS DE LUJO</span>
+            <h2 className="font-serif-luxury text-3xl sm:text-4xl md:text-5xl text-white tracking-[0.15em] uppercase font-light mt-3 mb-4">
+              NUESTROS SERVICIOS
             </h2>
-            <div className="w-12 h-[1px] bg-gold-champagne/40 mx-auto" />
+            <div className="w-12 h-[1px] bg-gold-champagne/40 mx-auto mb-4" />
+            <p className="text-gray-light/60 text-xs sm:text-sm font-light max-w-xl mx-auto">
+              Contamos con un menú completo de 175 servicios especializados. Despliega la barra interactiva para explorar todas las categorías.
+            </p>
           </div>
 
-          {/* Grid de Servicios */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-12">
-            {SERVICES.map((service, index) => {
-              const IconComponent = service.icon;
-              return (
-                <motion.div
-                  key={service.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{ duration: 0.8, delay: index * 0.1, ease: "easeOut" }}
-                  className="group bg-warm-card border border-warm-border hover:border-gold-champagne/40 p-8 sm:p-10 transition-all duration-500 relative flex flex-col justify-between hover:shadow-[0_10px_30px_rgba(212,175,55,0.03)]"
-                  id={`service-card-${service.id}`}
-                >
-                  {/* Accent Corner Line */}
-                  <div className="absolute top-0 right-0 w-0 h-0 border-t-2 border-r-2 border-gold-champagne opacity-0 group-hover:opacity-100 group-hover:w-4 group-hover:h-4 transition-all duration-500" />
-                  
-                  <div>
-                    {/* Icon */}
-                    <div className="w-12 h-12 rounded-none border border-gold-champagne/10 flex items-center justify-center mb-8 group-hover:border-gold-champagne/40 transition-colors duration-500">
-                      <IconComponent className="w-5 h-5 text-gold-champagne font-light" strokeWidth={1.2} />
-                    </div>
-                    
-                    {/* Title */}
-                    <h3 className="font-serif-luxury text-xl sm:text-2xl text-white uppercase tracking-[0.1em] font-light mb-4 group-hover:text-gold-champagne transition-colors duration-300">
-                      {service.name}
-                    </h3>
-                    
-                    {/* Description */}
-                    <p className="text-gray-light/60 text-xs sm:text-sm font-light leading-relaxed mb-6">
-                      {service.description}
-                    </p>
+          {/* MAIN EXPANDABLE BAR BANNER */}
+          <div className="bg-warm-card border border-warm-border hover:border-gold-champagne/40 transition-all duration-300 p-4 sm:p-6 mb-8 shadow-2xl relative">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              {/* Left Info */}
+              <div 
+                onClick={() => setIsServicesExpanded(!isServicesExpanded)}
+                className="flex items-center gap-4 cursor-pointer w-full md:w-auto"
+              >
+                <div className="w-12 h-12 border border-gold-champagne/30 bg-gold-champagne/10 flex items-center justify-center shrink-0 text-gold-champagne">
+                  <Scissors className="w-6 h-6" strokeWidth={1.2} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs uppercase tracking-[0.2em] font-serif-luxury text-white font-medium">
+                      Catálogo Interactivo de Servicios
+                    </span>
+                    <span className="bg-gold-champagne/20 text-gold-champagne border border-gold-champagne/40 text-[10px] font-mono px-2 py-0.5 uppercase tracking-wider">
+                      175 Servicios
+                    </span>
+                  </div>
+                  <p className="text-gray-light/50 text-xs font-light mt-0.5">
+                    Alisados, Tintes, Cortes, Tratamientos Kérastase, Manicure, Paquetes y más.
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Search Bar directly inside Expandable Bar */}
+              <div className="relative w-full md:w-72">
+                <Search className="w-3.5 h-3.5 text-gold-champagne/60 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={servicesSearch}
+                  onChange={(e) => {
+                    setServicesSearch(e.target.value);
+                    if (!isServicesExpanded) setIsServicesExpanded(true);
+                  }}
+                  onFocus={() => {
+                    if (!isServicesExpanded) setIsServicesExpanded(true);
+                  }}
+                  placeholder="Buscar servicio o código (ej. 218)..."
+                  className="w-full bg-dark-bg/90 border border-warm-border focus:border-gold-champagne text-white text-xs pl-9 pr-8 py-2.5 outline-none font-light placeholder:text-gray-light/40"
+                />
+                {servicesSearch && (
+                  <button
+                    onClick={() => setServicesSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-light/40 hover:text-white text-xs"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Expand Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setIsServicesExpanded(!isServicesExpanded)}
+                className="w-full md:w-auto bg-gold-champagne hover:bg-gold-champagne/90 text-dark-bg font-semibold text-xs uppercase tracking-[0.15em] px-6 py-3 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 shadow-lg"
+              >
+                <span>{isServicesExpanded || servicesSearch ? 'Plegar Catálogo' : 'Desplegar Catálogo (175)'}</span>
+                {isServicesExpanded || servicesSearch ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+
+            {/* Quick Category Pills when Collapsed */}
+            {!isServicesExpanded && !servicesSearch && (
+              <div className="mt-4 pt-4 border-t border-warm-border/50 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                <span className="text-[10px] uppercase tracking-wider text-gray-light/40 shrink-0 font-mono">
+                  Categorías:
+                </span>
+                {SERVICE_CATEGORIES.slice(1).map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setServicesCategory(cat);
+                      setIsServicesExpanded(true);
+                    }}
+                    className="text-[10px] uppercase tracking-wider px-3 py-1 bg-dark-bg/60 border border-warm-border hover:border-gold-champagne/50 text-gray-light/70 hover:text-gold-champagne transition-all shrink-0 cursor-pointer"
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* EXPANDABLE SECTION CONTENT */}
+          <AnimatePresence>
+            {(isServicesExpanded || servicesSearch !== '' || servicesCategory !== 'Todos') && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="overflow-hidden"
+              >
+                {/* Category Filter Pills Bar */}
+                <div className="mb-8 space-y-4">
+                  <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none justify-start sm:justify-center px-1">
+                    {SERVICE_CATEGORIES.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setServicesCategory(cat)}
+                        className={`text-[11px] uppercase tracking-wider font-medium px-4 py-2 border transition-all shrink-0 cursor-pointer ${
+                          servicesCategory === cat
+                            ? 'border-gold-champagne bg-gold-champagne text-dark-bg font-bold shadow-md'
+                            : 'border-warm-border text-gray-light/70 hover:border-gold-champagne/40 hover:text-white bg-warm-card/80'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
                   </div>
 
-                  {/* Price and CTA */}
-                  <div className="pt-6 border-t border-neutral-900 flex flex-col gap-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] tracking-[0.15em] uppercase text-gray-light/40 font-light">Inversión</span>
-                      <span className="font-mono text-sm sm:text-base text-gold-champagne font-light">
-                        {service.price} <span className="text-[10px] text-gray-light/40 font-sans ml-1">desde</span>
-                      </span>
-                    </div>
+                  {/* Filter Status & Counter */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 px-2 text-[11px] uppercase tracking-[0.15em] text-gold-champagne/80 font-mono">
+                    <span>
+                      {servicesCategory !== 'Todos' ? `Categoría: ${servicesCategory}` : 'Todas las categorías'}
+                    </span>
+                    <span>
+                      Mostrando {filteredMainServices.length} de {SERVICES.length} servicios
+                    </span>
+                  </div>
+                </div>
 
+                {/* Grid de Servicios */}
+                {filteredMainServices.length === 0 ? (
+                  <div className="text-center py-12 bg-warm-card/40 border border-warm-border mb-8">
+                    <Search className="w-8 h-8 text-gold-champagne/40 mx-auto mb-3" />
+                    <p className="text-sm text-gray-light/60 font-light">
+                      No se encontraron servicios con "{servicesSearch}".
+                    </p>
                     <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedService(service);
-                        setBookingStep(2);
-                        setShowBookingSuccess(false);
-                        scrollToSection('contacto');
-                      }}
-                      className="w-full bg-dark-bg/90 border border-gold-champagne/40 hover:border-gold-champagne text-gold-champagne hover:bg-gold-champagne hover:text-dark-bg text-[10px] uppercase tracking-[0.15em] font-semibold py-2.5 px-3 transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
+                      onClick={() => { setServicesSearch(''); setServicesCategory('Todos'); }}
+                      className="mt-4 text-xs text-gold-champagne uppercase tracking-widest underline cursor-pointer"
                     >
-                      <span>Agendar con Asistente Virtual</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
+                      Restablecer filtros y ver los 175 servicios
                     </button>
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 mb-8">
+                    {filteredMainServices.map((service, index) => {
+                      const IconComponent = service.icon || Scissors;
+                      return (
+                        <div
+                          key={service.id}
+                          className="group bg-warm-card border border-warm-border hover:border-gold-champagne/50 p-5 sm:p-6 transition-all duration-300 relative flex flex-col justify-between hover:shadow-[0_10px_30px_rgba(212,175,55,0.05)]"
+                          id={`service-card-${service.id}`}
+                        >
+                          {/* Accent Corner Line */}
+                          <div className="absolute top-0 right-0 w-0 h-0 border-t-2 border-r-2 border-gold-champagne opacity-0 group-hover:opacity-100 group-hover:w-3 group-hover:h-3 transition-all duration-300" />
+                          
+                          <div>
+                            {/* Top Badges (Code & Category) */}
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="w-8 h-8 border border-gold-champagne/20 bg-dark-bg/60 flex items-center justify-center text-gold-champagne">
+                                <IconComponent className="w-3.5 h-3.5" strokeWidth={1.2} />
+                              </div>
+                              {service.code && (
+                                <span className="font-mono text-[10px] text-gold-champagne bg-gold-champagne/10 border border-gold-champagne/30 px-2 py-0.5 tracking-widest uppercase">
+                                  CÓD. #{service.code}
+                                </span>
+                              )}
+                            </div>
+                            
+                            {/* Title */}
+                            <h3 className="font-serif-luxury text-base sm:text-lg text-white uppercase tracking-[0.08em] font-light mb-1.5 group-hover:text-gold-champagne transition-colors duration-300">
+                              {service.name}
+                            </h3>
+                            
+                            {/* Description */}
+                            <p className="text-gray-light/60 text-xs font-light leading-relaxed mb-4 line-clamp-2">
+                              {service.description || `Tratamiento exclusivo de ${service.category || 'Salón CF Portadas'}.`}
+                            </p>
+                          </div>
+
+                          {/* Meta info & CTA */}
+                          <div className="pt-3 border-t border-neutral-900/80 space-y-2.5">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-light/40 flex items-center gap-1 font-mono text-[11px]">
+                                <Clock className="w-3.5 h-3.5 text-gold-champagne/70" />
+                                {service.durationText || `${service.durationMinutes} min`}
+                              </span>
+                              <span className="font-mono text-sm text-gold-champagne font-medium">
+                                {service.price}
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedService(service);
+                                setBookingStep(2);
+                                setShowBookingSuccess(false);
+                                scrollToSection('contacto');
+                              }}
+                              className="w-full bg-dark-bg/90 border border-gold-champagne/40 hover:border-gold-champagne text-gold-champagne hover:bg-gold-champagne hover:text-dark-bg text-[10px] uppercase tracking-[0.15em] font-semibold py-2 px-3 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <span>Agendar Cita</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Bottom Close / Collapse Bar */}
+                <div className="text-center pt-4 border-t border-warm-border/40">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsServicesExpanded(false);
+                      setServicesSearch('');
+                      setServicesCategory('Todos');
+                    }}
+                    className="bg-warm-card hover:bg-gold-champagne hover:text-dark-bg border border-warm-border hover:border-gold-champagne text-gold-champagne text-xs uppercase tracking-[0.2em] font-medium px-8 py-3 transition-all inline-flex items-center gap-2 cursor-pointer"
+                  >
+                    <span>Plegar Catálogo de Servicios</span>
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Quick CTA to Form */}
-          <div className="text-center mt-16">
+          <div className="text-center mt-12">
             <button 
               onClick={() => {
                 scrollToSection('contacto');
@@ -936,38 +1144,108 @@ _Solicitado desde el sitio web de CF Portadas_`;
                     animate={{ opacity: 1 }}
                     className="space-y-4"
                   >
-                    <label className="block text-xs uppercase tracking-[0.2em] text-white font-light">
-                      Paso 1: Selecciona el Servicio
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1">
-                      {SERVICES.map((s) => (
-                        <div 
-                          key={s.id}
-                          onClick={() => {
-                            setSelectedService(s);
-                            setBookingStep(2);
-                          }}
-                          className={`p-4 border transition-all duration-300 cursor-pointer flex flex-col justify-between ${
-                            selectedService?.id === s.id 
-                              ? 'border-gold-champagne bg-dark-bg text-white shadow-[0_0_15px_rgba(212,175,55,0.05)]' 
-                              : 'border-warm-border hover:border-gold-champagne/30 bg-dark-bg/60'
+                    <div className="flex justify-between items-center">
+                      <label className="block text-xs uppercase tracking-[0.2em] text-white font-light">
+                        Paso 1: Selecciona el Servicio
+                      </label>
+                      <span className="text-[10px] text-gold-champagne/80 font-mono">
+                        {filteredBookingServices.length} opciones
+                      </span>
+                    </div>
+
+                    {/* Booking Assistant Search Input */}
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-gold-champagne/60 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={bookingSearch}
+                        onChange={(e) => setBookingSearch(e.target.value)}
+                        placeholder="Buscar por nombre o código (ej: 218, keratina, blower)..."
+                        className="w-full bg-dark-bg/90 border border-warm-border focus:border-gold-champagne text-white text-xs pl-9 pr-8 py-2.5 outline-none font-light"
+                      />
+                      {bookingSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setBookingSearch('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-light/40 hover:text-white text-xs"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Category Filter Pills in Booking Widget */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                      {SERVICE_CATEGORIES.map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setBookingCategory(cat)}
+                          className={`text-[9px] uppercase tracking-wider px-2.5 py-1 border transition-all shrink-0 ${
+                            bookingCategory === cat
+                              ? 'border-gold-champagne bg-gold-champagne text-dark-bg font-bold'
+                              : 'border-warm-border text-gray-light/60 hover:text-white bg-dark-bg/40'
                           }`}
                         >
-                          <span className="font-serif-luxury text-sm uppercase tracking-wider text-white">
-                            {s.name}
-                          </span>
-                          <span className="font-mono text-xs text-gold-champagne mt-2">
-                            {s.price} <span className="text-[9px] text-gray-light/40 font-sans">desde</span>
-                          </span>
-                        </div>
+                          {cat}
+                        </button>
                       ))}
                     </div>
+
+                    {/* Services Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-80 overflow-y-auto pr-1">
+                      {filteredBookingServices.length === 0 ? (
+                        <div className="col-span-full py-8 text-center text-xs text-gray-light/50 font-light border border-dashed border-warm-border">
+                          No hay servicios con "{bookingSearch}".
+                        </div>
+                      ) : (
+                        filteredBookingServices.map((s) => (
+                          <div 
+                            key={s.id}
+                            onClick={() => {
+                              setSelectedService(s);
+                              setBookingStep(2);
+                            }}
+                            className={`p-3 border transition-all duration-300 cursor-pointer flex flex-col justify-between ${
+                              selectedService?.id === s.id 
+                                ? 'border-gold-champagne bg-gold-champagne/10 text-white shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
+                                : 'border-warm-border hover:border-gold-champagne/40 bg-dark-bg/60'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-1 mb-1">
+                              <span className="font-serif-luxury text-xs uppercase tracking-wider text-white font-medium line-clamp-1">
+                                {s.name}
+                              </span>
+                              {s.code && (
+                                <span className="font-mono text-[9px] text-gold-champagne bg-gold-champagne/10 border border-gold-champagne/20 px-1 py-0.2 shrink-0">
+                                  #{s.code}
+                                </span>
+                              )}
+                            </div>
+                            
+                            <div className="flex justify-between items-center text-[10px] mt-2 font-mono">
+                              <span className="text-gray-light/50 flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-gold-champagne/60" />
+                                {s.durationText || `${s.durationMinutes}m`}
+                              </span>
+                              <span className="text-gold-champagne font-bold">
+                                {s.price}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
                     {selectedService && (
-                      <div className="pt-4 flex justify-end">
+                      <div className="pt-2 flex justify-between items-center border-t border-warm-border/50">
+                        <span className="text-[10px] text-gold-champagne font-mono">
+                          Seleccionado: <strong className="text-white">{selectedService.name}</strong> ({selectedService.price})
+                        </span>
                         <button
                           type="button"
                           onClick={() => setBookingStep(2)}
-                          className="bg-neutral-900 border border-gold-champagne/40 hover:border-gold-champagne text-gold-champagne px-5 py-2.5 text-xs uppercase tracking-wider font-light flex items-center gap-1.5 transition-colors"
+                          className="bg-neutral-900 border border-gold-champagne/40 hover:border-gold-champagne text-gold-champagne px-4 py-2 text-xs uppercase tracking-wider font-light flex items-center gap-1.5 transition-colors"
                         >
                           Siguiente <ChevronRight className="w-3.5 h-3.5" />
                         </button>
@@ -997,11 +1275,19 @@ _Solicitado desde el sitio web de CF Portadas_`;
                     </div>
 
                     <div className="grid grid-cols-1 gap-3">
-                      {STYLISTS.map((stylist) => (
+                      {STYLISTS.filter(st => {
+                        if (!selectedService) return true;
+                        if (!st.allowedCategories || st.allowedCategories.length === 0) return true;
+                        return st.allowedCategories.includes(selectedService.category);
+                      }).map((stylist) => (
                         <div 
                           key={stylist.id}
                           onClick={() => {
                             setSelectedStylist(stylist);
+                            // If bookingDate was already set and stylist is off on that date, reset date
+                            if (bookingDate && isStylistOffOnDate(stylist, bookingDate)) {
+                              setBookingDate('');
+                            }
                             setBookingStep(3);
                           }}
                           className={`p-4 border transition-all duration-300 cursor-pointer flex items-center justify-between ${
@@ -1011,7 +1297,7 @@ _Solicitado desde el sitio web de CF Portadas_`;
                           }`}
                         >
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 border border-gold-champagne/20 flex items-center justify-center bg-dark-bg font-serif-luxury text-gold-champagne font-bold">
+                            <div className="w-10 h-10 border border-gold-champagne/20 flex items-center justify-center bg-dark-bg font-serif-luxury text-gold-champagne font-bold shrink-0">
                               {stylist.avatarLetter}
                             </div>
                             <div>
@@ -1074,20 +1360,28 @@ _Solicitado desde el sitio web de CF Portadas_`;
                     <div className="space-y-2">
                       <span className="text-[10px] uppercase tracking-wider text-gray-light/50 font-mono block">Selecciona un día:</span>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {availableDates.map((date) => (
-                          <div
-                            key={date.rawValue}
-                            onClick={() => setBookingDate(date.rawValue)}
-                            className={`p-3 border text-center transition-all duration-300 cursor-pointer ${
-                              bookingDate === date.rawValue 
-                                ? 'border-gold-champagne bg-dark-bg text-white shadow-[0_0_15px_rgba(212,175,55,0.05)]' 
-                                : 'border-warm-border hover:border-gold-champagne/30 bg-dark-bg/60'
-                            }`}
-                          >
-                            <span className="block text-[10px] text-gold-champagne tracking-wider font-mono uppercase">{date.dayName.slice(0,3)}</span>
-                            <span className="block text-lg font-serif-luxury font-light">{date.dayNumber}</span>
-                          </div>
-                        ))}
+                        {availableDates.map((date) => {
+                          const isOff = isStylistOffOnDate(selectedStylist, date.rawValue);
+                          return (
+                            <div
+                              key={date.rawValue}
+                              onClick={() => {
+                                if (isOff) return;
+                                setBookingDate(date.rawValue);
+                              }}
+                              className={`p-3 border text-center transition-all duration-300 ${
+                                isOff 
+                                  ? 'border-neutral-800/40 bg-neutral-900/30 opacity-20 cursor-not-allowed pointer-events-none' 
+                                  : bookingDate === date.rawValue 
+                                    ? 'border-gold-champagne bg-dark-bg text-white shadow-[0_0_15px_rgba(212,175,55,0.05)] cursor-pointer' 
+                                    : 'border-warm-border hover:border-gold-champagne/30 bg-dark-bg/60 cursor-pointer'
+                              }`}
+                            >
+                              <span className="block text-[10px] text-gold-champagne tracking-wider font-mono uppercase">{date.dayName.slice(0,3)}</span>
+                              <span className="block text-lg font-serif-luxury font-light">{date.dayNumber}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -1098,21 +1392,38 @@ _Solicitado desde el sitio web de CF Portadas_`;
                         animate={{ opacity: 1, y: 0 }} 
                         className="space-y-2"
                       >
-                        <span className="text-[10px] uppercase tracking-wider text-gray-light/50 font-mono block">Bloques de Horarios disponibles:</span>
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                          {timeSlots.map((time) => (
-                            <div
-                              key={time}
-                              onClick={() => setBookingTime(time)}
-                              className={`p-2.5 border text-center text-xs transition-all duration-300 cursor-pointer font-mono ${
-                                bookingTime === time 
-                                  ? 'border-gold-champagne bg-dark-bg text-white font-semibold shadow-[0_0_15px_rgba(212,175,55,0.05)]' 
-                                  : 'border-warm-border hover:border-gold-champagne/30 bg-dark-bg/60 text-gray-light/60'
-                              }`}
-                            >
-                              {time}
-                            </div>
-                          ))}
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] uppercase tracking-wider text-gray-light/50 font-mono block">
+                            Horarios Disponibles (9:00 AM - 7:00 PM):
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-64 overflow-y-auto p-1 pr-2 custom-scrollbar">
+                          {TIME_SLOTS.map((time) => {
+                            const isOccupied = isSlotOccupied(time, bookingDate, selectedStylist?.id || '');
+                            const isSelected = bookingTime === time;
+                            return (
+                              <button
+                                key={time}
+                                type="button"
+                                disabled={isOccupied}
+                                onClick={() => setBookingTime(time)}
+                                className={`p-2.5 border text-center text-xs transition-all duration-300 font-mono flex flex-col items-center justify-center ${
+                                  isOccupied
+                                    ? 'border-red-900/30 bg-red-950/20 text-red-300/40 cursor-not-allowed opacity-40'
+                                    : isSelected 
+                                      ? 'border-gold-champagne bg-dark-bg text-white font-bold shadow-[0_0_15px_rgba(212,175,55,0.15)] cursor-pointer' 
+                                      : 'border-warm-border hover:border-gold-champagne/40 bg-dark-bg/60 text-gray-light/80 cursor-pointer'
+                                }`}
+                              >
+                                <span className={isOccupied ? 'line-through decoration-red-500/50' : ''}>{time}</span>
+                                {isOccupied && (
+                                  <span className="text-[8px] font-sans uppercase font-bold text-red-400/80 mt-0.5 tracking-tight">
+                                    Agendado
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </motion.div>
                     )}

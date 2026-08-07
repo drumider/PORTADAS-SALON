@@ -2,9 +2,13 @@ export interface Service {
   id: string;
   name: string;
   price: string;
-  icon?: any;
-  description: string;
+  priceNumber?: number;
+  code?: string;
+  durationText?: string;
   durationMinutes: number;
+  category?: string;
+  icon?: any;
+  description?: string;
 }
 
 export interface Stylist {
@@ -12,6 +16,9 @@ export interface Stylist {
   name: string;
   role: string;
   avatarLetter: string;
+  offDays?: number[]; // JS getDay() values: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+  offDaysText?: string;
+  allowedCategories?: string[]; // Allowed service categories for this specialist
 }
 
 export type AppointmentStatus = 'Confirmada' | 'Pendiente' | 'Completada' | 'Cancelada';

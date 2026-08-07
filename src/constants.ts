@@ -1,60 +1,78 @@
-import { Scissors, Paintbrush, Sparkles, Hand, Heart, Wind } from 'lucide-react';
-import { Service, Stylist } from './types';
+import { Stylist } from './types';
+import { ALL_SERVICES } from './data/servicesData';
 
-export const SERVICES: Service[] = [
-  {
-    id: 'corte',
-    name: 'Corte y Estilo',
-    price: '₡18,000',
-    icon: Scissors,
-    description: 'Diseño de corte personalizado, lavado premium con masaje capilar y secado con estilo.',
-    durationMinutes: 45
+export const SERVICES = ALL_SERVICES;
+
+export const STYLISTS: Stylist[] = [
+  { 
+    id: 'carlos', 
+    name: 'Carlos', 
+    role: 'Estilista Master / Colorista', 
+    avatarLetter: 'C', 
+    offDays: [2],
+    allowedCategories: ['Alisados y Keratinas', 'Coloración y Tintes', 'Cortes y Peinados', 'Tratamientos Capilares', 'Paquetes y Promociones'] 
   },
-  {
-    id: 'color',
-    name: 'Coloración',
-    price: '₡35,000',
-    icon: Paintbrush,
-    description: 'Técnicas avanzadas de balayage, babylights, cobertura total de canas o baño de color premium.',
-    durationMinutes: 90
+  { 
+    id: 'fernando', 
+    name: 'Fernando', 
+    role: 'Especialista en Alisados y Corte', 
+    avatarLetter: 'F', 
+    offDays: [3],
+    allowedCategories: ['Alisados y Keratinas', 'Coloración y Tintes', 'Cortes y Peinados', 'Tratamientos Capilares', 'Paquetes y Promociones'] 
   },
-  {
-    id: 'kerastase',
-    name: 'Tratamiento Kérastase',
-    price: '₡25,000',
-    icon: Sparkles,
-    description: 'Rituales Fusio-Dose y mascarillas intensivas personalizadas para restaurar la fibra capilar.',
-    durationMinutes: 60
+  { 
+    id: 'junior', 
+    name: 'Junior', 
+    role: 'Master en Tratamientos y Estilo', 
+    avatarLetter: 'J', 
+    offDays: [],
+    allowedCategories: ['Alisados y Keratinas', 'Coloración y Tintes', 'Cortes y Peinados', 'Tratamientos Capilares', 'Maquillaje y Masajes', 'Paquetes y Promociones'] 
   },
-  {
-    id: 'manicure',
-    name: 'Manicure y Pedicure',
-    price: '₡15,000',
-    icon: Hand,
-    description: 'Cuidado completo de uñas, exfoliación profunda, hidratación y esmaltado permanente en gel.',
-    durationMinutes: 60
+  { 
+    id: 'jessica', 
+    name: 'Jessica', 
+    role: 'Estilista y Manicurista', 
+    avatarLetter: 'J', 
+    offDays: [1],
+    allowedCategories: ['Alisados y Keratinas', 'Coloración y Tintes', 'Cortes y Peinados', 'Tratamientos Capilares', 'Manicure y Pedicure', 'Depilación y Rostro', 'Maquillaje y Masajes', 'Paquetes y Promociones'] 
   },
-  {
-    id: 'maquillaje',
-    name: 'Maquillaje',
-    price: '₡30,000',
-    icon: Heart,
-    description: 'Maquillaje profesional HD de larga duración para eventos especiales, novias y pasarela.',
-    durationMinutes: 60
+  { 
+    id: 'jorleny', 
+    name: 'Jorleny', 
+    role: 'Manicurista', 
+    avatarLetter: 'J', 
+    offDays: [3],
+    allowedCategories: ['Manicure y Pedicure', 'Depilación y Rostro', 'Maquillaje y Masajes', 'Paquetes y Promociones'] 
   },
-  {
-    id: 'alisado',
-    name: 'Alisado',
-    price: '₡45,000',
-    icon: Wind,
-    description: 'Alisados orgánicos libres de formol y queratinas brasileñas para un lacio sedoso de larga duración.',
-    durationMinutes: 120
+  { 
+    id: 'cualquiera', 
+    name: 'Cualquier profesional', 
+    role: 'El primero disponible para tu comodidad', 
+    avatarLetter: '★', 
+    offDays: [],
+    allowedCategories: ['Alisados y Keratinas', 'Coloración y Tintes', 'Cortes y Peinados', 'Tratamientos Capilares', 'Manicure y Pedicure', 'Depilación y Rostro', 'Maquillaje y Masajes', 'Paquetes y Promociones'] 
   }
 ];
 
-export const STYLISTS: Stylist[] = [
-  { id: 'carlos', name: 'Carlos', role: 'Estilista Master / Colorista', avatarLetter: 'C' },
-  { id: 'fernando', name: 'Fernando', role: 'Especialista en Alisados y Corte', avatarLetter: 'F' },
-  { id: 'diego', name: 'Diego', role: 'Master en Tratamientos y Estilo', avatarLetter: 'D' },
-  { id: 'cualquiera', name: 'Cualquier profesional', role: 'El primero disponible para tu comodidad', avatarLetter: '★' }
+export const TIME_SLOTS = [
+  '09:00 AM',
+  '09:30 AM',
+  '10:00 AM',
+  '10:30 AM',
+  '11:00 AM',
+  '11:30 AM',
+  '12:00 PM',
+  '12:30 PM',
+  '01:00 PM',
+  '01:30 PM',
+  '02:00 PM',
+  '02:30 PM',
+  '03:00 PM',
+  '03:30 PM',
+  '04:00 PM',
+  '04:30 PM',
+  '05:00 PM',
+  '05:30 PM',
+  '06:00 PM',
+  '06:30 PM'
 ];

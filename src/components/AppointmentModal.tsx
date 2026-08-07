@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Calendar, Clock, User, Phone, Mail, FileText, CheckCircle, Save, Trash2, Scissors } from 'lucide-react';
+import { X, Calendar, Clock, User, Phone, Mail, FileText, CheckCircle, Save, Trash2, Scissors, AlertCircle } from 'lucide-react';
 import { Appointment, AppointmentStatus } from '../types';
-import { SERVICES, STYLISTS } from '../constants';
+import { SERVICES, STYLISTS, TIME_SLOTS } from '../constants';
 
 interface AppointmentModalProps {
   isOpen: boolean;
@@ -25,6 +25,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
   const [clientPhone, setClientPhone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [serviceId, setServiceId] = useState(SERVICES[0].id);
+  const [serviceSearch, setServiceSearch] = useState('');
   const [stylistId, setStylistId] = useState(STYLISTS[0].id);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('10:00');
@@ -173,18 +174,34 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
             {/* Service & Stylist */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold mb-1">
-                  Servicio Solicitado
-                </label>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold">
+                    Servicio Solicitado
+                  </label>
+                  <span className="text-[9px] text-neutral-500 font-mono">175 disponibles</span>
+                </div>
+                
+                <input
+                  type="text"
+                  value={serviceSearch}
+                  onChange={(e) => setServiceSearch(e.target.value)}
+                  placeholder="Filtrar por código o nombre (ej. 218)..."
+                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-[11px] px-2.5 py-1.5 outline-none font-sans"
+                />
+
                 <select
                   value={serviceId}
                   onChange={(e) => setServiceId(e.target.value)}
-                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-3 py-2.5 outline-none uppercase font-serif-luxury font-medium"
+                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-2.5 py-2 outline-none font-medium"
                 >
-                  {SERVICES.map(s => (
+                  {SERVICES.filter(s => {
+                    if (!serviceSearch.trim()) return true;
+                    const q = serviceSearch.toLowerCase().trim();
+                    return s.name.toLowerCase().includes(q) || (s.code && s.code.toLowerCase().includes(q));
+                  }).map(s => (
                     <option key={s.id} value={s.id}>
-                      {s.name} ({s.price})
+                      {s.code ? `[#${s.code}] ` : ''}{s.name} - {s.price} ({s.durationText || `${s.durationMinutes}min`})
                     </option>
                   ))}
                 </select>
@@ -197,13 +214,21 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 <select
                   value={stylistId}
                   onChange={(e) => setStylistId(e.target.value)}
-                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-3 py-2.5 outline-none uppercase font-serif-luxury font-medium"
+                  className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-3 py-2.5 outline-none font-medium mt-[25px]"
                 >
-                  {STYLISTS.map(st => (
-                    <option key={st.id} value={st.id}>
-                      {st.name} ({st.role.split('/')[0]})
-                    </option>
-                  ))}
+                  {(() => {
+                    const selectedServiceObj = SERVICES.find(s => s.id === serviceId);
+                    const availableStylists = STYLISTS.filter(st => {
+                      if (!selectedServiceObj) return true;
+                      if (!st.allowedCategories || st.allowedCategories.length === 0) return true;
+                      return st.allowedCategories.includes(selectedServiceObj.category);
+                    });
+                    return availableStylists.map(st => (
+                      <option key={st.id} value={st.id}>
+                        {st.name} ({st.role.split('/')[0]})
+                      </option>
+                    ));
+                  })()}
                 </select>
               </div>
             </div>
@@ -237,9 +262,14 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     onChange={(e) => setTime(e.target.value)}
                     className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs pl-9 pr-3 py-2.5 outline-none font-mono"
                   >
-                    {['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'].map(t => (
-                      <option key={t} value={t}>{t} AM/PM</option>
-                    ))}
+                    {TIME_SLOTS.map(t => {
+                      const val24 = t.replace(' AM', '').replace(' PM', '');
+                      return (
+                        <option key={t} value={val24}>
+                          {t} ({val24})
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
