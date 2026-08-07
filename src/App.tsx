@@ -1135,7 +1135,7 @@ _Solicitado desde el sitio web de CF Portadas_`;
                   </div>
                 </motion.div>
               ) : (
-                <form onSubmit={(e) => { e.preventDefault(); handleProcessBooking(true); }}>
+                <form onSubmit={(e) => { e.preventDefault(); handleProcessBooking(false); }}>
                   
                   {/* STEP 1: SELECT SERVICE */}
                 {bookingStep === 1 && (
@@ -1535,26 +1535,17 @@ _Solicitado desde el sitio web de CF Portadas_`;
                         ← Modificar hora
                       </button>
 
-                      <div className="flex flex-col sm:flex-row items-stretch gap-2.5">
-                        <button
-                          type="button"
-                          onClick={() => handleProcessBooking(false)}
-                          className="bg-gold-champagne text-dark-bg hover:bg-white text-[11px] uppercase tracking-[0.1em] font-bold px-5 py-3.5 flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer"
-                        >
-                          <CheckCircle className="w-4 h-4 text-dark-bg" />
-                          <span>Agendar Cita con Asistente</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleProcessBooking(true)}
-                          className="bg-emerald-600/90 hover:bg-emerald-500 text-white text-[11px] uppercase tracking-[0.1em] font-medium px-4 py-3 flex items-center justify-center gap-2 transition-all cursor-pointer border border-emerald-500/50"
-                          id="booking-submit-whatsapp"
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                          <span>Agendar y Enviar por WhatsApp</span>
-                        </button>
-                      </div>
+                      <button
+                        type="submit"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleProcessBooking(false);
+                        }}
+                        className="bg-gold-champagne text-dark-bg hover:bg-white text-xs uppercase tracking-[0.15em] font-bold px-6 py-3.5 flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer"
+                      >
+                        <CheckCircle className="w-4 h-4 text-dark-bg" />
+                        <span>Agendar Cita</span>
+                      </button>
                     </div>
                   </motion.div>
                 )}

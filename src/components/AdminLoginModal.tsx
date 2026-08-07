@@ -30,7 +30,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClos
       // Accepted combinations for salon admin/owner
       if (
         (validUser === 'admin' || validUser === 'portadas' || validUser === 'cfportadas') &&
-        (validPass === 'portadas123' || validPass === 'admin' || validPass === '1234')
+        (validPass === 'portadas102027')
       ) {
         setAdminAuthenticated(true);
         setLoading(false);
