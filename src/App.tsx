@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { getImageUrl } from './utils/imageUtils';
+import heroImg from './assets/images/hero.png';
 import { 
   Scissors, 
   Paintbrush, 
@@ -430,14 +431,17 @@ _Solicitado desde el sitio web de CF Portadas_`;
         {/* Background Image with Dark Overlay */}
         <div className="absolute inset-0 z-0">
           <img 
-            src={getImageUrl('hero.png')} 
+            src={heroImg || getImageUrl('hero.png')} 
             alt="Interior de CF Portadas Salón de Belleza" 
             className="w-full h-full object-cover object-center filter contrast-110 brightness-[0.38] sepia-[15%]"
             referrerPolicy="no-referrer"
             onError={(e) => {
               const target = e.currentTarget;
-              if (!target.dataset.failed) {
-                target.dataset.failed = 'true';
+              if (!target.dataset.attempt) {
+                target.dataset.attempt = '1';
+                target.src = '/hero.png';
+              } else if (target.dataset.attempt === '1') {
+                target.dataset.attempt = '2';
                 target.src = '/assets/images/hero.png';
               }
             }}
