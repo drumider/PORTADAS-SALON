@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#222621"/>
+      <stop offset="100%" stop-color="#0b0e0a"/>
+    </radialGradient>
+    <linearGradient id="bottle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#141813"/>
+      <stop offset="25%" stop-color="#384036"/>
+      <stop offset="50%" stop-color="#242b23"/>
+      <stop offset="85%" stop-color="#111610"/>
+      <stop offset="100%" stop-color="#080b08"/>
+    </linearGradient>
+    <linearGradient id="label" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6e7862"/>
+      <stop offset="50%" stop-color="#8c997d"/>
+      <stop offset="100%" stop-color="#5a6350"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="530" rx="140" ry="25" fill="#000000" opacity="0.6"/>
+  <!-- Bottle body -->
+  <path d="M220 220 Q220 180 270 170 L270 140 L330 140 L330 170 Q380 180 380 220 L380 490 Q380 510 360 515 L240 515 Q220 510 220 490 Z" fill="url(#bottle)"/>
+  <!-- Cap -->
+  <rect x="270" y="100" width="60" height="42" rx="4" fill="#121511" stroke="#252b23" stroke-width="2"/>
+  <line x1="275" y1="110" x2="325" y2="110" stroke="#2f382c" stroke-width="2"/>
+  <line x1="275" y1="120" x2="325" y2="120" stroke="#2f382c" stroke-width="2"/>
+  <line x1="275" y1="130" x2="325" y2="130" stroke="#2f382c" stroke-width="2"/>
+  <!-- Label -->
+  <rect x="230" y="220" width="140" height="240" fill="url(#label)" rx="2"/>
+  <path d="M230 230 H370 M230 240 H370 M230 250 H370 M230 260 H370 M230 270 H370 M230 280 H370 M230 290 H370 M230 300 H370 M230 310 H370 M230 320 H370 M230 330 H370 M230 340 H370 M230 350 H370 M230 360 H370 M230 370 H370 M230 380 H370 M230 390 H370 M230 400 H370 M230 410 H370 M230 420 H370 M230 430 H370 M230 440 H370 M230 450 H370" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+  <!-- Text on Label -->
+  <text x="242" y="260" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="13" fill="#21291d" letter-spacing="1">FILLER THERAPY</text>
+  <text x="242" y="278" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="300" font-size="14" fill="#ffffff">restorative shampoo</text>
+  <line x1="242" y1="290" x2="358" y2="290" stroke="#3d4736" stroke-width="1"/>
+  <text x="242" y="306" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#21291d" font-weight="600">SHAMPOO RIGENERANTE PER CAPELLI</text>
+  <text x="242" y="316" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#21291d" font-weight="600">SPENTI, ARIDI E DANNEGGIATI.</text>
+  <text x="242" y="328" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6" fill="#21291d">REGENERATING SHAMPOO FOR</text>
+  <text x="242" y="337" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6" fill="#21291d">OPAQUE, DRY AND DAMAGED HAIR.</text>
+  <line x1="242" y1="350" x2="358" y2="350" stroke="#3d4736" stroke-width="1"/>
+  <text x="242" y="364" font-family="'Helvetica Neue', Arial, sans-serif" font-size="5.5" fill="#f0f5ed" letter-spacing="0.5">FREE FROM PHOSPHATES, PARABENS,</text>
+  <text x="242" y="373" font-family="'Helvetica Neue', Arial, sans-serif" font-size="5.5" fill="#f0f5ed" letter-spacing="0.5">PPG, COLORANTS.</text>
+  <!-- Brand NASHI -->
+  <line x1="285" y1="412" x2="315" y2="412" stroke="#21291d" stroke-width="2"/>
+  <text x="300" y="432" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="18" fill="#21291d" text-anchor="middle" letter-spacing="3">NASHI</text>
+  <!-- Specular shine -->
+  <path d="M225 220 Q225 185 270 175 L270 145 L280 145 L280 173 Q235 185 235 220 L235 490 Q235 505 245 512 L235 510 Q225 500 225 490 Z" fill="#ffffff" opacity="0.12"/>
+</svg>

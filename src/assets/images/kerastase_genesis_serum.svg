@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a2024"/>
+      <stop offset="100%" stop-color="#120b0e"/>
+    </radialGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fcedee"/>
+      <stop offset="50%" stop-color="#f7dedf"/>
+      <stop offset="100%" stop-color="#ebd0d2"/>
+    </linearGradient>
+    <linearGradient id="k_coral" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e85d68"/>
+      <stop offset="100%" stop-color="#d63c48"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="510" rx="110" ry="22" fill="#000000" opacity="0.6"/>
+  <!-- Box Body -->
+  <rect x="200" y="100" width="200" height="390" rx="8" fill="url(#box)" stroke="#dcb8ba" stroke-width="1.5"/>
+  <!-- Kerastase Brand -->
+  <text x="300" y="150" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="22" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="165" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="9" fill="#111111" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <!-- Iconic K Logo -->
+  <path d="M270 200 L270 280 M270 240 L330 200 M270 240 L330 280" stroke="url(#k_coral)" stroke-width="18" stroke-linecap="square" stroke-linejoin="miter"/>
+  <!-- GENESIS -->
+  <text x="300" y="315" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="16" fill="url(#k_coral)" text-anchor="middle" letter-spacing="3">GENESIS</text>
+  <!-- Description -->
+  <text x="300" y="350" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="8.5" fill="#222222" text-anchor="middle">SÉRUM ANTI-CHUTE FORTIFIANT</text>
+  <text x="300" y="365" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="8" fill="#222222" text-anchor="middle">ANTI HAIR-FALL FORTIFYING SERUM</text>
+  <text x="300" y="388" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7.5" fill="url(#k_coral)" text-anchor="middle" letter-spacing="0.5">AMINEXIL + RACINE DE GINGEMBRE + CAFÉINE</text>
+  <text x="300" y="420" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#666666" text-anchor="middle">Cheveux affaiblis, tendance à tomber</text>
+  <text x="300" y="432" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#666666" text-anchor="middle">Weakened hair, prone to falling</text>
+  <text x="300" y="465" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#888888" text-anchor="middle">90 ml 3.04 fl.oz.</text>
+</svg>

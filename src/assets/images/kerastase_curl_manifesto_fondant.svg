@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a2722"/>
+      <stop offset="100%" stop-color="#12100d"/>
+    </radialGradient>
+    <linearGradient id="tube" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f2dfc9"/>
+      <stop offset="35%" stop-color="#faeee1"/>
+      <stop offset="65%" stop-color="#ebd5bb"/>
+      <stop offset="100%" stop-color="#d9be9e"/>
+    </linearGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e3ceb6"/>
+      <stop offset="50%" stop-color="#faeee1"/>
+      <stop offset="100%" stop-color="#c9b093"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="530" rx="120" ry="20" fill="#000000" opacity="0.6"/>
+  <rect x="250" y="470" width="100" height="40" rx="4" fill="url(#cap)" stroke="#b89e80" stroke-width="1"/>
+  <path d="M220 110 L380 110 L350 470 L250 470 Z" fill="url(#tube)"/>
+  <rect x="215" y="100" width="170" height="15" fill="#e3ceb6" rx="1"/>
+  <text x="300" y="160" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="20" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="175" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="8" fill="#111111" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <!-- K Logo with bar -->
+  <line x1="240" y1="210" x2="360" y2="210" stroke="#a38363" stroke-width="6"/>
+  <path d="M285 195 L285 225 M285 210 L315 195 M285 210 L315 225" stroke="#ffffff" stroke-width="10" stroke-linecap="square"/>
+  <text x="300" y="245" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="13" fill="#222222" text-anchor="middle" letter-spacing="2">CURL MANIFESTO</text>
+  <text x="300" y="275" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="9" fill="#111111" text-anchor="middle">FONDANT HYDRATATION ESSENTIELLE</text>
+  <text x="300" y="290" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7" fill="#8c6d4d" text-anchor="middle">MIEL DE MANUKA + CÉRAMIDE</text>
+  <text x="300" y="310" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#444444" text-anchor="middle">Fondant léger restaurateur d'hydratation</text>
+  <text x="300" y="322" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#444444" text-anchor="middle">Lightweight moisture replenishing conditioner</text>
+  <text x="300" y="380" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="8" fill="#222222" text-anchor="middle" letter-spacing="1">À RINCER - RINSE-OUT</text>
+  <text x="300" y="445" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#666666" text-anchor="middle">250 ml 8.5 fl.oz.</text>
+</svg>

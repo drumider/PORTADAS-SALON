@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#222222"/>
+      <stop offset="100%" stop-color="#0c0c0c"/>
+    </radialGradient>
+    <linearGradient id="bottle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f0f0f0"/>
+      <stop offset="35%" stop-color="#ffffff"/>
+      <stop offset="65%" stop-color="#f7f7f7"/>
+      <stop offset="100%" stop-color="#d9d9d9"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#cda357"/>
+      <stop offset="50%" stop-color="#e3c285"/>
+      <stop offset="100%" stop-color="#ab8238"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="530" rx="120" ry="22" fill="#000000" opacity="0.6"/>
+  <!-- Bottle Shape -->
+  <path d="M230 180 Q230 150 260 140 L260 100 L340 100 L340 140 Q370 150 370 180 L370 490 Q370 515 340 520 L260 520 Q230 515 230 490 Z" fill="url(#bottle)"/>
+  <!-- Pump Cap -->
+  <rect x="270" y="65" width="60" height="35" rx="3" fill="#ffffff" stroke="#dddddd"/>
+  <path d="M285 65 L285 45 L340 45 Q350 45 350 55 L350 65 Z" fill="#eeeeee"/>
+  <!-- Bottle Text -->
+  <text x="300" y="180" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="18" fill="url(#gold)" text-anchor="middle" letter-spacing="2">RESCUE</text>
+  <text x="300" y="196" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="10" fill="url(#gold)" text-anchor="middle" letter-spacing="4">• P L E X •</text>
+  <!-- Huge SR -->
+  <text x="300" y="275" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="900" font-size="70" fill="url(#gold)" text-anchor="middle" letter-spacing="-2">SR</text>
+  <!-- SERUM -->
+  <rect x="245" y="290" width="110" height="20" fill="url(#gold)"/>
+  <text x="300" y="304" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="11" fill="#ffffff" text-anchor="middle" letter-spacing="3">SERUM</text>
+  <text x="300" y="325" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="10" fill="url(#gold)" text-anchor="middle" letter-spacing="2">DAILY USE</text>
+  <text x="300" y="380" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="10" fill="#444444" text-anchor="middle">Reconstrucción instantánea</text>
+  <text x="300" y="394" font-family="'Helvetica Neue', Arial, sans-serif" font-size="9" fill="#666666" text-anchor="middle">con Ácido Hialurónico</text>
+  <text x="300" y="420" font-family="'Helvetica Neue', Arial, sans-serif" font-size="9" fill="#666666" text-anchor="middle">Instant Reconstruction with Hyaluronic Acid</text>
+  <text x="300" y="475" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="11" fill="#333333" text-anchor="middle">300 ml e 10.15 fl.oz</text>
+</svg>

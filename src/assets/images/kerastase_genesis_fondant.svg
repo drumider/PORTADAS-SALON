@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a2024"/>
+      <stop offset="100%" stop-color="#120b0e"/>
+    </radialGradient>
+    <linearGradient id="tube" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#fcedee"/>
+      <stop offset="35%" stop-color="#ffffff"/>
+      <stop offset="65%" stop-color="#f7dedf"/>
+      <stop offset="100%" stop-color="#ebd0d2"/>
+    </linearGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#cccccc"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#aaaaaa"/>
+    </linearGradient>
+    <linearGradient id="k_coral" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e85d68"/>
+      <stop offset="100%" stop-color="#d63c48"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="530" rx="120" ry="20" fill="#000000" opacity="0.6"/>
+  <rect x="250" y="470" width="100" height="40" rx="4" fill="url(#cap)" stroke="#999999" stroke-width="1"/>
+  <path d="M220 110 L380 110 L350 470 L250 470 Z" fill="url(#tube)"/>
+  <rect x="215" y="100" width="170" height="15" fill="#f0d5d7" rx="1"/>
+  <!-- Tube Branding -->
+  <text x="300" y="160" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="20" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="175" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="8" fill="#111111" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <!-- K Logo -->
+  <path d="M280 200 L280 260 M280 230 L320 200 M280 230 L320 260" stroke="url(#k_coral)" stroke-width="14" stroke-linecap="square"/>
+  <text x="300" y="290" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="14" fill="url(#k_coral)" text-anchor="middle" letter-spacing="2">GENESIS</text>
+  <text x="300" y="320" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="10" fill="#111111" text-anchor="middle">FONDANT RENFORÇATEUR</text>
+  <text x="300" y="338" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7" fill="url(#k_coral)" text-anchor="middle">CELLULES NATIVES D'EDELWEISS + RACINE DE GINGEMBRE</text>
+  <text x="300" y="360" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#555555" text-anchor="middle">Soin fortifiant anti-chute</text>
+  <text x="300" y="372" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#555555" text-anchor="middle">Fortifying anti hair-fall conditioner</text>
+  <text x="300" y="420" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="8" fill="#222222" text-anchor="middle" letter-spacing="1">À RINCER - RINSE-OUT</text>
+  <text x="300" y="445" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#888888" text-anchor="middle">200 ml 6.76 fl.oz.</text>
+</svg>

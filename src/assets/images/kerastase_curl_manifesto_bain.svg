@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a2722"/>
+      <stop offset="100%" stop-color="#12100d"/>
+    </radialGradient>
+    <linearGradient id="bottle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f2dfc9"/>
+      <stop offset="35%" stop-color="#faeee1"/>
+      <stop offset="65%" stop-color="#ebd5bb"/>
+      <stop offset="100%" stop-color="#d9be9e"/>
+    </linearGradient>
+    <linearGradient id="chrome" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#b0b0b0"/>
+      <stop offset="25%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#e0e0e0"/>
+      <stop offset="75%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#999999"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="530" rx="120" ry="22" fill="#000000" opacity="0.6"/>
+  <!-- Bottle Shape -->
+  <path d="M220 190 Q220 150 260 140 L260 100 L340 100 L340 140 Q380 150 380 190 L380 480 Q380 515 350 520 L250 520 Q220 515 220 480 Z" fill="url(#bottle)"/>
+  <!-- Shiny Chrome Cap -->
+  <rect x="250" y="60" width="100" height="42" rx="6" fill="url(#chrome)" stroke="#777777" stroke-width="1"/>
+  <ellipse cx="300" cy="60" rx="50" ry="8" fill="#ffffff" opacity="0.8"/>
+  <!-- Label Content -->
+  <text x="300" y="210" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="20" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="225" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="8" fill="#111111" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <!-- K Logo with bar -->
+  <line x1="240" y1="260" x2="360" y2="260" stroke="#a38363" stroke-width="6"/>
+  <path d="M285 245 L285 275 M285 260 L315 245 M285 260 L315 275" stroke="#ffffff" stroke-width="10" stroke-linecap="square"/>
+  <text x="300" y="295" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="13" fill="#222222" text-anchor="middle" letter-spacing="2">CURL MANIFESTO</text>
+  <text x="300" y="325" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="10" fill="#111111" text-anchor="middle">BAIN HYDRATATION DOUCEUR</text>
+  <text x="300" y="342" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7" fill="#8c6d4d" text-anchor="middle">MIEL DE MANUKA + CÉRAMIDE</text>
+  <text x="300" y="362" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="7.5" fill="#111111" text-anchor="middle">Shampooing doux crème hydratant</text>
+  <text x="300" y="375" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#444444" text-anchor="middle">Gentle hydrating creamy shampoo</text>
+  <text x="300" y="475" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#555555" text-anchor="middle">250 ml 8.5 fl.oz.</text>
+</svg>

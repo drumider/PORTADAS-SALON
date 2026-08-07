@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a2024"/>
+      <stop offset="100%" stop-color="#120b0e"/>
+    </radialGradient>
+    <linearGradient id="bottle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f59ba2"/>
+      <stop offset="35%" stop-color="#fcc2c7"/>
+      <stop offset="65%" stop-color="#f5a1a7"/>
+      <stop offset="100%" stop-color="#d9757d"/>
+    </linearGradient>
+    <linearGradient id="chrome" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#b0b0b0"/>
+      <stop offset="25%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#e0e0e0"/>
+      <stop offset="75%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#999999"/>
+    </linearGradient>
+    <linearGradient id="k_coral" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e85d68"/>
+      <stop offset="100%" stop-color="#d63c48"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="530" rx="120" ry="22" fill="#000000" opacity="0.6"/>
+  <!-- Bottle Shape -->
+  <path d="M220 190 Q220 150 260 140 L260 100 L340 100 L340 140 Q380 150 380 190 L380 480 Q380 515 350 520 L250 520 Q220 515 220 480 Z" fill="url(#bottle)"/>
+  <!-- Shiny Chrome Cap -->
+  <rect x="250" y="60" width="100" height="42" rx="6" fill="url(#chrome)" stroke="#777777" stroke-width="1"/>
+  <ellipse cx="300" cy="60" rx="50" ry="8" fill="#ffffff" opacity="0.8"/>
+  <!-- Label Content -->
+  <text x="300" y="210" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="20" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="225" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="8" fill="#111111" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <!-- K Logo -->
+  <path d="M280 250 L280 300 M280 275 L320 250 M280 275 L320 300" stroke="url(#k_coral)" stroke-width="12" stroke-linecap="square"/>
+  <text x="300" y="325" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="13" fill="url(#k_coral)" text-anchor="middle" letter-spacing="2">GENESIS</text>
+  <text x="300" y="355" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="11" fill="#111111" text-anchor="middle">BAIN HYDRA-FORTIFIANT</text>
+  <text x="300" y="372" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7" fill="url(#k_coral)" text-anchor="middle">CELLULES NATIVES D'EDELWEISS + RACINE DE GINGEMBRE</text>
+  <text x="300" y="392" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="7.5" fill="#111111" text-anchor="middle">Shampooing fortifiant anti-chute</text>
+  <text x="300" y="405" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#444444" text-anchor="middle">Cheveux affaiblis, tendance à tomber</text>
+  <text x="300" y="417" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#444444" text-anchor="middle">Anti hair-fall fortifying shampoo</text>
+  <text x="300" y="475" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#555555" text-anchor="middle">250 ml 8.5 fl.oz.</text>
+</svg>

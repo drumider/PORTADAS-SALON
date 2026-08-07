@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a2024"/>
+      <stop offset="100%" stop-color="#120b0e"/>
+    </radialGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fcedee"/>
+      <stop offset="50%" stop-color="#f7dedf"/>
+      <stop offset="100%" stop-color="#ebd0d2"/>
+    </linearGradient>
+    <linearGradient id="k_coral" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e85d68"/>
+      <stop offset="100%" stop-color="#d63c48"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="500" rx="190" ry="32" fill="#000000" opacity="0.6"/>
+  <!-- Box / Jar Body -->
+  <rect x="140" y="180" width="320" height="290" rx="12" fill="url(#box)" stroke="#dcb8ba" stroke-width="1.5"/>
+  <!-- Kerastase Brand -->
+  <text x="300" y="230" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="26" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="248" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="10" fill="#111111" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <!-- K Logo -->
+  <path d="M280 270 L280 320 M280 295 L320 270 M280 295 L320 320" stroke="url(#k_coral)" stroke-width="12" stroke-linecap="square"/>
+  <!-- GENESIS -->
+  <text x="300" y="350" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="15" fill="url(#k_coral)" text-anchor="middle" letter-spacing="3">GENESIS</text>
+  <text x="300" y="375" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="12" fill="#111111" text-anchor="middle">MASQUE RECONSTITUANT</text>
+  <text x="300" y="392" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7.5" fill="url(#k_coral)" text-anchor="middle">CELLULES NATIVES D'EDELWEISS + RACINE DE GINGEMBRE</text>
+  <text x="300" y="412" font-family="'Helvetica Neue', Arial, sans-serif" font-size="8" fill="#555555" text-anchor="middle">Masque fortifiant intense anti-chute</text>
+  <text x="300" y="426" font-family="'Helvetica Neue', Arial, sans-serif" font-size="8" fill="#555555" text-anchor="middle">Anti hair-fall intense fortifying masque</text>
+  <text x="300" y="455" font-family="'Helvetica Neue', Arial, sans-serif" font-size="8" fill="#888888" text-anchor="middle">200 ml 6.76 fl.oz.</text>
+</svg>

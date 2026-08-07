@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a2722"/>
+      <stop offset="100%" stop-color="#12100d"/>
+    </radialGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f2dfc9"/>
+      <stop offset="50%" stop-color="#faeee1"/>
+      <stop offset="100%" stop-color="#ebd5bb"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="510" rx="110" ry="22" fill="#000000" opacity="0.6"/>
+  <!-- Box Body -->
+  <rect x="200" y="100" width="200" height="390" rx="8" fill="url(#box)" stroke="#d9be9e" stroke-width="1.5"/>
+  <text x="300" y="150" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="22" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="165" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="9" fill="#111111" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <!-- K Logo with metallic bar -->
+  <line x1="220" y1="215" x2="380" y2="215" stroke="#a38363" stroke-width="8"/>
+  <path d="M280 190 L280 240 M280 215 L320 190 M280 215 L320 240" stroke="#ffffff" stroke-width="12" stroke-linecap="square"/>
+  <text x="300" y="270" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="15" fill="#222222" text-anchor="middle" letter-spacing="2">CURL MANIFESTO</text>
+  <text x="300" y="310" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="12" fill="#111111" text-anchor="middle">HUILE SUBLIME REPAIR</text>
+  <text x="300" y="328" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7.5" fill="#8c6d4d" text-anchor="middle">MIEL DE MANUKA + CÉRAMIDE</text>
+  <text x="300" y="350" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="8" fill="#111111" text-anchor="middle">Huile nutrition multi-usages</text>
+  <text x="300" y="365" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#444444" text-anchor="middle">Nourishing multi-use hair &amp; scalp oil</text>
+  <text x="300" y="420" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="7.5" fill="#222222" text-anchor="middle">SANS RINÇAGE - LEAVE-IN</text>
+  <text x="300" y="465" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#666666" text-anchor="middle">50 ml 1.7 fl.oz.</text>
+</svg>

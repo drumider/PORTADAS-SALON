@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2c2720"/>
+      <stop offset="100%" stop-color="#12100d"/>
+    </radialGradient>
+    <linearGradient id="bottle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1c1611"/>
+      <stop offset="25%" stop-color="#4d3b28"/>
+      <stop offset="50%" stop-color="#33271a"/>
+      <stop offset="85%" stop-color="#140f0a"/>
+      <stop offset="100%" stop-color="#0a0805"/>
+    </linearGradient>
+    <linearGradient id="label" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#b09978"/>
+      <stop offset="50%" stop-color="#ccb695"/>
+      <stop offset="100%" stop-color="#8f7a5b"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="530" rx="140" ry="25" fill="#000000" opacity="0.6"/>
+  <path d="M220 220 Q220 180 270 170 L270 140 L330 140 L330 170 Q380 180 380 220 L380 490 Q380 510 360 515 L240 515 Q220 510 220 490 Z" fill="url(#bottle)"/>
+  <rect x="270" y="100" width="60" height="42" rx="4" fill="#15120e" stroke="#2a2218" stroke-width="2"/>
+  <rect x="230" y="220" width="140" height="240" fill="url(#label)" rx="2"/>
+  <rect x="310" y="225" width="22" height="18" fill="#d97262" opacity="0.8" rx="1"/>
+  <rect x="335" y="225" width="22" height="18" fill="#62a3d9" opacity="0.8" rx="1"/>
+  <text x="300" y="275" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="28" fill="#362919" text-anchor="middle" letter-spacing="1">nashi</text>
+  <text x="300" y="295" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="400" font-size="16" fill="#362919" text-anchor="middle" letter-spacing="4">ARGAN</text>
+  <text x="300" y="318" font-family="'Georgia', serif" font-style="italic" font-size="8" fill="#362919" text-anchor="middle">Trattamento di bellezza per tutti i tipi di capello</text>
+  <text x="300" y="328" font-family="'Georgia', serif" font-style="italic" font-size="7.5" fill="#362919" text-anchor="middle">Beauty treatment for all kind of hair</text>
+  <text x="300" y="355" font-family="'Georgia', serif" font-style="italic" font-size="18" fill="#362919" text-anchor="middle">conditioner</text>
+  <circle cx="300" cy="412" r="28" fill="none" stroke="#ffffff" stroke-width="2"/>
+  <text x="300" y="416" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="8.5" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">ARGAN</text>
+</svg>

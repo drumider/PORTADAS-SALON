@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a2238"/>
+      <stop offset="100%" stop-color="#0f0a17"/>
+    </radialGradient>
+    <linearGradient id="lavender_bottle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#bda7e3"/>
+      <stop offset="50%" stop-color="#e0d2f7"/>
+      <stop offset="100%" stop-color="#a38bcb"/>
+    </linearGradient>
+    <linearGradient id="holo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff0080"/>
+      <stop offset="50%" stop-color="#00ffff"/>
+      <stop offset="100%" stop-color="#ffff00"/>
+    </linearGradient>
+    <linearGradient id="silver_top" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#888888"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#666666"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="510" rx="90" ry="18" fill="#000000" opacity="0.6"/>
+  <!-- Silver Cap -->
+  <path d="M 230 110 L 370 110 L 350 160 L 250 160 Z" fill="url(#silver_top)"/>
+  <!-- Bottle Body -->
+  <path d="M 250 160 C 240 230, 230 380, 250 490 L 350 490 C 370 380, 360 230, 350 160 Z" fill="url(#lavender_bottle)"/>
+  <text x="300" y="210" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="16" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="222" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7" fill="#111111" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <!-- Holographic K -->
+  <path d="M 285 240 L 285 280 M 285 260 L 315 240 M 285 260 L 315 280" stroke="url(#holo)" stroke-width="8" stroke-linecap="square"/>
+  <text x="300" y="310" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="11" fill="#4a227b" text-anchor="middle" letter-spacing="2">BLOND ABSOLU</text>
+  <text x="300" y="340" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="11" fill="#111111" text-anchor="middle">BAIN ULTRA-VIOLET</text>
+  <text x="300" y="358" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="6.5" fill="#443366" text-anchor="middle">ACIDE HYALURONIQUE + EDELWEISS</text>
+  <text x="300" y="380" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#222222" text-anchor="middle">Shampooing violet anti-faux reflets</text>
+  <text x="300" y="392" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#222222" text-anchor="middle">Anti-brass purple shampoo</text>
+  <text x="300" y="465" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#333333" text-anchor="middle">250 ml 8.5 fl.oz.</text>
+</svg>
