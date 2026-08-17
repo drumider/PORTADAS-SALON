@@ -34,7 +34,10 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  // Initialize or reset form only when the modal opens or the specific appointment/slot changes
   useEffect(() => {
+    if (!isOpen) return;
+
     if (initialAppointment) {
       setConfirmDelete(false);
       setClientName(initialAppointment.clientName || '');
@@ -57,7 +60,14 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
       setStatus('Confirmada');
       setNotes('');
     }
-  }, [initialAppointment, selectedDate, isOpen]);
+  }, [
+    isOpen,
+    initialAppointment?.id,
+    initialAppointment?.stylistId,
+    initialAppointment?.time,
+    initialAppointment?.date,
+    selectedDate
+  ]);
 
   if (!isOpen) return null;
 

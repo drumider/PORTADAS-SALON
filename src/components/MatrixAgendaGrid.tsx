@@ -371,6 +371,20 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
     );
   }, [selectedDate]);
 
+  // Memoize appointment payload passed into AppointmentModal to prevent unwanted re-initializations
+  const modalAppointmentData = useMemo(() => {
+    if (editingAppointment) return editingAppointment;
+    if (modalInitialSlot) {
+      return {
+        stylistId: modalInitialSlot.stylistId,
+        date: selectedDateStr,
+        time: modalInitialSlot.time,
+        status: 'Confirmada' as const
+      };
+    }
+    return null;
+  }, [editingAppointment, modalInitialSlot, selectedDateStr]);
+
   return (
     <div 
       ref={gridContainerRef}
@@ -1083,12 +1097,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         }}
         onSave={handleSaveAppointment}
         onDelete={handleDeleteAppointment}
-        initialAppointment={editingAppointment || (modalInitialSlot ? {
-          stylistId: modalInitialSlot.stylistId,
-          date: selectedDateStr,
-          time: modalInitialSlot.time,
-          status: 'Confirmada'
-        } : null)}
+        initialAppointment={modalAppointmentData}
         selectedDate={selectedDateStr}
       />
 
