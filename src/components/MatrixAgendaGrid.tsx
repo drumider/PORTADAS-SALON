@@ -31,7 +31,12 @@ import {
   Minus,
   Square,
   Check,
-  CalendarCheck
+  CalendarCheck,
+  Grid,
+  Columns,
+  Sparkles,
+  Layers,
+  ChevronDown
 } from 'lucide-react';
 import { Appointment, AppointmentStatus, Stylist } from '../types';
 import { STYLISTS as DEFAULT_STYLISTS, SERVICES } from '../constants';
@@ -49,13 +54,13 @@ interface MatrixAgendaGridProps {
   isAdmin?: boolean;
 }
 
-// Generate customizable time slots between 07:30 and 21:30 (default 30-minute intervals)
-const GENERATE_TIME_SLOTS = (interval: 15 | 30 = 30): string[] => {
+// Generate customizable time slots between 07:30 and 21:00 (strictly 30-minute intervals)
+const GENERATE_TIME_SLOTS = (): string[] => {
   const slots: string[] = [];
   const startHour = 7;
   const startMinute = 30;
   const endHour = 21;
-  const endMinute = 30;
+  const endMinute = 0;
 
   let currentMinutes = startHour * 60 + startMinute;
   const endMinutes = endHour * 60 + endMinute;
@@ -64,10 +69,12 @@ const GENERATE_TIME_SLOTS = (interval: 15 | 30 = 30): string[] => {
     const h = Math.floor(currentMinutes / 60);
     const m = currentMinutes % 60;
     slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-    currentMinutes += interval;
+    currentMinutes += 30;
   }
   return slots;
 };
+
+type AgendaViewMode = 'single_stylist' | 'timeline' | 'matrix';
 
 export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isAdmin = true }) => {
   // Real-time Clock
@@ -76,9 +83,16 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
   // Selected Date (defaults to today)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
-  // Salon selection
-  const [selectedSalon, setSelectedSalon] = useState<string>('Salón 1');
-  const [isSalonMenuOpen, setIsSalonMenuOpen] = useState<boolean>(false);
+  // View Mode: On desktop/tablets (width >= 768px) default to 'matrix' like before; on mobile (< 768px) default to 'single_stylist'
+  const [viewMode, setViewMode] = useState<AgendaViewMode>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      return 'matrix';
+    }
+    return 'single_stylist';
+  });
+  
+  // Active Stylist filter for single stylist view or matrix highlight
+  const [activeStylistId, setActiveStylistId] = useState<string>('carlos');
 
   // Stylists list (with ability to add new ones dynamically)
   const [stylists, setStylists] = useState<Stylist[]>(() => {
@@ -92,9 +106,8 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
   // Appointments
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
-  // Time slots interval (strictly 30 min blocks: 07:30, 08:00, 08:30, 09:00...)
-  const [slotInterval, setSlotInterval] = useState<15 | 30>(30);
-  const timeSlots = useMemo(() => GENERATE_TIME_SLOTS(slotInterval), [slotInterval]);
+  // Time slots (30 min blocks: 07:30, 08:00, 08:30, 09:00...)
+  const timeSlots = useMemo(() => GENERATE_TIME_SLOTS(), []);
 
   // Modals & Drawers state
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
@@ -174,18 +187,18 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
     setActiveBottomModal(null);
   };
 
-  // Format date helper: "Sábado, 15 de Agosto de 2026"
+  // Format date helper
   const formattedSelectedDate = useMemo(() => {
-    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
     const monthNames = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+      'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'
     ];
     const dayName = dayNames[selectedDate.getDay()];
     const dayNum = selectedDate.getDate();
     const monthName = monthNames[selectedDate.getMonth()];
     const year = selectedDate.getFullYear();
-    return `${dayName}, ${dayNum} de ${monthName} de ${year}`;
+    return `${dayName}, ${dayNum} ${monthName} ${year}`;
   }, [selectedDate]);
 
   const selectedDateStr = useMemo(() => {
@@ -214,10 +227,12 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
 
   // Appointments for the selected day
   const dayAppointments = useMemo(() => {
-    return appointments.filter(a => a.date === selectedDateStr);
+    return appointments
+      .filter(a => a.date === selectedDateStr)
+      .sort((a, b) => a.time.localeCompare(b.time));
   }, [appointments, selectedDateStr]);
 
-  // Map appointments by stylistId and time (also supporting legacy :15 and :45 slots falling into the half-hour block)
+  // Map appointments by stylistId and time
   const appointmentMatrix = useMemo(() => {
     const map = new Map<string, Appointment[]>();
     dayAppointments.forEach(app => {
@@ -230,12 +245,10 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
       const targetM = m < 30 ? '00' : '30';
       const targetSlotTime = `${String(h).padStart(2, '0')}:${targetM}`;
 
-      // Set direct exact match
       const exactKey = `${app.stylistId}_${cleanTime}`;
       const existingExact = map.get(exactKey) || [];
       map.set(exactKey, [...existingExact, app]);
 
-      // Also bucket into 30m block slot
       const blockKey = `${app.stylistId}_${targetSlotTime}`;
       if (blockKey !== exactKey) {
         const existingBlock = map.get(blockKey) || [];
@@ -297,8 +310,9 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
     switch (status) {
       case 'Confirmada':
         return {
-          cardBg: 'bg-emerald-50/95 border-emerald-400 text-emerald-950 hover:border-emerald-600',
+          cardBg: 'bg-emerald-50 border-emerald-400 text-emerald-950 hover:border-emerald-600',
           dot: 'bg-emerald-500',
+          badge: 'bg-emerald-100 text-emerald-800 border-emerald-300',
           textColor: 'text-emerald-950',
           subColor: 'text-emerald-800',
           timeColor: 'text-emerald-700',
@@ -306,8 +320,9 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         };
       case 'Pendiente':
         return {
-          cardBg: 'bg-amber-50/95 border-amber-400 text-amber-950 hover:border-amber-600',
+          cardBg: 'bg-amber-50 border-amber-400 text-amber-950 hover:border-amber-600',
           dot: 'bg-amber-500',
+          badge: 'bg-amber-100 text-amber-900 border-amber-300',
           textColor: 'text-amber-950',
           subColor: 'text-amber-800',
           timeColor: 'text-amber-700',
@@ -315,8 +330,9 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         };
       case 'Completada':
         return {
-          cardBg: 'bg-blue-50/95 border-blue-400 text-blue-950 hover:border-blue-600',
+          cardBg: 'bg-blue-50 border-blue-400 text-blue-950 hover:border-blue-600',
           dot: 'bg-blue-500',
+          badge: 'bg-blue-100 text-blue-800 border-blue-300',
           textColor: 'text-blue-950',
           subColor: 'text-blue-800',
           timeColor: 'text-blue-700',
@@ -324,8 +340,9 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         };
       case 'Cancelada':
         return {
-          cardBg: 'bg-rose-50/90 border-rose-300 text-rose-800 line-through opacity-70',
+          cardBg: 'bg-rose-50 border-rose-300 text-rose-800 line-through opacity-70',
           dot: 'bg-rose-400',
+          badge: 'bg-rose-100 text-rose-800 border-rose-300',
           textColor: 'text-rose-900',
           subColor: 'text-rose-700',
           timeColor: 'text-rose-600',
@@ -335,6 +352,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         return {
           cardBg: 'bg-neutral-50 border-neutral-300 text-neutral-900',
           dot: 'bg-neutral-400',
+          badge: 'bg-neutral-100 text-neutral-800 border-neutral-300',
           textColor: 'text-neutral-900',
           subColor: 'text-neutral-700',
           timeColor: 'text-neutral-600',
@@ -361,6 +379,11 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
     return appointments.filter(app => app.status === 'Pendiente');
   }, [appointments]);
 
+  // Active stylist object
+  const selectedStylistObj = useMemo(() => {
+    return stylists.find(s => s.id === activeStylistId) || stylists[0];
+  }, [stylists, activeStylistId]);
+
   // Check if today
   const isToday = useMemo(() => {
     const today = new Date();
@@ -371,7 +394,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
     );
   }, [selectedDate]);
 
-  // Memoize appointment payload passed into AppointmentModal to prevent unwanted re-initializations
+  // Memoize appointment payload passed into AppointmentModal
   const modalAppointmentData = useMemo(() => {
     if (editingAppointment) return editingAppointment;
     if (modalInitialSlot) {
@@ -388,348 +411,596 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
   return (
     <div 
       ref={gridContainerRef}
-      className={`min-h-[82vh] bg-[#FAF8F5] text-neutral-900 border border-[#E2D8CC] rounded-xl shadow-lg flex flex-col font-sans select-none overflow-x-hidden ${
+      className={`min-h-[82vh] bg-[#FAF8F5] text-neutral-900 border border-[#E2D8CC] rounded-xl shadow-lg flex flex-col font-sans select-none overflow-hidden ${
         isFullscreen ? 'fixed inset-0 z-50 p-0 rounded-none' : 'relative'
       }`}
       id="matrix-agenda-main"
     >
-      {/* 1. TOP WINDOW BAR (Light & Clean) */}
-      <header className="bg-white border-b border-[#E2D8CC] px-3 sm:px-6 py-3 flex items-center justify-between gap-2 sm:gap-4 shrink-0 shadow-xs">
+      {/* 1. COMPACT RESPONSIVE TOP BAR */}
+      <header className="bg-white border-b border-[#E2D8CC] px-3 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shrink-0 shadow-xs">
         
-        {/* Left: Calendar Icon + Title + Salon Subtitle */}
-        <div className="flex items-center gap-2.5 sm:gap-3.5">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-md border border-[#B5916A]/40 bg-[#FAF8F5] flex items-center justify-center text-[#8C6B4D] shadow-xs shrink-0">
-            <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[#8C6B4D]" />
+        {/* Left: Brand Badge & Title */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 rounded bg-[#FAF8F5] border border-[#B5916A]/40 flex items-center justify-center text-[#8C6B4D] shadow-xs shrink-0">
+            <CalendarIcon className="w-4 h-4 text-[#8C6B4D]" />
           </div>
-          <div className="relative">
-            <h1 className="text-xs sm:text-sm md:text-base font-bold text-[#2C221C] tracking-wide uppercase font-serif-luxury leading-tight">
-              Agenda de Citas
-            </h1>
-            
-            {/* Salon Dropdown */}
-            <div className="relative inline-block">
-              <button 
-                onClick={() => setIsSalonMenuOpen(!isSalonMenuOpen)}
-                className="text-[10px] sm:text-[11px] text-[#8C6B4D] hover:text-[#2C221C] transition-colors flex items-center gap-1 font-medium cursor-pointer"
-              >
-                <span>{selectedSalon}</span>
-                <span className="text-[8px] opacity-80">▼</span>
-              </button>
-
-              {isSalonMenuOpen && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-[#E2D8CC] shadow-xl rounded-md z-50 py-1">
-                  {['Salón 1 - Principal', 'Salón 2 - Spa y Estética', 'Cabina VIP Kérastase'].map(salon => (
-                    <button
-                      key={salon}
-                      onClick={() => {
-                        setSelectedSalon(salon.split(' - ')[0]);
-                        setIsSalonMenuOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-1.5 text-xs text-neutral-800 hover:bg-[#FAF8F5] hover:text-[#8C6B4D] transition-colors flex items-center justify-between cursor-pointer"
-                    >
-                      <span>{salon}</span>
-                      {selectedSalon === salon.split(' - ')[0] && <Check className="w-3.5 h-3.5 text-[#8C6B4D]" />}
-                    </button>
-                  ))}
-                </div>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-xs sm:text-sm font-bold text-[#2C221C] tracking-wide uppercase font-serif-luxury leading-tight">
+                Agenda de Citas
+              </h1>
+              {isToday && (
+                <span className="text-[9px] uppercase font-mono tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 px-1.5 py-0.2 rounded font-bold">
+                  Hoy
+                </span>
               )}
             </div>
+            <span className="text-[10px] text-[#8C6B4D] font-mono">
+              Salón Escazú · {dayAppointments.length} {dayAppointments.length === 1 ? 'cita' : 'citas'}
+            </span>
           </div>
         </div>
 
-        {/* Center: Date Navigation (< Sábado, 15 de Agosto de 2026 >) */}
-        <div className="flex items-center gap-1 sm:gap-2.5">
+        {/* Center: Clean Date Navigator (< Lun, 17 Ago 2026 >) */}
+        <div className="flex items-center gap-1 bg-[#FAF8F5] border border-[#D9CEC2] p-1 rounded-md shadow-xs">
           <button
             onClick={handlePrevDay}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-white border border-[#D9CEC2] hover:border-[#8C6B4D] hover:bg-[#F2ECE5] text-[#2C221C] flex items-center justify-center transition-all shadow-xs cursor-pointer"
+            className="w-7 h-7 rounded bg-white hover:bg-[#F2ECE5] text-[#2C221C] border border-[#E2D8CC] flex items-center justify-center transition-colors shadow-xs cursor-pointer"
             title="Día anterior"
             aria-label="Día anterior"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
 
-          <div
-            className="px-3 sm:px-5 py-1.5 rounded bg-[#FAF8F5] border border-[#D9CEC2] text-xs sm:text-sm font-semibold text-[#2C221C] tracking-wide flex items-center gap-2 shadow-xs"
+          <button
+            onClick={handleSetToday}
+            className="px-2.5 py-1 text-xs font-semibold text-[#2C221C] tracking-wide hover:text-[#8C6B4D] transition-colors cursor-pointer font-serif-luxury"
+            title="Clic para ir a Hoy"
           >
-            <span className="font-serif-luxury font-bold text-neutral-900">{formattedSelectedDate}</span>
-            {isToday && (
-              <span className="text-[9px] uppercase font-mono tracking-wider bg-[#E5C1CD]/40 text-[#8C4A5A] border border-[#E5C1CD] px-1.5 py-0.2 rounded font-bold hidden sm:inline">
-                Hoy
-              </span>
-            )}
-          </div>
+            {formattedSelectedDate}
+          </button>
 
           <button
             onClick={handleNextDay}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-white border border-[#D9CEC2] hover:border-[#8C6B4D] hover:bg-[#F2ECE5] text-[#2C221C] flex items-center justify-center transition-all shadow-xs cursor-pointer"
+            className="w-7 h-7 rounded bg-white hover:bg-[#F2ECE5] text-[#2C221C] border border-[#E2D8CC] flex items-center justify-center transition-colors shadow-xs cursor-pointer"
             title="Día siguiente"
             aria-label="Día siguiente"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
-
-          {!isToday && (
-            <button
-              onClick={handleSetToday}
-              className="text-[9px] sm:text-[10px] uppercase font-mono tracking-wider px-2.5 py-1.5 bg-[#2C221C] hover:bg-[#8C6B4D] text-white transition-all rounded shadow-xs hidden lg:block cursor-pointer font-bold"
-            >
-              Ir a Hoy
-            </button>
-          )}
         </div>
 
-        {/* Right: Action Buttons + Live Clock */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
-          
-          {/* Action Buttons in Header */}
-          <button
-            onClick={() => setActiveBottomModal('help')}
-            className="px-2.5 sm:px-3 py-1.5 rounded bg-[#FAF8F5] hover:bg-[#F2ECE5] border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#5C4A38] hover:text-[#1A1410] transition-all shadow-xs flex items-center gap-1.5 cursor-pointer text-xs font-bold uppercase tracking-wider"
-            title="Ayuda y Guía de Uso"
-          >
-            <HelpCircle className="w-4 h-4 text-[#8C6B4D]" />
-            <span className="hidden md:inline">Ayuda</span>
-          </button>
+        {/* Right: Quick View Switcher & Action Tools */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* View Mode Switcher Pills */}
+          <div className="flex items-center bg-[#F2ECE5] p-0.5 rounded border border-[#D9CEC2]">
+            <button
+              onClick={() => setViewMode('single_stylist')}
+              className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1 ${
+                viewMode === 'single_stylist'
+                  ? 'bg-white text-[#2C221C] shadow-xs'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+              title="Vista Individual por Estilista (Ideal para móvil)"
+            >
+              <User className="w-3 h-3 text-[#8C6B4D]" />
+              <span className="hidden sm:inline">Por Estilista</span>
+            </button>
 
+            <button
+              onClick={() => setViewMode('timeline')}
+              className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1 ${
+                viewMode === 'timeline'
+                  ? 'bg-white text-[#2C221C] shadow-xs'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+              title="Cronograma de citas del día"
+            >
+              <ListIcon className="w-3 h-3 text-[#8C6B4D]" />
+              <span className="hidden sm:inline">Cronograma</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('matrix')}
+              className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1 ${
+                viewMode === 'matrix'
+                  ? 'bg-white text-[#2C221C] shadow-xs'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+              title="Tabla Matriz Completa"
+            >
+              <Columns className="w-3 h-3 text-[#8C6B4D]" />
+              <span className="hidden sm:inline">Matriz</span>
+            </button>
+          </div>
+
+          {/* Pending Requests Button */}
+          {pendingAppointments.length > 0 && (
+            <button
+              onClick={() => setActiveBottomModal('pending')}
+              className="px-2 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1 transition-colors shadow-xs"
+              title="Citas pendientes"
+            >
+              <ClipboardList className="w-3.5 h-3.5 text-amber-600" />
+              <span className="bg-amber-600 text-white text-[9px] px-1 rounded-full font-mono">
+                {pendingAppointments.length}
+              </span>
+            </button>
+          )}
+
+          {/* Quick Tools Trigger */}
           <button
             onClick={() => setActiveBottomModal('list')}
-            className="px-2.5 sm:px-3 py-1.5 rounded bg-[#FAF8F5] hover:bg-[#F2ECE5] border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#5C4A38] hover:text-[#1A1410] transition-all shadow-xs flex items-center gap-1.5 cursor-pointer text-xs font-bold uppercase tracking-wider"
-            title="Ver Todas las Citas en Lista"
+            className="w-7 h-7 rounded bg-[#FAF8F5] hover:bg-[#F2ECE5] border border-[#D9CEC2] text-[#5C4A38] flex items-center justify-center transition-colors shadow-xs"
+            title="Buscador general de citas"
           >
-            <ListIcon className="w-4 h-4 text-[#8C6B4D]" />
-            <span className="hidden md:inline">Lista</span>
+            <Search className="w-3.5 h-3.5" />
           </button>
 
           <button
             onClick={handlePrint}
-            className="px-2.5 sm:px-3 py-1.5 rounded bg-[#FAF8F5] hover:bg-[#F2ECE5] border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#5C4A38] hover:text-[#1A1410] transition-all shadow-xs flex items-center gap-1.5 cursor-pointer text-xs font-bold uppercase tracking-wider"
-            title="Imprimir Hoja de Trabajo Diaria"
+            className="w-7 h-7 rounded bg-[#FAF8F5] hover:bg-[#F2ECE5] border border-[#D9CEC2] text-[#5C4A38] flex items-center justify-center transition-colors shadow-xs"
+            title="Imprimir hoja de trabajo"
           >
-            <Printer className="w-4 h-4 text-[#8C6B4D]" />
-            <span className="hidden md:inline">Imprimir</span>
+            <Printer className="w-3.5 h-3.5" />
           </button>
-
-          <button
-            onClick={() => setActiveBottomModal('pending')}
-            className="px-2.5 sm:px-3 py-1.5 rounded bg-[#FAF8F5] hover:bg-amber-50 border border-amber-300 hover:border-amber-500 text-amber-900 transition-all shadow-xs flex items-center gap-1.5 relative cursor-pointer text-xs font-bold uppercase tracking-wider"
-            title="Ver Citas Pendientes de Confirmación"
-          >
-            <ClipboardList className="w-4 h-4 text-amber-600" />
-            <span className="hidden sm:inline">Pendientes</span>
-            {pendingAppointments.length > 0 && (
-              <span className="bg-amber-600 text-white font-bold text-[9px] px-1.5 py-0.2 rounded-full animate-bounce">
-                {pendingAppointments.length}
-              </span>
-            )}
-          </button>
-
-          {/* Live Clock */}
-          <div className="flex items-center gap-1.5 text-[#2C221C] bg-[#FAF8F5] border border-[#E2D8CC] px-2.5 py-1 rounded shadow-xs hidden lg:flex">
-            <Clock className="w-3.5 h-3.5 text-[#8C6B4D] animate-pulse" />
-            <span className="font-mono text-xs sm:text-sm font-bold tracking-wider">
-              {currentTime || '00:00:00'}
-            </span>
-          </div>
-
-          {/* Fullscreen Button */}
-          <button
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            className="w-7 h-7 rounded text-neutral-500 hover:text-neutral-900 hover:bg-[#F2ECE5] flex items-center justify-center transition-colors cursor-pointer"
-            title="Pantalla Completa"
-          >
-            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
-          </button>
-
         </div>
 
       </header>
 
-      {/* 2. MAIN MATRIX GRID (Light Theme Table with high contrast) */}
-      <div className="flex-1 overflow-auto bg-[#F7F4EF] relative" id="matrix-scroll-area">
-        <div className="min-w-[1000px] w-full pb-24">
-          <table className="w-full border-collapse text-left border-b border-[#E2D8CC]">
-            
-            {/* Table Header: HORA + Stylist Columns */}
-            <thead className="sticky top-0 z-20 bg-[#F4EEE6] border-b-2 border-[#D9CEC2] shadow-xs">
-              <tr>
-                {/* Column: HORA */}
-                <th className="w-24 px-3 py-3 border-r border-[#E2D8CC] text-center bg-[#F0EAE1] sticky left-0 z-30 shadow-[2px_0_4px_rgba(0,0,0,0.05)]">
-                  <span className="text-[11px] font-bold tracking-[0.2em] text-[#5C4A38] uppercase font-mono">
-                    HORA
+      {/* 2. STYLIST SELECTOR TABS (Visible in mobile or when single_stylist mode is active) */}
+      {(viewMode === 'single_stylist' || viewMode === 'timeline') && (
+        <div className="bg-[#FAF8F5] border-b border-[#E2D8CC] px-3 sm:px-5 py-2 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[10px] uppercase font-bold text-[#8C6B4D] font-mono mr-1 hidden sm:inline">
+              Profesionales:
+            </span>
+
+            {stylists.map((st) => {
+              const isSelected = activeStylistId === st.id;
+              const dayOfWeek = selectedDate.getDay();
+              const isOff = st.offDays?.includes(dayOfWeek);
+              
+              // Count stylist appointments for this day
+              const stAppointmentsCount = dayAppointments.filter(
+                a => a.stylistId === st.id || (st.id !== 'cualquiera' && a.stylistId === 'cualquiera')
+              ).length;
+
+              return (
+                <button
+                  key={st.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveStylistId(st.id);
+                  }}
+                  className={`px-3 py-1.5 rounded-md text-xs font-serif-luxury uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#2C221C] text-white font-bold shadow-xs'
+                      : 'bg-white border border-[#D9CEC2] text-neutral-800 hover:border-[#8C6B4D] hover:bg-[#F2ECE5]'
+                  }`}
+                >
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${
+                    isSelected ? 'bg-[#8C6B4D] text-white' : 'bg-[#FAF8F5] text-neutral-700 border border-[#E2D8CC]'
+                  }`}>
+                    {st.avatarLetter}
                   </span>
-                </th>
+                  <span>{st.name.split(' ')[0]}</span>
+                  
+                  {isOff ? (
+                    <span className="text-[8px] bg-rose-100 text-rose-800 border border-rose-200 px-1 py-0.2 rounded font-mono font-bold">
+                      Libre
+                    </span>
+                  ) : stAppointmentsCount > 0 ? (
+                    <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold ${
+                      isSelected ? 'bg-[#8C6B4D] text-white' : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {stAppointmentsCount}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
 
-                {/* Columns: Stylists */}
-                {stylists.map((stylist) => {
-                  const dayOfWeek = selectedDate.getDay();
-                  const isOff = stylist.offDays?.includes(dayOfWeek);
+          {/* Add Stylist Action */}
+          <button
+            onClick={() => setActiveBottomModal('add_stylist')}
+            className="text-[10px] text-[#8C6B4D] hover:text-[#2C221C] font-bold uppercase tracking-wider flex items-center gap-1 shrink-0 px-2 py-1 bg-white border border-[#D9CEC2] rounded hover:border-[#8C6B4D] transition-colors"
+          >
+            <Plus className="w-3 h-3" />
+            <span className="hidden sm:inline">Nuevo</span>
+          </button>
+        </div>
+      )}
 
-                  return (
-                    <th
-                      key={stylist.id}
-                      className={`px-3 py-2.5 border-r border-[#E2D8CC] text-center min-w-[180px] max-w-[240px] transition-colors ${
-                        stylist.id === 'cualquiera' ? 'bg-[#F5EFE8]' : 'bg-[#FAF8F5]'
-                      }`}
-                    >
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs sm:text-sm font-bold text-[#1C1612] tracking-wider uppercase font-serif-luxury">
-                            {stylist.name}
-                          </span>
-                          {isOff && (
-                            <span className="text-[8px] bg-rose-100 border border-rose-300 text-rose-800 px-1 py-0.2 rounded uppercase font-mono font-bold">
-                              Libre
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[9px] text-[#7C6652] font-mono tracking-wider uppercase line-clamp-1 mt-0.5 font-medium">
-                          {stylist.role}
-                        </span>
-                      </div>
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
+      {/* 3. MAIN CONTENT VIEWS */}
+      <div className="flex-1 overflow-y-auto bg-[#F7F4EF] p-2.5 sm:p-4" id="matrix-scroll-area">
+        
+        {/* ========================================================= */}
+        {/* VIEW A: SINGLE STYLIST (Spacious & Ergonomic for Mobile)  */}
+        {/* ========================================================= */}
+        {viewMode === 'single_stylist' && (
+          <div className="max-w-3xl mx-auto space-y-3">
+            
+            {/* Stylist Header Summary Card */}
+            <div className="bg-white border border-[#E2D8CC] p-3.5 rounded-lg shadow-xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#2C221C] text-gold-champagne flex items-center justify-center text-sm font-bold font-serif-luxury shadow-xs shrink-0">
+                  {selectedStylistObj.avatarLetter}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-serif-luxury text-sm sm:text-base font-bold text-neutral-900 uppercase">
+                      {selectedStylistObj.name}
+                    </h3>
+                    {selectedStylistObj.offDays?.includes(selectedDate.getDay()) && (
+                      <span className="text-[9px] bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded font-mono font-bold uppercase">
+                        Día de Descanso
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-[#8C6B4D] font-mono uppercase tracking-wider">
+                    {selectedStylistObj.role}
+                  </p>
+                </div>
+              </div>
 
-            {/* Table Body: Time Rows */}
-            <tbody className="divide-y divide-[#EAE3DC] bg-white">
+              <div className="text-right">
+                <span className="text-xs text-neutral-500 font-mono block">Citas programadas</span>
+                <strong className="text-base font-serif-luxury font-bold text-[#2C221C]">
+                  {dayAppointments.filter(a => a.stylistId === selectedStylistObj.id || a.stylistId === 'cualquiera').length}
+                </strong>
+              </div>
+            </div>
+
+            {/* Time Slots Vertical Flow */}
+            <div className="space-y-1.5">
               {timeSlots.map((timeSlot) => {
+                const cleanTime = timeSlot;
+                const appKey = `${selectedStylistObj.id}_${cleanTime}`;
+                const slotAppointments = appointmentMatrix.get(appKey) || [];
                 const [slotH, slotM] = timeSlot.split(':').map(Number);
                 const now = new Date();
                 const isCurrentHourSlot = isToday && now.getHours() === slotH && Math.abs(now.getMinutes() - slotM) < 15;
+                const isOff = selectedStylistObj.offDays?.includes(selectedDate.getDay());
 
                 return (
-                  <tr 
-                    key={timeSlot} 
-                    className={`hover:bg-[#F4EFE9] transition-colors group ${
-                      isCurrentHourSlot ? 'bg-amber-100/40 border-y border-amber-300/80' : ''
+                  <div
+                    key={timeSlot}
+                    className={`bg-white border rounded-lg p-2.5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs ${
+                      isCurrentHourSlot ? 'border-[#8C6B4D] ring-1 ring-[#8C6B4D]/30 bg-amber-50/30' : 'border-[#E2D8CC] hover:border-[#8C6B4D]/60'
                     }`}
                   >
-                    
-                    {/* Time Column (Left Sticky) */}
-                    <td className="w-24 px-3 py-1.5 border-r border-[#E2D8CC] text-center bg-[#F0EAE1] sticky left-0 z-10 font-mono text-[11px] text-[#5C4A38] font-bold group-hover:text-[#1C1612] shadow-[2px_0_4px_rgba(0,0,0,0.05)]">
-                      <div className="flex items-center justify-center gap-1">
-                        {isCurrentHourSlot && <span className="w-1.5 h-1.5 rounded-full bg-[#8C6B4D] animate-ping" />}
-                        <span>{timeSlot}</span>
+                    {/* Time Label */}
+                    <div className="flex items-center gap-2 shrink-0 sm:w-28">
+                      <span className="w-2 h-2 rounded-full bg-[#8C6B4D]" />
+                      <span className="font-mono text-sm font-bold text-[#2C221C]">
+                        {timeSlot}
+                      </span>
+                      {isCurrentHourSlot && (
+                        <span className="text-[8px] bg-amber-200 text-amber-900 px-1 rounded font-bold uppercase font-mono">
+                          Actual
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Slot Content */}
+                    <div className="flex-1 min-w-0">
+                      {slotAppointments.length > 0 ? (
+                        <div className="space-y-2">
+                          {slotAppointments.map((app) => {
+                            const badge = getStatusBadge(app.status);
+                            return (
+                              <div
+                                key={app.id}
+                                onClick={() => handleSlotClick(selectedStylistObj, timeSlot, app)}
+                                className={`p-2.5 rounded-md border text-left cursor-pointer transition-all ${badge.cardBg} hover:shadow-md`}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <User className="w-3.5 h-3.5 text-[#8C6B4D] shrink-0" />
+                                    <span className="font-bold text-xs uppercase font-serif-luxury truncate text-neutral-900">
+                                      {app.clientName}
+                                    </span>
+                                  </div>
+                                  <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${badge.badge}`}>
+                                    {app.status}
+                                  </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-neutral-700 mt-1.5">
+                                  <div className="flex items-center gap-1.5 truncate">
+                                    <Scissors className="w-3 h-3 text-[#8C6B4D] shrink-0" />
+                                    <span className="truncate">{app.serviceName}</span>
+                                  </div>
+                                  {app.clientPhone && (
+                                    <div className="flex items-center gap-1.5 font-mono text-neutral-600">
+                                      <Phone className="w-3 h-3 text-emerald-600 shrink-0" />
+                                      <span>{app.clientPhone}</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {app.notes && (
+                                  <p className="text-[10px] text-neutral-500 italic mt-1 bg-white/60 p-1 rounded border border-black/5">
+                                    "{app.notes}"
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : isOff ? (
+                        <div 
+                          onClick={() => handleSlotClick(selectedStylistObj, timeSlot)}
+                          className="py-2 px-3 border border-dashed border-neutral-300 rounded bg-[#FAF8F5] text-neutral-400 text-xs font-mono flex items-center justify-between cursor-pointer hover:border-[#8C6B4D] hover:text-neutral-700 transition-colors"
+                        >
+                          <span>Día de descanso programado</span>
+                          <span className="text-[10px] text-[#8C6B4D] font-bold uppercase">+ Forzar cita</span>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleSlotClick(selectedStylistObj, timeSlot)}
+                          className="w-full py-2 px-3 rounded border border-dashed border-[#D9CEC2] hover:border-[#8C6B4D] bg-[#FAF8F5] hover:bg-white text-[#5C4A38] text-xs font-medium transition-all flex items-center justify-between cursor-pointer group"
+                        >
+                          <span className="text-[11px] text-neutral-500 group-hover:text-neutral-900 font-mono">
+                            Espacio libre a las {timeSlot}
+                          </span>
+                          <span className="text-[10px] text-[#8C6B4D] font-bold uppercase tracking-wider bg-white group-hover:bg-[#8C6B4D] group-hover:text-white px-2 py-0.5 rounded border border-[#D9CEC2] transition-colors flex items-center gap-1">
+                            <Plus className="w-3 h-3" />
+                            <span>Agendar Cita</span>
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* VIEW B: TIMELINE / CHRONOLOGICAL SCHEDULE FOR THE DAY     */}
+        {/* ========================================================= */}
+        {viewMode === 'timeline' && (
+          <div className="max-w-3xl mx-auto space-y-3">
+            <div className="bg-white border border-[#E2D8CC] p-3 rounded-lg flex items-center justify-between">
+              <span className="text-xs font-bold uppercase font-serif-luxury text-neutral-900">
+                Cronograma de {formattedSelectedDate}
+              </span>
+              <span className="text-xs font-mono text-[#8C6B4D]">
+                Total: {dayAppointments.length} citas registradas
+              </span>
+            </div>
+
+            {dayAppointments.length === 0 ? (
+              <div className="bg-white border border-[#E2D8CC] rounded-lg p-10 text-center space-y-3">
+                <CalendarCheck className="w-10 h-10 text-neutral-300 mx-auto" />
+                <p className="text-sm text-neutral-600 font-serif-luxury">
+                  No hay citas agendadas para {formattedSelectedDate}.
+                </p>
+                <button
+                  onClick={() => {
+                    setEditingAppointment(null);
+                    setModalInitialSlot({ stylistId: activeStylistId, time: '09:00' });
+                    setIsAppointmentModalOpen(true);
+                  }}
+                  className="px-4 py-2 bg-[#2C221C] hover:bg-[#8C6B4D] text-white text-xs font-bold uppercase tracking-wider rounded shadow-xs cursor-pointer"
+                >
+                  + Agendar Primera Cita
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {dayAppointments.map((app) => {
+                  const badge = getStatusBadge(app.status);
+                  return (
+                    <div
+                      key={app.id}
+                      className={`bg-white border rounded-lg p-3.5 shadow-xs transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${badge.cardBg}`}
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base font-bold font-mono text-neutral-900">
+                            {app.time}
+                          </span>
+                          <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${badge.badge}`}>
+                            {app.status}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm font-bold text-neutral-900 uppercase font-serif-luxury">
+                          {app.clientName}
+                        </h4>
+
+                        <p className="text-xs text-neutral-700">
+                          {app.serviceName} · Especialista: <strong className="text-neutral-900 font-medium">{app.stylistName}</strong>
+                        </p>
+
+                        {app.clientPhone && (
+                          <p className="text-[11px] text-neutral-500 font-mono">
+                            Tel / WA: {app.clientPhone}
+                          </p>
+                        )}
                       </div>
-                    </td>
 
-                    {/* Stylist Cells */}
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-black/10">
+                        {app.status === 'Pendiente' && (
+                          <button
+                            onClick={() => handleStatusChange(app.id, 'Confirmada')}
+                            className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold rounded uppercase tracking-wider flex items-center gap-1"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>Confirmar</span>
+                          </button>
+                        )}
+
+                        {app.clientPhone && (
+                          <a
+                            href={`https://wa.me/${app.clientPhone.replace(/\D/g, '')}?text=Hola%20${encodeURIComponent(app.clientName)},%20le%20escribimos%20de%20CF%20Portadas%20para%20su%20cita%20a%20las%20${app.time}.`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold rounded flex items-center gap-1"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            <span>WhatsApp</span>
+                          </a>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            setEditingAppointment(app);
+                            setIsAppointmentModalOpen(true);
+                          }}
+                          className="px-2.5 py-1.5 bg-[#2C221C] hover:bg-[#8C6B4D] text-white text-[11px] font-bold rounded uppercase cursor-pointer"
+                        >
+                          Editar
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* VIEW C: FULL MULTI-COLUMN MATRIX (Horizontal Scrolling)   */}
+        {/* ========================================================= */}
+        {viewMode === 'matrix' && (
+          <div className="overflow-x-auto pb-6 bg-white border border-[#E2D8CC] rounded-lg shadow-xs">
+            <div className="min-w-[760px] w-full">
+              <table className="w-full border-collapse text-left">
+                
+                {/* Table Header: HORA + Stylists */}
+                <thead className="bg-[#F4EEE6] border-b-2 border-[#D9CEC2] sticky top-0 z-20">
+                  <tr>
+                    <th className="w-20 px-3 py-2.5 border-r border-[#E2D8CC] text-center bg-[#F0EAE1] sticky left-0 z-30 font-mono text-[10px] font-bold text-[#5C4A38] uppercase">
+                      HORA
+                    </th>
+
                     {stylists.map((stylist) => {
-                      const cleanTime = timeSlot;
-                      const appKey = `${stylist.id}_${cleanTime}`;
-                      const slotAppointments = appointmentMatrix.get(appKey) || [];
-
                       const dayOfWeek = selectedDate.getDay();
                       const isOff = stylist.offDays?.includes(dayOfWeek);
 
                       return (
-                        <td
+                        <th
                           key={stylist.id}
-                          className="px-2 py-1 border-r border-[#E2D8CC] h-10 align-middle relative text-center"
+                          className="px-3 py-2 border-r border-[#E2D8CC] text-center min-w-[190px] max-w-[240px] bg-[#FAF8F5]"
                         >
-                          {slotAppointments.length > 0 ? (
-                            <div className="space-y-1">
-                              {slotAppointments.map((appointment) => (
-                                /* Booked Appointment Card (Light Theme) */
-                                <motion.div
-                                  key={appointment.id}
-                                  initial={{ opacity: 0, scale: 0.95 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  onClick={() => handleSlotClick(stylist, timeSlot, appointment)}
-                                  className={`p-1.5 rounded text-left border-2 cursor-pointer transition-all shadow-xs hover:shadow-md group/card ${
-                                    getStatusBadge(appointment.status).cardBg
-                                  } hover:scale-[1.02] hover:z-20 relative`}
-                                  title={`Cita: ${appointment.clientName} - ${appointment.serviceName} (${appointment.time})`}
-                                >
-                                  <div className="flex items-center justify-between gap-1">
-                                    <span className={`font-bold text-xs truncate max-w-[120px] ${getStatusBadge(appointment.status).textColor}`}>
-                                      {appointment.clientName}
-                                    </span>
-                                    <span className={`w-2 h-2 rounded-full shrink-0 ${getStatusBadge(appointment.status).dot}`} />
-                                  </div>
-
-                                  <div className="flex items-center justify-between text-[9px] mt-0.5">
-                                    <span className={`truncate max-w-[110px] font-medium ${getStatusBadge(appointment.status).subColor}`}>
-                                      {appointment.serviceName}
-                                    </span>
-                                    <span className={`font-mono font-bold shrink-0 ${getStatusBadge(appointment.status).timeColor}`}>
-                                      {appointment.time}
-                                    </span>
-                                  </div>
-
-                                  {appointment.clientPhone && (
-                                    <div className="text-[8px] text-neutral-600 font-mono flex items-center gap-1 mt-0.5">
-                                      <Phone className="w-2.5 h-2.5 text-emerald-600" />
-                                      <span>{appointment.clientPhone}</span>
-                                    </div>
-                                  )}
-                                </motion.div>
-                              ))}
+                          <div className="flex flex-col items-center justify-center">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-[#1C1612] uppercase font-serif-luxury truncate">
+                                {stylist.name}
+                              </span>
+                              {isOff && (
+                                <span className="text-[8px] bg-rose-100 text-rose-800 border border-rose-300 px-1 py-0.2 rounded uppercase font-mono font-bold">
+                                  Libre
+                                </span>
+                              )}
                             </div>
-                          ) : isOff ? (
-                            /* Day Off Muted Cell */
-                            <div 
-                              onClick={() => handleSlotClick(stylist, timeSlot)}
-                              className="h-7 rounded border border-dashed border-[#DDD5CC] bg-[#EFEAE2]/60 flex items-center justify-center cursor-pointer hover:border-[#8C6B4D] transition-colors opacity-60 hover:opacity-100"
-                              title="Día libre programado. Haga clic para agendar cita extraordinaria."
-                            >
-                              <span className="text-[9px] text-neutral-400 font-mono tracking-tight font-medium">Libre</span>
-                            </div>
-                          ) : (
-                            /* Available Slot Button Pill in Light Theme */
-                            <button
-                              onClick={() => handleSlotClick(stylist, timeSlot)}
-                              className="w-full max-w-[130px] mx-auto h-7 px-2.5 rounded-sm bg-white hover:bg-[#8C6B4D] hover:text-white border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#3D3025] font-mono text-[10px] font-semibold transition-all flex items-center justify-center gap-1 shadow-xs group/btn cursor-pointer"
-                              title={`Agendar espacio con ${stylist.name} a las ${timeSlot}`}
-                            >
-                              <span className="group-hover/btn:font-bold">{timeSlot}</span>
-                              <Plus className="w-2.5 h-2.5 opacity-0 group-hover/btn:opacity-100 text-white transition-opacity" />
-                            </button>
-                          )}
-                        </td>
+                            <span className="text-[9px] text-[#7C6652] font-mono tracking-wider uppercase truncate mt-0.5">
+                              {stylist.role}
+                            </span>
+                          </div>
+                        </th>
                       );
                     })}
-
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
 
-          {/* Bottom Table Action: + Agregar Profesional */}
-          <div className="p-4 bg-white border-t border-[#E2D8CC] flex flex-wrap items-center justify-between gap-3">
-            <button
-              onClick={() => setActiveBottomModal('add_stylist')}
-              className="px-3.5 py-2 rounded-md bg-[#FAF8F5] hover:bg-[#2C221C] hover:text-white border border-[#D9CEC2] hover:border-[#2C221C] text-xs text-[#2C221C] font-bold tracking-wider uppercase flex items-center gap-2 transition-all shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 text-[#8C6B4D]" />
-              <span>Agregar Profesional</span>
-            </button>
+                {/* Table Body: Time Rows */}
+                <tbody className="divide-y divide-[#EAE3DC] bg-white">
+                  {timeSlots.map((timeSlot) => {
+                    const [slotH, slotM] = timeSlot.split(':').map(Number);
+                    const now = new Date();
+                    const isCurrentHourSlot = isToday && now.getHours() === slotH && Math.abs(now.getMinutes() - slotM) < 15;
 
-            <div className="flex items-center gap-3 text-xs text-[#6B5744] font-mono">
-              <span>Total Citas Hoy: <strong className="text-[#2C221C] font-bold">{dayAppointments.length}</strong></span>
-              <span>•</span>
-              <span>Confirmadas: <strong className="text-emerald-700 font-bold">{dayAppointments.filter(a => a.status === 'Confirmada').length}</strong></span>
-              {pendingAppointments.length > 0 && (
-                <>
-                  <span>•</span>
-                  <button 
-                    onClick={() => setActiveBottomModal('pending')} 
-                    className="text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer"
-                  >
-                    Pendientes: {pendingAppointments.length}
-                  </button>
-                </>
-              )}
+                    return (
+                      <tr 
+                        key={timeSlot} 
+                        className={`hover:bg-[#F4EFE9] transition-colors ${
+                          isCurrentHourSlot ? 'bg-amber-100/30' : ''
+                        }`}
+                      >
+                        {/* Time Column (Sticky) */}
+                        <td className="w-20 px-2 py-2 border-r border-[#E2D8CC] text-center bg-[#F0EAE1] sticky left-0 z-10 font-mono text-[11px] text-[#5C4A38] font-bold">
+                          {timeSlot}
+                        </td>
+
+                        {/* Stylist Cells */}
+                        {stylists.map((stylist) => {
+                          const cleanTime = timeSlot;
+                          const appKey = `${stylist.id}_${cleanTime}`;
+                          const slotAppointments = appointmentMatrix.get(appKey) || [];
+                          const dayOfWeek = selectedDate.getDay();
+                          const isOff = stylist.offDays?.includes(dayOfWeek);
+
+                          return (
+                            <td
+                              key={stylist.id}
+                              className="px-2 py-1.5 border-r border-[#E2D8CC] align-middle text-center"
+                            >
+                              {slotAppointments.length > 0 ? (
+                                <div className="space-y-1">
+                                  {slotAppointments.map((app) => (
+                                    <div
+                                      key={app.id}
+                                      onClick={() => handleSlotClick(stylist, timeSlot, app)}
+                                      className={`p-1.5 rounded text-left border cursor-pointer transition-all shadow-xs hover:shadow-md ${
+                                        getStatusBadge(app.status).cardBg
+                                      }`}
+                                      title={`Cita: ${app.clientName} - ${app.serviceName}`}
+                                    >
+                                      <div className="flex items-center justify-between gap-1">
+                                        <span className="font-bold text-xs truncate max-w-[130px] text-neutral-900 font-serif-luxury">
+                                          {app.clientName}
+                                        </span>
+                                        <span className={`w-2 h-2 rounded-full shrink-0 ${getStatusBadge(app.status).dot}`} />
+                                      </div>
+                                      <div className="text-[10px] text-neutral-600 truncate mt-0.5">
+                                        {app.serviceName}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : isOff ? (
+                                <div 
+                                  onClick={() => handleSlotClick(stylist, timeSlot)}
+                                  className="h-7 rounded border border-dashed border-[#DDD5CC] bg-[#EFEAE2]/60 flex items-center justify-center cursor-pointer opacity-60 hover:opacity-100"
+                                >
+                                  <span className="text-[9px] text-neutral-400 font-mono">Libre</span>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSlotClick(stylist, timeSlot)}
+                                  className="w-full h-7 px-2 rounded bg-white hover:bg-[#8C6B4D] hover:text-white border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#3D3025] font-mono text-[10px] font-semibold transition-all flex items-center justify-center gap-1 shadow-xs cursor-pointer group/btn"
+                                >
+                                  <span>{timeSlot}</span>
+                                  <Plus className="w-2.5 h-2.5 opacity-0 group-hover/btn:opacity-100 text-white" />
+                                </button>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
+        )}
+
       </div>
 
       {/* ============================================================ */}
-      {/* 3. MODALS & POPUPS (Light Theme)                             */}
+      {/* 4. MODALS & POPUPS                                           */}
       {/* ============================================================ */}
 
       {/* MODAL 1: AYUDA */}
@@ -746,7 +1017,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                 <div className="flex items-center gap-2 text-[#8C6B4D]">
                   <HelpCircle className="w-5 h-5" />
                   <h3 className="font-serif-luxury text-lg font-bold text-neutral-900 uppercase tracking-wider">
-                    Guía de la Agenda de Citas
+                    Guía de la Agenda
                   </h3>
                 </div>
                 <button onClick={() => setActiveBottomModal(null)} className="text-neutral-400 hover:text-neutral-800 cursor-pointer">
@@ -756,8 +1027,8 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
 
               <div className="space-y-3 text-xs text-neutral-700 leading-relaxed">
                 <div className="p-3 bg-[#FAF8F5] border border-[#EAE3DC] rounded">
-                  <h4 className="font-bold text-neutral-900 uppercase text-[11px] mb-1">¿Cómo agendar una cita?</h4>
-                  <p>Haga clic en cualquier botón de hora disponible (ej. <span className="font-mono font-bold text-[#8C6B4D]">08:00</span>) en la columna del estilista deseado para abrir el formulario y registrar cliente, servicio y notas.</p>
+                  <h4 className="font-bold text-neutral-900 uppercase text-[11px] mb-1">Vistas Adaptables</h4>
+                  <p>En dispositivos móviles, use la pestaña <strong>"Por Estilista"</strong> para ver de forma amplia y cómoda los espacios de cada profesional sin apretar columnas.</p>
                 </div>
 
                 <div className="p-3 bg-[#FAF8F5] border border-[#EAE3DC] rounded">
@@ -765,26 +1036,21 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                   <ul className="space-y-1.5 mt-1 font-mono text-[11px]">
                     <li className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-emerald-500" />
-                      <strong className="text-emerald-900">Confirmada:</strong> Cita agendada y verificada.
+                      <strong className="text-emerald-900">Confirmada:</strong> Cita agendada y lista.
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-amber-500" />
-                      <strong className="text-amber-900">Pendiente:</strong> Solicitud web en espera de confirmación.
+                      <strong className="text-amber-900">Pendiente:</strong> Solicitud web por verificar.
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-blue-500" />
-                      <strong className="text-blue-900">Completada:</strong> Servicio atendido y finalizado.
+                      <strong className="text-blue-900">Completada:</strong> Servicio finalizado.
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-rose-500" />
                       <strong className="text-rose-900">Cancelada:</strong> Cita anulada.
                     </li>
                   </ul>
-                </div>
-
-                <div className="p-3 bg-[#FAF8F5] border border-[#EAE3DC] rounded">
-                  <h4 className="font-bold text-neutral-900 uppercase text-[11px] mb-1">Impresión y Exportación</h4>
-                  <p>Haga clic en el botón <strong className="text-neutral-900">Imprimir</strong> en la barra inferior para generar una hoja de trabajo diaria lista para recepción.</p>
                 </div>
               </div>
 
@@ -801,7 +1067,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         )}
       </AnimatePresence>
 
-      {/* MODAL 2: MOSTRAR LISTA */}
+      {/* MODAL 2: BUSCADOR GENERAL DE CITAS */}
       <AnimatePresence>
         {activeBottomModal === 'list' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm">
@@ -884,7 +1150,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                           <td className="p-2.5 text-neutral-700">{app.serviceName}</td>
                           <td className="p-2.5 font-serif-luxury text-neutral-900 font-medium">{app.stylistName}</td>
                           <td className="p-2.5">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono border ${getStatusBadge(app.status).cardBg}`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono border ${getStatusBadge(app.status).badge}`}>
                               {app.status}
                             </span>
                           </td>
@@ -921,7 +1187,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         )}
       </AnimatePresence>
 
-      {/* MODAL 4: CITAS PENDIENTES */}
+      {/* MODAL 3: CITAS PENDIENTES */}
       <AnimatePresence>
         {activeBottomModal === 'pending' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -946,7 +1212,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
               <div className="flex-1 overflow-y-auto space-y-2">
                 {pendingAppointments.length === 0 ? (
                   <div className="text-center py-12 text-neutral-500 text-xs font-mono">
-                    🎉 No hay citas pendientes. Todas las citas están confirmadas o procesadas.
+                    🎉 No hay citas pendientes. Todas las citas están confirmadas.
                   </div>
                 ) : (
                   pendingAppointments.map(app => (
@@ -996,7 +1262,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         )}
       </AnimatePresence>
 
-      {/* MODAL 5: AGREGAR PROFESIONAL */}
+      {/* MODAL 4: AGREGAR PROFESIONAL */}
       <AnimatePresence>
         {activeBottomModal === 'add_stylist' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -1100,6 +1366,58 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         initialAppointment={modalAppointmentData}
         selectedDate={selectedDateStr}
       />
+
+      {/* 5. BOTTOM COMMAND DOCK (Identical to original desktop layout) */}
+      <footer className="bg-white border-t border-[#E2D8CC] px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 shadow-xs">
+        {/* Left: Clock & App Stats */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 font-mono text-[#2C221C] bg-[#FAF8F5] border border-[#D9CEC2] px-2.5 py-1 rounded shadow-xs">
+            <Clock className="w-3.5 h-3.5 text-[#8C6B4D]" />
+            <span className="font-bold">{currentTime || '00:00:00'}</span>
+          </div>
+
+          <div className="hidden md:flex items-center gap-2 text-neutral-600 font-mono text-[11px]">
+            <span>{dayAppointments.length} citas hoy</span>
+            <span>•</span>
+            <span className="text-emerald-700 font-semibold">
+              {dayAppointments.filter(a => a.status === 'Confirmada').length} confirmadas
+            </span>
+          </div>
+        </div>
+
+        {/* Right: Quick Action Buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveBottomModal('help')}
+            className="px-2.5 py-1 text-neutral-600 hover:text-neutral-900 hover:bg-[#FAF8F5] border border-transparent hover:border-[#D9CEC2] rounded transition-colors flex items-center gap-1 font-mono text-xs cursor-pointer"
+            title="Ayuda del sistema"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-[#8C6B4D]" />
+            <span className="hidden sm:inline">Ayuda</span>
+          </button>
+
+          <button
+            onClick={() => setActiveBottomModal('add_stylist')}
+            className="px-2.5 py-1 text-neutral-600 hover:text-neutral-900 hover:bg-[#FAF8F5] border border-transparent hover:border-[#D9CEC2] rounded transition-colors flex items-center gap-1 font-mono text-xs cursor-pointer"
+            title="Agregar estilista"
+          >
+            <Plus className="w-3.5 h-3.5 text-[#8C6B4D]" />
+            <span className="hidden sm:inline">Nuevo Profesional</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setEditingAppointment(null);
+              setModalInitialSlot({ stylistId: activeStylistId, time: '09:00' });
+              setIsAppointmentModalOpen(true);
+            }}
+            className="px-3 py-1 bg-[#2C221C] hover:bg-[#8C6B4D] text-white text-xs font-bold uppercase tracking-wider rounded shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 text-gold-champagne" />
+            <span>Nueva Cita</span>
+          </button>
+        </div>
+      </footer>
 
     </div>
   );

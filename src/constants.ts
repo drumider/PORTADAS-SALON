@@ -3,6 +3,18 @@ import { ALL_SERVICES } from './data/servicesData';
 
 export const SERVICES = ALL_SERVICES;
 
+export const SERVICE_CATEGORIES = [
+  'Todos',
+  'Alisados y Keratinas',
+  'Coloración y Tintes',
+  'Cortes y Peinados',
+  'Tratamientos Capilares',
+  'Manicure y Pedicure',
+  'Depilación y Rostro',
+  'Maquillaje y Masajes',
+  'Paquetes y Promociones'
+];
+
 export const STYLISTS: Stylist[] = [
   { 
     id: 'carlos', 

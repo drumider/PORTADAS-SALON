@@ -27,13 +27,22 @@ import {
   Search,
   Filter,
   Tag,
-  AlertCircle
+  AlertCircle,
+  Menu,
+  ShoppingBag,
+  CalendarDays,
+  Check,
+  Share2,
+  Copy,
+  ChevronLeft,
+  Sparkle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { saveAppointment, isAdminAuthenticated, subscribeToAppointments } from './utils/storage';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ProductsSection } from './components/ProductsSection';
+import { ClientBookingWidget } from './components/ClientBookingWidget';
 import { Service, Stylist, Appointment } from './types';
 import { SERVICES, STYLISTS, TIME_SLOTS } from './constants';
 import { SERVICE_CATEGORIES } from './data/servicesData';
@@ -95,20 +104,12 @@ const GALLERY: GalleryItem[] = [
 export default function App() {
   // Navigation & Interactive states
   const [activeTab, setActiveTab] = useState<'inicio' | 'servicios' | 'productos' | 'galeria' | 'contacto'>('inicio');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const [activeLightbox, setActiveLightbox] = useState<GalleryItem | null>(null);
 
-  // Booking Assistant Form State
-  const [bookingStep, setBookingStep] = useState<1 | 2 | 3 | 4>(1);
+  // Selected service passed from services catalog to ClientBookingWidget
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [selectedStylist, setSelectedStylist] = useState<Stylist | null>(null);
-  const [bookingDate, setBookingDate] = useState<string>('');
-  const [bookingTime, setBookingTime] = useState<string>('');
-  const [clientName, setClientName] = useState<string>('');
-  const [clientPhone, setClientPhone] = useState<string>('');
-  const [customNote, setCustomNote] = useState<string>('');
-  const [bookingError, setBookingError] = useState<string | null>(null);
-  const [showBookingSuccess, setShowBookingSuccess] = useState<boolean>(false);
-  const [latestAppointment, setLatestAppointment] = useState<any | null>(null);
   const [existingAppointments, setExistingAppointments] = useState<Appointment[]>([]);
 
   // Real-time listener for booked appointments to block occupied slots
@@ -190,198 +191,6 @@ export default function App() {
     }
   };
 
-  // Helper to check if a stylist is off on a date string (YYYY-MM-DD)
-  const isStylistOffOnDate = (stylist?: Stylist | null, dateStr?: string) => {
-    if (!stylist || !stylist.offDays || !stylist.offDays.length || !dateStr) return false;
-    if (stylist.id === 'cualquiera') return false;
-    const [y, m, d] = dateStr.split('-').map(Number);
-    if (!y || !m || !d) return false;
-    const dayOfWeek = new Date(y, m - 1, d).getDay();
-    return stylist.offDays.includes(dayOfWeek);
-  };
-
-  // Generate date options (Next 7 business days excluding Sundays)
-  const getNextDays = () => {
-    const days = [];
-    const today = new Date();
-    let count = 0;
-    
-    // Check up to 14 days ahead to find 7 open days
-    while (count < 14 && days.length < 7) {
-      const nextDay = new Date(today);
-      nextDay.setDate(today.getDate() + count);
-      
-      // 0 is Sunday
-      if (nextDay.getDay() !== 0) {
-        const y = nextDay.getFullYear();
-        const m = String(nextDay.getMonth() + 1).padStart(2, '0');
-        const d = String(nextDay.getDate()).padStart(2, '0');
-        const rawValue = `${y}-${m}-${d}`;
-
-        days.push({
-          rawValue,
-          formatted: nextDay.toLocaleDateString('es-CR', { weekday: 'short', day: 'numeric', month: 'short' }),
-          dayName: nextDay.toLocaleDateString('es-CR', { weekday: 'long' }),
-          dayNumber: nextDay.getDate(),
-          dayOfWeek: nextDay.getDay()
-        });
-      }
-      count++;
-    }
-    return days;
-  };
-
-  const availableDates = getNextDays();
-
-  // Normalize time string into "HH:MM" 24h format for consistent comparison
-  const normalizeTime = (t: string): string => {
-    if (!t) return '';
-    let clean = t.trim().toUpperCase();
-    const isPM = clean.includes('PM');
-    const isAM = clean.includes('AM');
-    clean = clean.replace('AM', '').replace('PM', '').trim();
-    const parts = clean.split(':');
-    if (parts.length < 2) return t;
-    let hours = parseInt(parts[0], 10);
-    const minutes = parts[1].padStart(2, '0');
-    
-    if (isPM && hours < 12) hours += 12;
-    if (isAM && hours === 12) hours = 0;
-    
-    return `${hours.toString().padStart(2, '0')}:${minutes}`;
-  };
-
-  // Check if a time slot is already booked for date & stylist
-  const isSlotOccupied = (timeSlotLabel: string, dateStr: string, stylistId: string): boolean => {
-    if (!dateStr || !stylistId) return false;
-    const slotNorm = normalizeTime(timeSlotLabel);
-
-    return existingAppointments.some((app) => {
-      if (app.status === 'Cancelada') return false;
-      if (app.date !== dateStr) return false;
-
-      const isSameStylist = 
-        stylistId === 'cualquiera' || 
-        app.stylistId === 'cualquiera' || 
-        app.stylistId === stylistId;
-
-      if (!isSameStylist) return false;
-
-      const appTimeNorm = normalizeTime(app.time);
-      return appTimeNorm === slotNorm;
-    });
-  };
-
-  // Handle Reservation processing: saves to persistent DB & prepares WhatsApp confirmation
-  const handleProcessBooking = (openWhatsApp: boolean = false) => {
-    setBookingError(null);
-
-    if (!selectedService) {
-      setBookingError('Por favor selecciona primero el servicio deseado.');
-      setBookingStep(1);
-      return;
-    }
-
-    if (!selectedStylist) {
-      setBookingError('Por favor selecciona un especialista para tu servicio.');
-      setBookingStep(2);
-      return;
-    }
-
-    if (!bookingDate || !bookingTime) {
-      setBookingError('Por favor elige el día y la hora de tu cita.');
-      setBookingStep(3);
-      return;
-    }
-
-    if (!clientName.trim()) {
-      setBookingError('Por favor ingresa tu nombre completo.');
-      return;
-    }
-
-    if (!clientPhone.trim()) {
-      setBookingError('Por favor ingresa tu número de teléfono / WhatsApp.');
-      return;
-    }
-
-    if (isStylistOffOnDate(selectedStylist, bookingDate)) {
-      setBookingError(`${selectedStylist.name} no atiende en la fecha seleccionada (${selectedStylist.offDaysText || 'Día de descanso'}). Por favor selecciona otra fecha u otro especialista.`);
-      setBookingStep(3);
-      return;
-    }
-
-    try {
-      // Save appointment persistently into database / localStorage
-      const newAppointment = saveAppointment({
-        clientName: clientName.trim(),
-        clientPhone: clientPhone.trim(),
-        clientEmail: '',
-        serviceId: selectedService.id,
-        serviceName: selectedService.name,
-        stylistId: selectedStylist.id,
-        stylistName: selectedStylist.name,
-        date: bookingDate,
-        time: bookingTime.replace(' AM', '').replace(' PM', ''),
-        durationMinutes: selectedService.durationMinutes || 60,
-        status: 'Pendiente',
-        notes: customNote.trim()
-      });
-
-      const formattedDate = availableDates.find(d => d.rawValue === bookingDate)?.formatted || bookingDate;
-      
-      const message = `¡Hola CF Portadas! Me gustaría solicitar/confirmar mi cita:
-
-✨ Servicio: ${selectedService.name}
-💇‍♂️ Especialista: ${selectedStylist.name} (${selectedStylist.role})
-📅 Fecha: ${formattedDate}
-⏰ Hora: ${bookingTime}
-
-👤 Cliente: ${clientName.trim()}
-📞 Teléfono: ${clientPhone.trim()}
-${customNote.trim() ? `📝 Nota: ${customNote.trim()}` : ''}
-
-📌 Código de Cita: ${newAppointment.id}
-_Solicitado desde el sitio web de CF Portadas_`;
-
-      const encodedText = encodeURIComponent(message);
-      const waUrl = `https://wa.me/50689607575?text=${encodedText}`;
-      
-      setLatestAppointment({
-        ...newAppointment,
-        formattedDate,
-        formattedTime: bookingTime,
-        waUrl
-      });
-
-      if (openWhatsApp) {
-        try {
-          window.open(waUrl, '_blank', 'noopener,noreferrer');
-        } catch (err) {}
-      }
-
-      setShowBookingSuccess(true);
-      setBookingError(null);
-    } catch (err) {
-      console.error('Error saving appointment:', err);
-      setBookingError('Ocurrió un inconveniente al guardar la cita. Por favor intenta de nuevo.');
-    }
-  };
-
-  // Reset booking form
-  const resetForm = () => {
-    setSelectedService(null);
-    setSelectedStylist(null);
-    setBookingDate('');
-    setBookingTime('');
-    setClientName('');
-    setClientPhone('');
-    setCustomNote('');
-    setBookingError(null);
-    setBookingStep(1);
-    setShowBookingSuccess(false);
-    setLatestAppointment(null);
-  };
-
   // If Admin Panel view is active, render AdminDashboard
   if (isAdminViewActive) {
     return (
@@ -408,24 +217,27 @@ _Solicitado desde el sitio web de CF Portadas_`;
   }
 
   return (
-    <div className="bg-dark-bg text-gray-light min-h-screen selection:bg-gold-champagne selection:text-dark-bg relative overflow-x-hidden font-sans antialiased">
+    <div className="bg-dark-bg text-gray-light min-h-screen selection:bg-gold-champagne selection:text-dark-bg relative overflow-x-hidden font-sans antialiased pb-20 md:pb-0">
       
       {/* GLOBAL BACKGROUND ELEMENTS */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(201,169,106,0.05),rgba(255,255,255,0))]" />
       
       {/* HEADER / NAVIGATION */}
-      <header className="fixed top-0 left-0 w-full z-40 bg-transparent py-6 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+      <header className="fixed top-0 left-0 w-full z-40 bg-dark-bg/85 backdrop-blur-md border-b border-warm-border/50 py-4 sm:py-6 transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
           <div 
-            onClick={() => scrollToSection('inicio')} 
+            onClick={() => {
+              scrollToSection('inicio');
+              setIsMobileMenuOpen(false);
+            }} 
             className="cursor-pointer flex flex-col items-start group"
             id="header-logo"
           >
             <div className="relative pl-6 pr-1 pt-2 flex items-center">
-              <span className="absolute -top-1.5 left-0 font-logo-doulaise text-4xl text-gold-champagne group-hover:text-white transition-colors leading-none select-none pointer-events-none transform -rotate-[10deg]">
+              <span className="absolute -top-1.5 left-0 font-logo-doulaise text-3xl sm:text-4xl text-gold-champagne group-hover:text-white transition-colors leading-none select-none pointer-events-none transform -rotate-[10deg]">
                 cf
               </span>
-              <span className="font-logo-sans text-base sm:text-lg tracking-[0.2em] text-white font-light uppercase group-hover:text-gold-champagne transition-colors pl-[0.1em]">
+              <span className="font-logo-sans text-sm sm:text-lg tracking-[0.2em] text-white font-light uppercase group-hover:text-gold-champagne transition-colors pl-[0.1em]">
                 PORTADAS
               </span>
             </div>
@@ -434,13 +246,14 @@ _Solicitado desde el sitio web de CF Portadas_`;
             </span>
           </div>
 
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8 items-center">
             {['inicio', 'servicios', 'productos', 'galeria', 'contacto'].map((section) => (
               <button
                 key={section}
                 onClick={() => scrollToSection(section)}
-                className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 font-light hover:text-gold-champagne ${
-                  activeTab === section ? 'text-gold-champagne font-normal' : 'text-gray-light/60'
+                className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 font-light hover:text-gold-champagne cursor-pointer ${
+                  activeTab === section ? 'text-gold-champagne font-normal border-b border-gold-champagne pb-1' : 'text-gray-light/60'
                 }`}
                 id={`nav-${section}`}
               >
@@ -449,19 +262,103 @@ _Solicitado desde el sitio web de CF Portadas_`;
             ))}
           </nav>
 
-          <div>
+          <div className="flex items-center gap-2 sm:gap-4">
             <button 
               onClick={() => {
                 scrollToSection('contacto');
-                setShowBookingSuccess(false);
+                setIsMobileMenuOpen(false);
               }}
-              className="border border-gold-champagne hover:border-white text-gold-champagne px-5 py-2 text-[10px] sm:text-xs uppercase tracking-[0.2em] font-medium transition-all duration-300 hover:bg-gold-champagne hover:text-dark-bg cursor-pointer"
+              className="border border-gold-champagne bg-gold-champagne/10 hover:bg-gold-champagne hover:text-dark-bg text-gold-champagne px-3.5 sm:px-5 py-2 text-[10px] sm:text-xs uppercase tracking-[0.18em] font-medium transition-all duration-300 cursor-pointer shadow-sm flex items-center gap-1.5"
               id="cta-reservas-header"
             >
-              AGENDAR CON ASISTENTE
+              <Sparkles className="w-3 h-3 text-gold-champagne" />
+              <span className="hidden sm:inline">AGENDAR CON ASISTENTE</span>
+              <span className="sm:hidden font-bold">AGENDAR</span>
+            </button>
+
+            {/* Mobile Hamburger Toggle Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 text-gold-champagne hover:text-white border border-warm-border bg-warm-card flex items-center justify-center transition-colors cursor-pointer"
+              aria-label="Abrir menú"
+              id="mobile-menu-toggle-btn"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Dropdown / Drawer */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="md:hidden bg-warm-card border-b border-gold-champagne/30 overflow-hidden shadow-2xl"
+            >
+              <div className="px-6 py-5 flex flex-col space-y-4">
+                {[
+                  { id: 'inicio', label: 'Inicio' },
+                  { id: 'servicios', label: 'Menú de Servicios (175)' },
+                  { id: 'productos', label: 'Líneas & Marcas' },
+                  { id: 'galeria', label: 'Galería de Trabajos' },
+                  { id: 'contacto', label: '✨ Agendar Cita con Asistente' }
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      scrollToSection(item.id);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`text-left text-xs uppercase tracking-[0.2em] py-2 border-b border-warm-border/50 transition-colors flex items-center justify-between ${
+                      item.id === 'contacto' 
+                        ? 'text-gold-champagne font-bold' 
+                        : activeTab === item.id 
+                          ? 'text-gold-champagne font-medium' 
+                          : 'text-gray-light/80 hover:text-white'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+                  </button>
+                ))}
+
+                <div className="pt-2 flex items-center justify-between text-[11px] text-gray-light/60">
+                  <a href="tel:2219090" className="hover:text-gold-champagne flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-gold-champagne" /> 2219-0909
+                  </a>
+                  <a 
+                    href="https://wa.me/50689607575?text=Hola%20CF%20Portadas,%20quisiera%20consultar%20por%20una%20cita."
+                    target="_blank"
+                    rel="noopener noreferrer" 
+                    className="text-emerald-400 font-medium flex items-center gap-1"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" /> WA 8960-7575
+                  </a>
+                </div>
+
+                <div className="pt-1">
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      if (isAdminAuthenticated()) {
+                        setIsAdminViewActive(true);
+                      } else {
+                        setIsAdminLoginOpen(true);
+                      }
+                    }}
+                    className="w-full text-center py-2.5 bg-dark-bg/80 border border-gold-champagne/30 text-gold-champagne/80 hover:text-gold-champagne text-[10px] uppercase font-mono tracking-widest flex items-center justify-center gap-1.5"
+                  >
+                    <Lock className="w-3 h-3 text-gold-champagne/70" />
+                    <span>Acceso Administrador de Citas</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* 1. HERO SECTION */}
@@ -545,7 +442,6 @@ _Solicitado desde el sitio web de CF Portadas_`;
             <button
               onClick={() => {
                 scrollToSection('contacto');
-                setShowBookingSuccess(false);
               }}
               className="group relative border border-gold-champagne bg-gold-champagne/10 text-gold-champagne px-8 sm:px-10 py-4 text-xs sm:text-sm tracking-[0.2em] uppercase font-semibold overflow-hidden transition-all duration-700 hover:border-white shadow-lg cursor-pointer"
               id="hero-reserve-btn"
@@ -779,8 +675,6 @@ _Solicitado desde el sitio web de CF Portadas_`;
                               type="button"
                               onClick={() => {
                                 setSelectedService(service);
-                                setBookingStep(2);
-                                setShowBookingSuccess(false);
                                 scrollToSection('contacto');
                               }}
                               className="w-full bg-dark-bg/90 border border-gold-champagne/40 hover:border-gold-champagne text-gold-champagne hover:bg-gold-champagne hover:text-dark-bg text-[10px] uppercase tracking-[0.15em] font-semibold py-2 px-3 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
@@ -817,10 +711,7 @@ _Solicitado desde el sitio web de CF Portadas_`;
           {/* Quick CTA to Form */}
           <div className="text-center mt-12">
             <button 
-              onClick={() => {
-                scrollToSection('contacto');
-                setBookingStep(1);
-              }}
+              onClick={() => scrollToSection('contacto')}
               className="text-[11px] sm:text-xs tracking-[0.3em] uppercase text-gold-champagne hover:text-white transition-colors duration-300 inline-flex items-center gap-2 group border-b border-gold-champagne/20 pb-1"
               id="service-cta-book"
             >
@@ -930,90 +821,92 @@ _Solicitado desde el sitio web de CF Portadas_`;
       </section>
 
       {/* 5. RESERVAS Y CONTACTO */}
-      <section id="contacto" className="py-24 sm:py-32 bg-dark-bg relative z-10 border-t border-warm-border/60 overflow-hidden">
+      <section id="contacto" className="py-12 sm:py-24 bg-dark-bg relative z-10 border-t border-warm-border/60 overflow-hidden">
         {/* Soft Gold glow */}
         <div className="absolute right-0 bottom-0 w-[500px] h-[500px] bg-gold-champagne/4 rounded-full filter blur-[120px] pointer-events-none" />
         
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-12 items-start">
+        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-start">
             
-            {/* Left Side: Contact Information & Hours */}
-            <div className="lg:col-span-5 flex flex-col justify-between h-full space-y-12">
+            {/* Left Side / Mobile-First: Interactive Client Booking Wizard */}
+            <div className="lg:col-span-7 order-1 lg:order-2 w-full" id="booking-assistant-container">
+              <ClientBookingWidget
+                existingAppointments={existingAppointments}
+                externalSelectedService={selectedService}
+                onSaveAppointment={async (appData) => {
+                  const saved = saveAppointment(appData);
+                  return { success: true, id: saved.id };
+                }}
+              />
+            </div>
+
+            {/* Right Side / Mobile-Second: Salon Contact Information & Map */}
+            <div className="lg:col-span-5 order-2 lg:order-1 flex flex-col justify-between space-y-6 bg-warm-card/60 border border-warm-border/80 p-5 sm:p-7 rounded-sm">
               <div>
-                <span className="text-gold-champagne text-xs tracking-[0.3em] uppercase font-light">CONECTEMOS</span>
-                <div className="relative pl-6 pr-1 pt-2 flex items-center mt-3 mb-6">
-                  <span className="absolute -top-1.5 left-0 font-logo-doulaise text-4xl text-gold-champagne leading-none select-none pointer-events-none transform -rotate-[10deg]">
+                <span className="text-gold-champagne text-[11px] tracking-[0.3em] uppercase font-light">CONECTEMOS</span>
+                <div className="relative pl-6 pr-1 pt-1 flex items-center mt-2 mb-3">
+                  <span className="absolute -top-1.5 left-0 font-logo-doulaise text-3xl text-gold-champagne leading-none select-none pointer-events-none transform -rotate-[10deg]">
                     cf
                   </span>
-                  <span className="font-logo-sans text-xl sm:text-2xl tracking-[0.22em] text-white font-light uppercase pl-[0.1em]">
+                  <span className="font-logo-sans text-lg sm:text-xl tracking-[0.22em] text-white font-light uppercase pl-[0.1em]">
                     PORTADAS
                   </span>
                 </div>
-                <p className="text-gray-light/60 text-xs sm:text-sm font-light leading-relaxed max-w-md">
-                  Estamos ubicados en el corazón de San Rafael de Escazú, listos para brindarte un servicio personalizado inigualable. Agenda tu espacio por medio de nuestro asistente virtual o llámanos directamente.
+                <p className="text-gray-light/60 text-xs font-light leading-relaxed">
+                  Estamos ubicados en el corazón de San Rafael de Escazú, listos para brindarte un servicio personalizado inigualable.
                 </p>
               </div>
 
+              {/* Quick Mobile Call Actions */}
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href="tel:2219090"
+                  className="flex items-center justify-center gap-1.5 p-2.5 bg-dark-bg/90 border border-warm-border hover:border-gold-champagne/60 text-white hover:text-gold-champagne text-xs font-mono rounded-sm transition-colors"
+                >
+                  <Phone className="w-3.5 h-3.5 text-gold-champagne shrink-0" />
+                  <span>2219 0909</span>
+                </a>
+                <a
+                  href="tel:22883535"
+                  className="flex items-center justify-center gap-1.5 p-2.5 bg-dark-bg/90 border border-warm-border hover:border-gold-champagne/60 text-white hover:text-gold-champagne text-xs font-mono rounded-sm transition-colors"
+                >
+                  <Phone className="w-3.5 h-3.5 text-gold-champagne shrink-0" />
+                  <span>2288 3535</span>
+                </a>
+                <a
+                  href="https://wa.me/50689607575?text=Hola%20CF%20Portadas,%20quisiera%20consultar%20por%20una%20cita."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="col-span-2 flex items-center justify-center gap-2 p-2.5 bg-emerald-950/40 border border-emerald-500/40 hover:border-emerald-400 text-emerald-300 hover:text-white text-xs font-medium rounded-sm transition-colors"
+                >
+                  <MessageSquare className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>WhatsApp: 8960 7575</span>
+                  <ExternalLink className="w-3 h-3 opacity-70" />
+                </a>
+              </div>
+
               {/* Contact Information List */}
-              <div className="space-y-6">
-                {/* Teléfonos */}
-                <div className="flex items-start gap-4" id="contact-phones">
-                  <div className="w-8 h-8 rounded-none border border-gold-champagne/20 flex items-center justify-center shrink-0 mt-1">
-                    <Phone className="w-3.5 h-3.5 text-gold-champagne" strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <h4 className="text-[10px] tracking-[0.2em] uppercase text-gold-champagne/70 font-light mb-1">Línea de Atención</h4>
-                    <div className="flex gap-4">
-                      <a href="tel:2219090" className="text-sm text-white hover:text-gold-champagne transition-colors font-mono">
-                        2219 0909
-                      </a>
-                      <span className="text-neutral-800">·</span>
-                      <a href="tel:22883535" className="text-sm text-white hover:text-gold-champagne transition-colors font-mono">
-                        2288 3535
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-                {/* WhatsApp */}
-                <div className="flex items-start gap-4" id="contact-whatsapp">
-                  <div className="w-8 h-8 rounded-none border border-emerald-500/20 bg-emerald-950/10 flex items-center justify-center shrink-0 mt-1">
-                    <MessageSquare className="w-3.5 h-3.5 text-emerald-400" strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <h4 className="text-[10px] tracking-[0.2em] uppercase text-emerald-400 font-light mb-1">WhatsApp Directo</h4>
-                    <a 
-                      href="https://wa.me/50689607575?text=Hola%20CF%20Portadas,%20quisiera%20reservar%20una%20cita." 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm text-white hover:text-emerald-400 transition-colors font-medium"
-                    >
-                      <span>8960 7575</span>
-                      <ExternalLink className="w-3 h-3 text-emerald-500" />
-                    </a>
-                  </div>
-                </div>
-
+              <div className="space-y-4 border-t border-warm-border/60 pt-4">
                 {/* Dirección */}
-                <div className="flex items-start gap-4" id="contact-address">
-                  <div className="w-8 h-8 rounded-none border border-gold-champagne/20 flex items-center justify-center shrink-0 mt-1">
+                <div className="flex items-start gap-3" id="contact-address">
+                  <div className="w-7 h-7 rounded-none border border-gold-champagne/20 flex items-center justify-center shrink-0 mt-0.5">
                     <MapPin className="w-3.5 h-3.5 text-gold-champagne" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="text-[10px] tracking-[0.2em] uppercase text-gold-champagne/70 font-light mb-1">Ubicación</h4>
-                    <p className="text-xs text-white/80 font-light leading-relaxed max-w-sm">
-                      Asama Plaza, Carretera John F. Kennedy, San Rafael de Escazú, San José Province, Costa Rica.
+                    <h4 className="text-[10px] tracking-[0.2em] uppercase text-gold-champagne/70 font-light mb-0.5">Ubicación</h4>
+                    <p className="text-xs text-white/80 font-light leading-relaxed">
+                      Asama Plaza, Carretera John F. Kennedy, San Rafael de Escazú, Costa Rica.
                     </p>
                   </div>
                 </div>
 
                 {/* Horario */}
-                <div className="flex items-start gap-4" id="contact-hours">
-                  <div className="w-8 h-8 rounded-none border border-gold-champagne/20 flex items-center justify-center shrink-0 mt-1">
+                <div className="flex items-start gap-3" id="contact-hours">
+                  <div className="w-7 h-7 rounded-none border border-gold-champagne/20 flex items-center justify-center shrink-0 mt-0.5">
                     <Clock className="w-3.5 h-3.5 text-gold-champagne" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="text-[10px] tracking-[0.2em] uppercase text-gold-champagne/70 font-light mb-1">Horario de Atención</h4>
+                    <h4 className="text-[10px] tracking-[0.2em] uppercase text-gold-champagne/70 font-light mb-0.5">Horario de Atención</h4>
                     <p className="text-xs text-white/80 font-light">
                       Lunes a Sábado: <span className="text-white font-mono">9:00 AM - 7:00 PM</span>
                     </p>
@@ -1024,8 +917,8 @@ _Solicitado desde el sitio web de CF Portadas_`;
                 </div>
               </div>
 
-              {/* Map Embed - Dark Mode Styled with CSS filter */}
-              <div className="w-full h-64 border border-warm-border overflow-hidden relative group">
+              {/* Map Embed */}
+              <div className="w-full h-44 border border-warm-border overflow-hidden relative group rounded-sm">
                 <iframe 
                   src="https://maps.google.com/maps?q=Asama%20Plaza,%20Escazu,%20Costa%20Rica&t=&z=16&ie=UTF8&iwloc=&output=embed" 
                   className="w-full h-full border-0 grayscale invert contrast-115 opacity-65 group-hover:opacity-85 transition-opacity duration-500" 
@@ -1034,585 +927,10 @@ _Solicitado desde el sitio web de CF Portadas_`;
                   referrerPolicy="no-referrer"
                   title="Google Maps Asama Plaza"
                 />
-                <div className="absolute top-3 left-3 bg-warm-card/95 border border-gold-champagne/20 px-3 py-1 text-[9px] tracking-widest text-gold-champagne uppercase">
-                  UBICACIÓN PREFERENCIAL
+                <div className="absolute top-2.5 left-2.5 bg-warm-card/95 border border-gold-champagne/20 px-2.5 py-1 text-[9px] tracking-widest text-gold-champagne uppercase font-mono">
+                  ASAMA PLAZA · ESCAZÚ
                 </div>
               </div>
-            </div>
-
-            {/* Right Side: Interactive Booking Assistant (Form) */}
-            <div className="lg:col-span-7 bg-warm-card border border-warm-border p-8 sm:p-12 relative" id="booking-assistant-container">
-              {/* Gold border accent */}
-              <div className="absolute top-0 left-0 w-[2px] h-full bg-gold-champagne" />
-              
-              <div className="mb-8">
-                <span className="text-gold-champagne text-[10px] tracking-[0.3em] uppercase font-light">ASISTENTE VIRTUAL</span>
-                <h3 className="font-serif-luxury text-2xl text-white uppercase tracking-wider font-light mt-1">
-                  AGENDA TU EXPERIENCIA
-                </h3>
-                <p className="text-gray-light/40 text-[11px] font-light mt-1">
-                  Completa tu solicitud en 4 simples pasos y envíala directamente a nuestro equipo de recepción.
-                </p>
-              </div>
-
-              {/* Step Indicators */}
-              <div className="flex items-center justify-between mb-8 pb-4 border-b border-neutral-900">
-                {[1, 2, 3, 4].map((step) => (
-                  <div key={step} className="flex items-center">
-                    <div 
-                      className={`w-6 h-6 rounded-none text-[10px] flex items-center justify-center font-mono border transition-all duration-300 ${
-                        bookingStep === step 
-                          ? 'border-gold-champagne bg-gold-champagne text-dark-bg font-bold shadow-md shadow-gold-champagne/10' 
-                          : bookingStep > step 
-                          ? 'border-emerald-500 bg-emerald-950/20 text-emerald-400' 
-                          : 'border-neutral-800 text-neutral-500'
-                      }`}
-                    >
-                      {step}
-                    </div>
-                    {step < 4 && (
-                      <div className={`h-[1px] w-8 sm:w-16 mx-2 ${bookingStep > step ? 'bg-emerald-500/50' : 'bg-neutral-800'}`} />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Confirmation view or Step-by-step form */}
-              {showBookingSuccess && latestAppointment ? (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.97 }} 
-                  animate={{ opacity: 1, scale: 1 }} 
-                  className="space-y-6 bg-dark-bg/90 border border-emerald-500/40 p-6 shadow-2xl relative"
-                >
-                  <div className="flex items-start gap-4 border-b border-emerald-500/30 pb-4">
-                    <div className="w-10 h-10 border border-emerald-500/50 bg-emerald-950/40 flex items-center justify-center text-emerald-400 shrink-0">
-                      <CheckCircle className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-emerald-400 uppercase font-mono tracking-widest font-semibold block">
-                        CITA GUARDADA EN LA AGENDA AUTOMÁTICAMENTE
-                      </span>
-                      <h4 className="font-serif-luxury text-xl text-white uppercase tracking-wider font-light mt-0.5">
-                        ¡Agendamiento Confirmado!
-                      </h4>
-                      <p className="text-[11px] text-gray-light/70 font-light mt-1">
-                        Tu reservación ha sido registrada directamente en el sistema de CF Portadas.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Appointment Details Ticket */}
-                  <div className="bg-warm-card border border-gold-champagne/30 p-5 space-y-3 text-xs font-sans">
-                    <div className="flex justify-between items-center pb-2 border-b border-warm-border">
-                      <span className="text-[10px] uppercase font-mono text-gold-champagne tracking-wider">Código de Cita:</span>
-                      <span className="font-mono text-white font-bold">{latestAppointment.id}</span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-y-3 text-gray-300">
-                      <div>
-                        <span className="block text-[10px] uppercase text-gray-light/50 font-mono">Cliente</span>
-                        <strong className="text-white font-serif-luxury uppercase text-sm block mt-0.5">{latestAppointment.clientName}</strong>
-                      </div>
-                      <div className="text-right">
-                        <span className="block text-[10px] uppercase text-gray-light/50 font-mono">Teléfono</span>
-                        <strong className="text-white font-mono block mt-0.5">{latestAppointment.clientPhone}</strong>
-                      </div>
-
-                      <div>
-                        <span className="block text-[10px] uppercase text-gray-light/50 font-mono">Servicio</span>
-                        <strong className="text-gold-champagne font-serif-luxury uppercase text-sm block mt-0.5">{latestAppointment.serviceName}</strong>
-                      </div>
-                      <div className="text-right">
-                        <span className="block text-[10px] uppercase text-gray-light/50 font-mono">Especialista</span>
-                        <strong className="text-white font-serif-luxury uppercase block mt-0.5">{latestAppointment.stylistName}</strong>
-                      </div>
-
-                      <div>
-                        <span className="block text-[10px] uppercase text-gray-light/50 font-mono">Fecha</span>
-                        <strong className="text-white font-mono block mt-0.5">{latestAppointment.formattedDate || latestAppointment.date}</strong>
-                      </div>
-                      <div className="text-right">
-                        <span className="block text-[10px] uppercase text-gray-light/50 font-mono">Hora</span>
-                        <strong className="text-gold-champagne font-mono font-bold block mt-0.5">{latestAppointment.formattedTime || latestAppointment.time}</strong>
-                      </div>
-                    </div>
-
-                    {latestAppointment.notes && (
-                      <div className="pt-2 border-t border-warm-border/50 text-[11px] text-gray-light/70 italic">
-                        Nota: "{latestAppointment.notes}"
-                      </div>
-                    )}
-
-                    <div className="pt-3 border-t border-warm-border flex items-center justify-between text-[11px]">
-                      <span className="text-gray-light/60 font-mono">Estado en la Agenda:</span>
-                      <span className="text-amber-300 font-mono uppercase bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 text-[9px] font-bold">
-                        Pendiente (Guardada)
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="space-y-3 pt-2">
-                    <a
-                      href={latestAppointment.waUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs uppercase tracking-[0.15em] font-bold py-3.5 px-4 flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-emerald-950/50 cursor-pointer"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                      <span>Confirmar / Enviar por WhatsApp</span>
-                      <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-                    </a>
-
-                    <div>
-                      <button
-                        type="button"
-                        onClick={resetForm}
-                        className="w-full bg-dark-bg border border-gold-champagne/40 hover:border-gold-champagne text-gold-champagne hover:text-white text-xs uppercase tracking-wider py-3 px-3 transition-colors font-medium flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Agendar Otra Cita</span>
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ) : (
-                <form onSubmit={(e) => { e.preventDefault(); handleProcessBooking(false); }}>
-                  {bookingError && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mb-4 p-3 bg-red-950/60 border border-red-500/50 text-red-200 text-xs flex items-start gap-2.5 rounded-sm"
-                    >
-                      <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <span className="font-medium">{bookingError}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setBookingError(null)}
-                        className="text-red-400 hover:text-white text-xs"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </motion.div>
-                  )}
-                  
-                  {/* STEP 1: SELECT SERVICE */}
-                {bookingStep === 1 && (
-                  <motion.div 
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }}
-                    className="space-y-4"
-                  >
-                    <div className="flex justify-between items-center">
-                      <label className="block text-xs uppercase tracking-[0.2em] text-white font-light">
-                        Paso 1: Selecciona el Servicio
-                      </label>
-                      <span className="text-[10px] text-gold-champagne/80 font-mono">
-                        {filteredBookingServices.length} opciones
-                      </span>
-                    </div>
-
-                    {/* Booking Assistant Search Input */}
-                    <div className="relative">
-                      <Search className="w-3.5 h-3.5 text-gold-champagne/60 absolute left-3 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="text"
-                        value={bookingSearch}
-                        onChange={(e) => setBookingSearch(e.target.value)}
-                        placeholder="Buscar por nombre o código (ej: 218, keratina, blower)..."
-                        className="w-full bg-dark-bg/90 border border-warm-border focus:border-gold-champagne text-white text-xs pl-9 pr-8 py-2.5 outline-none font-light"
-                      />
-                      {bookingSearch && (
-                        <button
-                          type="button"
-                          onClick={() => setBookingSearch('')}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-light/40 hover:text-white text-xs"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Category Filter Pills in Booking Widget */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                      {SERVICE_CATEGORIES.map((cat) => (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => setBookingCategory(cat)}
-                          className={`text-[9px] uppercase tracking-wider px-2.5 py-1 border transition-all shrink-0 ${
-                            bookingCategory === cat
-                              ? 'border-gold-champagne bg-gold-champagne text-dark-bg font-bold'
-                              : 'border-warm-border text-gray-light/60 hover:text-white bg-dark-bg/40'
-                          }`}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Services Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-80 overflow-y-auto pr-1">
-                      {filteredBookingServices.length === 0 ? (
-                        <div className="col-span-full py-8 text-center text-xs text-gray-light/50 font-light border border-dashed border-warm-border">
-                          No hay servicios con "{bookingSearch}".
-                        </div>
-                      ) : (
-                        filteredBookingServices.map((s) => (
-                          <div 
-                            key={s.id}
-                            onClick={() => {
-                              setSelectedService(s);
-                              setBookingStep(2);
-                            }}
-                            className={`p-3 border transition-all duration-300 cursor-pointer flex flex-col justify-between ${
-                              selectedService?.id === s.id 
-                                ? 'border-gold-champagne bg-gold-champagne/10 text-white shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-                                : 'border-warm-border hover:border-gold-champagne/40 bg-dark-bg/60'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-1 mb-1">
-                              <span className="font-serif-luxury text-xs uppercase tracking-wider text-white font-medium line-clamp-1">
-                                {s.name}
-                              </span>
-                              {s.code && (
-                                <span className="font-mono text-[9px] text-gold-champagne bg-gold-champagne/10 border border-gold-champagne/20 px-1 py-0.2 shrink-0">
-                                  #{s.code}
-                                </span>
-                              )}
-                            </div>
-                            
-                            <div className="flex justify-between items-center text-[10px] mt-2 font-mono">
-                              <span className="text-gray-light/50 flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-gold-champagne/60" />
-                                {s.durationText || `${s.durationMinutes}m`}
-                              </span>
-                              <span className="text-gold-champagne font-bold">
-                                {s.price}
-                              </span>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-
-                    {selectedService && (
-                      <div className="pt-2 flex justify-between items-center border-t border-warm-border/50">
-                        <span className="text-[10px] text-gold-champagne font-mono">
-                          Seleccionado: <strong className="text-white">{selectedService.name}</strong> ({selectedService.price})
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setBookingStep(2)}
-                          className="bg-neutral-900 border border-gold-champagne/40 hover:border-gold-champagne text-gold-champagne px-4 py-2 text-xs uppercase tracking-wider font-light flex items-center gap-1.5 transition-colors"
-                        >
-                          Siguiente <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-
-                {/* STEP 2: SELECT STYLIST */}
-                {bookingStep === 2 && (
-                  <motion.div 
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }}
-                    className="space-y-4"
-                  >
-                    <div className="flex justify-between items-center">
-                      <label className="block text-xs uppercase tracking-[0.2em] text-white font-light">
-                        Paso 2: Especialista Preferido
-                      </label>
-                      <button 
-                        type="button" 
-                        onClick={() => setBookingStep(1)} 
-                        className="text-[10px] text-gold-champagne/50 hover:text-gold-champagne uppercase tracking-wider"
-                      >
-                        Atrás
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-3">
-                      {STYLISTS.filter(st => {
-                        if (!selectedService) return true;
-                        if (!st.allowedCategories || st.allowedCategories.length === 0) return true;
-                        return st.allowedCategories.includes(selectedService.category);
-                      }).map((stylist) => (
-                        <div 
-                          key={stylist.id}
-                          onClick={() => {
-                            setSelectedStylist(stylist);
-                            // If bookingDate was already set and stylist is off on that date, reset date
-                            if (bookingDate && isStylistOffOnDate(stylist, bookingDate)) {
-                              setBookingDate('');
-                            }
-                            setBookingStep(3);
-                          }}
-                          className={`p-4 border transition-all duration-300 cursor-pointer flex items-center justify-between ${
-                            selectedStylist?.id === stylist.id 
-                              ? 'border-gold-champagne bg-dark-bg text-white shadow-[0_0_15px_rgba(212,175,55,0.05)]' 
-                              : 'border-warm-border hover:border-gold-champagne/30 bg-dark-bg/60'
-                          }`}
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 border border-gold-champagne/20 flex items-center justify-center bg-dark-bg font-serif-luxury text-gold-champagne font-bold shrink-0">
-                              {stylist.avatarLetter}
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-serif-luxury uppercase tracking-wider text-white">
-                                {stylist.name}
-                              </h4>
-                              <p className="text-[10px] text-gray-light/40 font-light uppercase tracking-wider">
-                                {stylist.role}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className={`w-3 h-3 border ${selectedStylist?.id === stylist.id ? 'bg-gold-champagne border-gold-champagne' : 'border-neutral-700'}`} />
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="pt-4 flex justify-between">
-                      <button
-                        type="button"
-                        onClick={() => setBookingStep(1)}
-                        className="text-xs uppercase tracking-wider text-gray-light/40 hover:text-white"
-                      >
-                        Paso anterior
-                      </button>
-                      {selectedStylist && (
-                        <button
-                          type="button"
-                          onClick={() => setBookingStep(3)}
-                          className="bg-neutral-900 border border-gold-champagne/40 hover:border-gold-champagne text-gold-champagne px-5 py-2.5 text-xs uppercase tracking-wider font-light flex items-center gap-1.5 transition-colors"
-                        >
-                          Siguiente <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* STEP 3: DATE & TIME */}
-                {bookingStep === 3 && (
-                  <motion.div 
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }}
-                    className="space-y-6"
-                  >
-                    <div className="flex justify-between items-center">
-                      <label className="block text-xs uppercase tracking-[0.2em] text-white font-light">
-                        Paso 3: Fecha y Hora de Preferencia
-                      </label>
-                      <button 
-                        type="button" 
-                        onClick={() => setBookingStep(2)} 
-                        className="text-[10px] text-gold-champagne/50 hover:text-gold-champagne uppercase tracking-wider"
-                      >
-                        Atrás
-                      </button>
-                    </div>
-
-                    {/* Date Selector */}
-                    <div className="space-y-2">
-                      <span className="text-[10px] uppercase tracking-wider text-gray-light/50 font-mono block">Selecciona un día:</span>
-                      <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-none sm:grid sm:grid-cols-4 snap-x">
-                        {availableDates.map((date) => {
-                          const isOff = isStylistOffOnDate(selectedStylist, date.rawValue);
-                          return (
-                            <div
-                              key={date.rawValue}
-                              onClick={() => {
-                                if (isOff) return;
-                                setBookingDate(date.rawValue);
-                              }}
-                              className={`p-3 border text-center transition-all duration-300 min-w-[100px] sm:min-w-0 shrink-0 sm:shrink snap-start ${
-                                isOff 
-                                  ? 'border-neutral-800/40 bg-neutral-900/30 opacity-20 cursor-not-allowed pointer-events-none' 
-                                  : bookingDate === date.rawValue 
-                                    ? 'border-gold-champagne bg-dark-bg text-white shadow-[0_0_15px_rgba(212,175,55,0.05)] cursor-pointer ring-1 ring-gold-champagne/50' 
-                                    : 'border-warm-border hover:border-gold-champagne/30 bg-dark-bg/60 cursor-pointer'
-                              }`}
-                            >
-                              <span className="block text-[10px] text-gold-champagne tracking-wider font-mono uppercase">{date.dayName.slice(0,3)}</span>
-                              <span className="block text-lg font-serif-luxury font-light">{date.dayNumber}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Time Selector */}
-                    {bookingDate && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        className="space-y-2"
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className="text-[10px] uppercase tracking-wider text-gray-light/50 font-mono block">
-                            Horarios Disponibles (9:00 AM - 7:00 PM):
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-64 overflow-y-auto p-1 pr-2 custom-scrollbar">
-                          {TIME_SLOTS.map((time) => {
-                            const isOccupied = isSlotOccupied(time, bookingDate, selectedStylist?.id || '');
-                            const isSelected = bookingTime === time;
-                            return (
-                              <button
-                                key={time}
-                                type="button"
-                                disabled={isOccupied}
-                                onClick={() => setBookingTime(time)}
-                                className={`p-2.5 border text-center text-xs transition-all duration-300 font-mono flex flex-col items-center justify-center ${
-                                  isOccupied
-                                    ? 'border-red-900/30 bg-red-950/20 text-red-300/40 cursor-not-allowed opacity-40'
-                                    : isSelected 
-                                      ? 'border-gold-champagne bg-dark-bg text-white font-bold shadow-[0_0_15px_rgba(212,175,55,0.15)] cursor-pointer' 
-                                      : 'border-warm-border hover:border-gold-champagne/40 bg-dark-bg/60 text-gray-light/80 cursor-pointer'
-                                }`}
-                              >
-                                <span className={isOccupied ? 'line-through decoration-red-500/50' : ''}>{time}</span>
-                                {isOccupied && (
-                                  <span className="text-[8px] font-sans uppercase font-bold text-red-400/80 mt-0.5 tracking-tight">
-                                    Agendado
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    )}
-
-                    <div className="pt-4 flex justify-between items-center">
-                      <button
-                        type="button"
-                        onClick={() => setBookingStep(2)}
-                        className="text-xs uppercase tracking-wider text-gray-light/40 hover:text-white"
-                      >
-                        Atrás
-                      </button>
-                      {bookingDate && bookingTime && (
-                        <button
-                          type="button"
-                          onClick={() => setBookingStep(4)}
-                          className="bg-neutral-900 border border-gold-champagne/40 hover:border-gold-champagne text-gold-champagne px-5 py-2.5 text-xs uppercase tracking-wider font-light flex items-center gap-1.5 transition-colors"
-                        >
-                          Siguiente <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* STEP 4: CLIENT DATA & COMPILING */}
-                {bookingStep === 4 && (
-                  <motion.div 
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }}
-                    className="space-y-5"
-                  >
-                    <div className="flex justify-between items-center">
-                      <label className="block text-xs uppercase tracking-[0.2em] text-white font-light">
-                        Paso 4: Información de Contacto
-                      </label>
-                      <button 
-                        type="button" 
-                        onClick={() => setBookingStep(3)} 
-                        className="text-[10px] text-gold-champagne/50 hover:text-gold-champagne uppercase tracking-wider"
-                      >
-                        Atrás
-                      </button>
-                    </div>
-
-                    <div className="space-y-4">
-                      {/* Name input */}
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-widest text-gold-champagne/70 font-light mb-1">Nombre Completo</label>
-                        <input 
-                          type="text" 
-                          required
-                          value={clientName}
-                          onChange={(e) => setClientName(e.target.value)}
-                          placeholder="p.ej. Mariana Rodríguez"
-                          className="w-full bg-dark-bg border border-warm-border focus:border-gold-champagne text-white text-sm px-4 py-3 outline-none transition-colors"
-                        />
-                      </div>
-
-                      {/* Phone input */}
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-widest text-gold-champagne/70 font-light mb-1">Número de Celular</label>
-                        <input 
-                          type="tel" 
-                          required
-                          value={clientPhone}
-                          onChange={(e) => setClientPhone(e.target.value)}
-                          placeholder="p.ej. 8888 8888"
-                          className="w-full bg-dark-bg border border-warm-border focus:border-gold-champagne text-white text-sm px-4 py-3 outline-none transition-colors font-mono"
-                        />
-                      </div>
-
-                      {/* Notes */}
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-widest text-gold-champagne/70 font-light mb-1">Nota Especial (Opcional)</label>
-                        <textarea 
-                          rows={2}
-                          value={customNote}
-                          onChange={(e) => setCustomNote(e.target.value)}
-                          placeholder="Si necesitas algún detalle o aclaración, escríbela aquí..."
-                          className="w-full bg-dark-bg border border-warm-border focus:border-gold-champagne text-white text-sm px-4 py-3 outline-none transition-colors resize-none"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Booking summary recap */}
-                    <div className="bg-dark-bg border border-warm-border/80 p-4 space-y-2 text-xs">
-                      <p className="text-[10px] uppercase text-gold-champagne tracking-widest font-semibold">Resumen de Reserva:</p>
-                      <div className="grid grid-cols-2 gap-y-1 text-gray-light/80">
-                        <span className="font-light">Servicio:</span>
-                        <span className="text-white text-right uppercase font-serif-luxury font-medium">{selectedService?.name}</span>
-                        
-                        <span className="font-light">Estilista:</span>
-                        <span className="text-white text-right uppercase font-serif-luxury">{selectedStylist?.name}</span>
-                        
-                        <span className="font-light">Horario:</span>
-                        <span className="text-gold-champagne text-right font-mono font-medium">
-                          {availableDates.find(d => d.rawValue === bookingDate)?.formatted} - {bookingTime}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setBookingStep(3)}
-                        className="text-xs uppercase tracking-wider text-gray-light/40 hover:text-white text-center sm:text-left py-2"
-                      >
-                        ← Modificar hora
-                      </button>
-
-                      <button
-                        type="submit"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleProcessBooking(false);
-                        }}
-                        className="bg-gold-champagne text-dark-bg hover:bg-white text-xs uppercase tracking-[0.15em] font-bold px-6 py-3.5 flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer"
-                      >
-                        <CheckCircle className="w-4 h-4 text-dark-bg" />
-                        <span>Agendar Cita</span>
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-                
-              </form>
-              )}
             </div>
             
           </div>
@@ -1764,15 +1082,11 @@ _Solicitado desde el sitio web de CF Portadas_`;
                 <div className="pt-8">
                   <button 
                     onClick={() => {
-                      // Pre-fill booking assistant with this service & stylist
                       const matchedService = SERVICES.find(s => s.name === activeLightbox.service);
-                      const matchedStylist = STYLISTS.find(st => st.name === activeLightbox.stylist);
                       if (matchedService) setSelectedService(matchedService);
-                      if (matchedStylist) setSelectedStylist(matchedStylist);
                       
                       setActiveLightbox(null);
                       scrollToSection('contacto');
-                      setBookingStep(3); // Skip directly to date/time step since service & stylist are selected!
                     }}
                     className="w-full bg-gold-champagne text-dark-bg hover:bg-white text-xs uppercase tracking-[0.2em] font-bold py-3.5 text-center transition-colors duration-300"
                     id="lightbox-book-now"
@@ -1786,18 +1100,70 @@ _Solicitado desde el sitio web de CF Portadas_`;
         )}
       </AnimatePresence>
 
-      {/* DISCREET FLOATING WHATSAPP BUTTON (ALWAYS VISIBLE ON MOBILE) */}
+      {/* DISCREET FLOATING WHATSAPP BUTTON (DESKTOP) */}
       <a 
         href="https://wa.me/50689607575?text=Hola%20CF%20Portadas,%20quisiera%20reservar%20una%20cita."
         target="_blank" 
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full p-4 shadow-2xl transition-all duration-300 hover:scale-110 flex items-center justify-center border border-emerald-500 md:bottom-8 md:right-8 group"
+        className="hidden md:flex fixed bottom-8 right-8 z-40 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full p-4 shadow-2xl transition-all duration-300 hover:scale-110 items-center justify-center border border-emerald-500 group"
         aria-label="Contactar por WhatsApp"
         id="floating-whatsapp-btn"
       >
         <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-25 group-hover:opacity-0" />
         <MessageSquare className="w-6 h-6 text-white" strokeWidth={2.0} />
       </a>
+
+      {/* MOBILE STICKY BOTTOM ACTION BAR */}
+      <nav 
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-dark-bg/95 backdrop-blur-lg border-t border-gold-champagne/30 px-3 py-2 shadow-[0_-5px_20px_rgba(0,0,0,0.6)]"
+        aria-label="Navegación Móvil"
+      >
+        <div className="grid grid-cols-4 gap-1 items-center max-w-md mx-auto">
+          {/* 1. Services */}
+          <button
+            onClick={() => scrollToSection('servicios')}
+            className={`flex flex-col items-center justify-center py-1 rounded transition-colors ${
+              activeTab === 'servicios' ? 'text-gold-champagne' : 'text-gray-light/60 hover:text-white'
+            }`}
+          >
+            <Scissors className="w-4 h-4 mb-0.5" />
+            <span className="text-[9px] uppercase tracking-wider font-mono">Servicios</span>
+          </button>
+
+          {/* 2. Primary Agendar Button */}
+          <button
+            onClick={() => {
+              scrollToSection('contacto');
+            }}
+            className="flex flex-col items-center justify-center py-1.5 px-1 bg-gold-champagne text-dark-bg rounded font-bold shadow-md shadow-gold-champagne/20 active:scale-95 transition-transform"
+          >
+            <Sparkles className="w-4 h-4 mb-0.5 text-dark-bg" />
+            <span className="text-[9px] uppercase tracking-wider font-bold">Agendar</span>
+          </button>
+
+          {/* 3. WhatsApp Direct */}
+          <a
+            href="https://wa.me/50689607575?text=Hola%20CF%20Portadas,%20quisiera%20consultar%20por%20una%20cita."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center justify-center py-1 rounded text-emerald-400 hover:text-emerald-300 transition-colors"
+          >
+            <MessageSquare className="w-4 h-4 mb-0.5" />
+            <span className="text-[9px] uppercase tracking-wider font-mono">WhatsApp</span>
+          </a>
+
+          {/* 4. Ubicación / Map */}
+          <button
+            onClick={() => scrollToSection('contacto')}
+            className={`flex flex-col items-center justify-center py-1 rounded transition-colors ${
+              activeTab === 'contacto' ? 'text-gold-champagne' : 'text-gray-light/60 hover:text-white'
+            }`}
+          >
+            <MapPin className="w-4 h-4 mb-0.5" />
+            <span className="text-[9px] uppercase tracking-wider font-mono">Escazú</span>
+          </button>
+        </div>
+      </nav>
 
       {/* SECRET ADMIN LOGIN MODAL */}
       <AdminLoginModal
