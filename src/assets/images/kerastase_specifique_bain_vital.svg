@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#22252a"/>
+      <stop offset="100%" stop-color="#0a0c0e"/>
+    </radialGradient>
+    <linearGradient id="teal_bottle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="40%" stop-color="#67e8f9"/>
+      <stop offset="70%" stop-color="#0891b2"/>
+      <stop offset="100%" stop-color="#0e7490"/>
+    </linearGradient>
+    <linearGradient id="silver_top" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#888888"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#666666"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="510" rx="90" ry="18" fill="#000000" opacity="0.6"/>
+  <!-- Silver Cap -->
+  <path d="M 230 110 L 370 110 L 350 160 L 250 160 Z" fill="url(#silver_top)"/>
+  <!-- Turquoise Bottle Body -->
+  <path d="M 250 160 C 240 230, 230 380, 250 490 L 350 490 C 370 380, 360 230, 350 160 Z" fill="url(#teal_bottle)" opacity="0.9"/>
+  <text x="300" y="210" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="16" fill="#ffffff" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="222" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7" fill="#e0f2fe" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <!-- Gold K -->
+  <path d="M 285 240 L 285 280 M 285 260 L 315 240 M 285 260 L 315 280" stroke="#ffffff" stroke-width="8" stroke-linecap="square"/>
+  <text x="300" y="310" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="11" fill="#ffffff" text-anchor="middle" letter-spacing="2">SPECIFIQUE</text>
+  <text x="300" y="340" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="11" fill="#ffffff" text-anchor="middle">BAIN VITAL DERMO-CALM</text>
+  <text x="300" y="358" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="6.5" fill="#f0fdfa" text-anchor="middle">HUILE DE CALOPHYLLUM</text>
+  <text x="300" y="380" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#ffffff" text-anchor="middle">Shampooing hydra-apaisant</text>
+  <text x="300" y="392" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#ffffff" text-anchor="middle">Cleansing soothing shampoo</text>
+  <text x="300" y="465" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#e0f2fe" text-anchor="middle">250 ml 8.5 fl.oz.</text>
+</svg>

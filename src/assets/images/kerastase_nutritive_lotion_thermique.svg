@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#3b200b"/>
+      <stop offset="100%" stop-color="#140a03"/>
+    </radialGradient>
+    <linearGradient id="orange_bottle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e65c00"/>
+      <stop offset="40%" stop-color="#ff8833"/>
+      <stop offset="70%" stop-color="#f27011"/>
+      <stop offset="100%" stop-color="#cc4400"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="520" rx="75" ry="15" fill="#000000" opacity="0.6"/>
+  <!-- Spray Head -->
+  <rect x="285" y="70" width="30" height="20" fill="#ffffff"/>
+  <path d="M 270 90 L 330 90 L 320 130 L 280 130 Z" fill="#e2e2e2"/>
+  <rect x="285" y="130" width="30" height="30" fill="#ffffff"/>
+  <!-- Orange Slim Bottle -->
+  <path d="M 235 160 C 235 180, 225 210, 225 260 L 225 470 C 225 495, 375 495, 375 470 L 375 260 C 375 210, 365 180, 365 160 Z" fill="url(#orange_bottle)"/>
+  <!-- White label card -->
+  <rect x="240" y="220" width="120" height="220" rx="4" fill="#ffffff" opacity="0.95"/>
+  <text x="300" y="250" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="13" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="260" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="6" fill="#111111" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <text x="300" y="280" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="9" fill="#ff6600" text-anchor="middle" letter-spacing="1.5">NUTRITIVE</text>
+  <text x="300" y="305" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="9.5" fill="#111111" text-anchor="middle">LOTION THERMIQUE</text>
+  <text x="300" y="318" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="9.5" fill="#111111" text-anchor="middle">SUBLIMATRICE</text>
+  <text x="300" y="338" font-family="'Helvetica Neue', Arial, sans-serif" font-size="5.5" fill="#666666" text-anchor="middle">PLANT-BASED PROTEINS</text>
+  <text x="300" y="346" font-family="'Helvetica Neue', Arial, sans-serif" font-size="5.5" fill="#666666" text-anchor="middle">+ NIACINAMIDE</text>
+  <text x="300" y="420" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#444444" text-anchor="middle">150 ml 5.1 fl.oz.</text>
+</svg>

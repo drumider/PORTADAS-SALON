@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2b2d35"/>
+      <stop offset="100%" stop-color="#0f1015"/>
+    </radialGradient>
+    <linearGradient id="holo_box" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fdfbfb"/>
+      <stop offset="30%" stop-color="#ebedee"/>
+      <stop offset="70%" stop-color="#e2d2f9"/>
+      <stop offset="100%" stop-color="#c5f0f5"/>
+    </linearGradient>
+    <linearGradient id="holo_k" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00f2fe"/>
+      <stop offset="50%" stop-color="#4facfe"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="500" rx="100" ry="18" fill="#000000" opacity="0.6"/>
+  <!-- Box -->
+  <rect x="200" y="120" width="200" height="360" rx="8" fill="url(#holo_box)" stroke="#ffffff" stroke-width="2"/>
+  <text x="300" y="170" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="16" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="182" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7" fill="#222222" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <!-- Holographic teal K -->
+  <path d="M 285 200 L 285 240 M 285 220 L 315 200 M 285 220 L 315 240" stroke="#2ac1bc" stroke-width="8" stroke-linecap="square"/>
+  <text x="300" y="270" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="12" fill="#2ac1bc" text-anchor="middle" letter-spacing="3">SYMBIOSE</text>
+  <text x="300" y="300" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="10" fill="#111111" text-anchor="middle">SÉRUM CELLULAIRE NUIT</text>
+  <text x="300" y="315" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="9" fill="#111111" text-anchor="middle">ANTI-PELLICULAIRE INTENSIF</text>
+  <text x="300" y="335" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="6.5" fill="#333333" text-anchor="middle">ACIDE SALICYLIQUE + PIROCTONE OLAMINE</text>
+  <!-- Moon icon -->
+  <path d="M 292 370 A 10 10 0 0 0 308 370 A 12 12 0 0 1 292 370 Z" fill="#2ac1bc"/>
+  <text x="300" y="395" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#444444" text-anchor="middle">NUIT - NIGHT</text>
+  <text x="300" y="450" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#555555" text-anchor="middle">90 ml 3.04 fl.oz.</text>
+</svg>

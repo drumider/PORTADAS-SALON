@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#3d2a1c"/>
+      <stop offset="100%" stop-color="#140d08"/>
+    </radialGradient>
+    <linearGradient id="bronze_tube" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#cd7f32"/>
+      <stop offset="40%" stop-color="#e69c54"/>
+      <stop offset="80%" stop-color="#d98c3e"/>
+      <stop offset="100%" stop-color="#a65d1b"/>
+    </linearGradient>
+    <linearGradient id="silver_cap" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#999999"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#777777"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="520" rx="80" ry="16" fill="#000000" opacity="0.6"/>
+  <!-- Upside down tube -->
+  <path d="M 220 120 L 380 120 L 360 450 C 360 470, 240 470, 240 450 Z" fill="url(#bronze_tube)"/>
+  <!-- Silver Bottom Cap -->
+  <rect x="240" y="450" width="120" height="50" rx="6" fill="url(#silver_cap)"/>
+  <!-- Text Label -->
+  <text x="300" y="190" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="16" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="202" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7" fill="#111111" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <text x="300" y="235" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="11" fill="#111111" text-anchor="middle" letter-spacing="2">DISCIPLINE</text>
+  <text x="300" y="270" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="12" fill="#111111" text-anchor="middle">FONDANT FLUIDEALISTE</text>
+  <text x="300" y="295" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="6.5" fill="#442200" text-anchor="middle">MORPHO-KERATINE™</text>
+  <text x="300" y="330" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#111111" text-anchor="middle">Soin lisseur en-mouvement</text>
+  <text x="300" y="342" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#111111" text-anchor="middle">Smooth-in-motion conditioner</text>
+  <text x="300" y="420" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#222222" text-anchor="middle">200 ml 6.8 fl.oz.</text>
+</svg>

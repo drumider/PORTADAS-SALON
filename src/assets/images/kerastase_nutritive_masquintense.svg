@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#3d220c"/>
+      <stop offset="100%" stop-color="#140a03"/>
+    </radialGradient>
+    <linearGradient id="jar_white" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#f5f5f7"/>
+      <stop offset="100%" stop-color="#d8d8e0"/>
+    </linearGradient>
+    <linearGradient id="orange_cap" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e65c00"/>
+      <stop offset="50%" stop-color="#ff8833"/>
+      <stop offset="100%" stop-color="#cc4400"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="490" rx="140" ry="25" fill="#000000" opacity="0.6"/>
+  <!-- Orange Top Lid -->
+  <rect x="180" y="200" width="240" height="60" rx="12" fill="url(#orange_cap)"/>
+  <ellipse cx="300" cy="200" rx="120" ry="12" fill="#ffa866" opacity="0.8"/>
+  <!-- White Jar Body -->
+  <path d="M 180 255 L 195 470 C 195 480, 405 480, 405 470 L 420 255 Z" fill="url(#jar_white)"/>
+  <!-- Front Orange K -->
+  <path d="M 285 280 L 285 320 M 285 300 L 315 280 M 285 300 L 315 320" stroke="#ff6600" stroke-width="8" stroke-linecap="round"/>
+  <!-- Text Label -->
+  <text x="300" y="348" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="16" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="360" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7" fill="#111111" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <text x="300" y="380" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="11" fill="#ff6600" text-anchor="middle" letter-spacing="1.5">NUTRITIVE</text>
+  <text x="300" y="398" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="11" fill="#111111" text-anchor="middle">MASQUINTENSE</text>
+  <text x="300" y="412" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#555555" text-anchor="middle">PLANT-BASED PROTEINS + NIACINAMIDE</text>
+  <text x="300" y="455" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#444444" text-anchor="middle">200 ml 6.8 fl.oz.</text>
+</svg>

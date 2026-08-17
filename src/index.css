@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@200;300;400;500&family=JetBrains+Mono:wght@300;400&family=Pinyon+Script&family=Allura&family=Montserrat:wght@100;200;300;400&family=Herr+Von+Muellerhoff&family=Monsieur+La+Doulaise&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif-luxury: "Cormorant Garamond", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-logo-script: "Pinyon Script", cursive;
+  --font-logo-script-alt: "Allura", cursive;
+  --font-logo-sans: "Montserrat", sans-serif;
+  --font-logo-muellerhoff: "Herr Von Muellerhoff", cursive;
+  --font-logo-doulaise: "Monsieur La Doulaise", cursive;
+  
+  --color-gold-champagne: #E5C1CD; /* Luxury Rose Gold / Blush Pink */
+  --color-gold-hover: #F1D5DF; /* Warm glowing Rose */
+  --color-dark-bg: #0F0C0A; /* Elegant warm deep espresso black */
+  --color-warm-card: #181411; /* Warm dark chocolate card */
+  --color-warm-border: #2C221C; /* Warm bronze-rose border */
+  --color-gray-light: #EBE7E0; /* Soft warm light cream-gray */
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0F0C0A;
+}
+::-webkit-scrollbar-thumb {
+  background: #E5C1CD;
+  border-radius: 3px;
+}
+
+/* Base selection styling */
+::selection {
+  background-color: #E5C1CD;
+  color: #0F0C0A;
+}
