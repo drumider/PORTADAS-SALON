@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Service, Stylist, Appointment } from '../types';
 import { SERVICES, STYLISTS, SERVICE_CATEGORIES, TIME_SLOTS } from '../constants';
+import { normalizeTimeTo24h, formatTimeTo12h } from '../utils/timeUtils';
 
 interface ClientBookingWidgetProps {
   existingAppointments: Appointment[];
@@ -132,13 +133,14 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
   // Check if a time slot is occupied
   const isSlotOccupied = (timeSlot: string, dateStr: string, stylistId: string) => {
     if (!dateStr || !stylistId) return false;
+    const targetTime24 = normalizeTimeTo24h(timeSlot);
     return existingAppointments.some((app) => {
       if (app.date !== dateStr) return false;
       if (app.status === 'Cancelada') return false;
       if (stylistId !== 'cualquiera' && app.stylistId !== 'cualquiera' && app.stylistId !== stylistId) {
         return false;
       }
-      return app.time === timeSlot;
+      return normalizeTimeTo24h(app.time) === targetTime24;
     });
   };
 
@@ -196,6 +198,9 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
       const chosenDay = availableDays.find(d => d.rawValue === bookingDate);
       const formattedDate = chosenDay ? chosenDay.formatted : bookingDate;
 
+      const normalizedTime24 = normalizeTimeTo24h(bookingTime);
+      const displayTime12 = formatTimeTo12h(bookingTime);
+
       const newApp = {
         clientName: clientName.trim(),
         clientPhone: clientPhone.trim(),
@@ -205,7 +210,7 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
         stylistId: selectedStylist.id,
         stylistName: selectedStylist.name,
         date: bookingDate,
-        time: bookingTime,
+        time: normalizedTime24,
         durationMinutes: selectedService.durationMinutes || 60,
         status: 'Pendiente',
         notes: customNote.trim()
@@ -223,7 +228,7 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
           `💇‍♀️ *Servicio:* ${selectedService.name} (${selectedService.price})\n` +
           `✂️ *Especialista:* ${selectedStylist.name}\n` +
           `📅 *Fecha:* ${formattedDate}\n` +
-          `⏰ *Hora:* ${bookingTime}\n` +
+          `⏰ *Hora:* ${displayTime12 || bookingTime}\n` +
           (customNote.trim() ? `📝 *Nota:* ${customNote.trim()}\n\n` : `\n`) +
           `Por favor me confirman en recepción. ¡Muchas gracias!`;
 
@@ -233,6 +238,7 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
           id: appointmentId,
           ...newApp,
           formattedDate,
+          displayTime: displayTime12 || bookingTime,
           price: selectedService.price,
           waUrl
         });

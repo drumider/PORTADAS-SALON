@@ -36,7 +36,12 @@ import {
   Columns,
   Sparkles,
   Layers,
-  ChevronDown
+  ChevronDown,
+  Bell,
+  ArrowRight,
+  Send,
+  CalendarPlus,
+  CheckCheck
 } from 'lucide-react';
 import { Appointment, AppointmentStatus, Stylist } from '../types';
 import { STYLISTS as DEFAULT_STYLISTS, SERVICES } from '../constants';
@@ -45,8 +50,10 @@ import {
   saveAppointment, 
   deleteAppointment, 
   updateAppointmentStatus, 
+  updateAppointmentDetails,
   subscribeToAppointments 
 } from '../utils/storage';
+import { normalizeTimeTo24h, formatTimeTo12h, formatTimeDisplay } from '../utils/timeUtils';
 import { AppointmentModal } from './AppointmentModal';
 
 interface MatrixAgendaGridProps {
@@ -132,6 +139,22 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
   const [isFullscreen, setIsFullscreen] = useState(false);
   const gridContainerRef = useRef<HTMLDivElement>(null);
 
+  // Notification Toast state
+  const [notificationToast, setNotificationToast] = useState<{
+    id: string;
+    message: string;
+    type: 'success' | 'info' | 'warning';
+  } | null>(null);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!notificationToast) return;
+    const timer = setTimeout(() => {
+      setNotificationToast(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [notificationToast]);
+
   // Update live clock
   useEffect(() => {
     const updateClock = () => {
@@ -146,10 +169,27 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
     return () => clearInterval(timer);
   }, []);
 
+  const prevPendingCountRef = useRef<number>(0);
+  const isInitialLoadRef = useRef<boolean>(true);
+
   // Subscribe to real-time appointments
   useEffect(() => {
     const unsubscribe = subscribeToAppointments((updated) => {
       setAppointments(updated);
+
+      const currentPending = updated.filter(a => a.status === 'Pendiente');
+      
+      if (!isInitialLoadRef.current && currentPending.length > prevPendingCountRef.current) {
+        const latestNewApp = currentPending[currentPending.length - 1];
+        setNotificationToast({
+          id: 'toast-' + Date.now(),
+          message: `🔔 ¡Nueva Solicitud de Cita! ${latestNewApp?.clientName || 'Un cliente'} ha agendado vía Asistente Web para el ${latestNewApp?.date || ''} (${formatTimeTo12h(latestNewApp?.time || '')}).`,
+          type: 'warning'
+        });
+      }
+      
+      prevPendingCountRef.current = currentPending.length;
+      isInitialLoadRef.current = false;
     });
     return () => unsubscribe();
   }, []);
@@ -232,12 +272,12 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
       .sort((a, b) => a.time.localeCompare(b.time));
   }, [appointments, selectedDateStr]);
 
-  // Map appointments by stylistId and time
+  // Map appointments by stylistId and time with normalized times (supporting 12h/24h)
   const appointmentMatrix = useMemo(() => {
     const map = new Map<string, Appointment[]>();
     dayAppointments.forEach(app => {
-      const cleanTime = app.time.substring(0, 5);
-      const [hStr, mStr] = cleanTime.split(':');
+      const normalized24 = normalizeTimeTo24h(app.time);
+      const [hStr, mStr] = normalized24.split(':');
       const h = parseInt(hStr, 10);
       const m = parseInt(mStr, 10);
 
@@ -245,27 +285,76 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
       const targetM = m < 30 ? '00' : '30';
       const targetSlotTime = `${String(h).padStart(2, '0')}:${targetM}`;
 
-      const exactKey = `${app.stylistId}_${cleanTime}`;
+      const exactKey = `${app.stylistId}_${normalized24}`;
       const existingExact = map.get(exactKey) || [];
-      map.set(exactKey, [...existingExact, app]);
+      if (!existingExact.some(existing => existing.id === app.id)) {
+        map.set(exactKey, [...existingExact, app]);
+      }
 
       const blockKey = `${app.stylistId}_${targetSlotTime}`;
       if (blockKey !== exactKey) {
         const existingBlock = map.get(blockKey) || [];
-        map.set(blockKey, [...existingBlock, app]);
+        if (!existingBlock.some(existing => existing.id === app.id)) {
+          map.set(blockKey, [...existingBlock, app]);
+        }
       }
 
       if (app.stylistId === 'cualquiera') {
-        const exactQual = `cualquiera_${cleanTime}`;
-        map.set(exactQual, [...(map.get(exactQual) || []), app]);
+        const exactQual = `cualquiera_${normalized24}`;
+        const existingQual = map.get(exactQual) || [];
+        if (!existingQual.some(existing => existing.id === app.id)) {
+          map.set(exactQual, [...existingQual, app]);
+        }
         const blockQual = `cualquiera_${targetSlotTime}`;
         if (blockQual !== exactQual) {
-          map.set(blockQual, [...(map.get(blockQual) || []), app]);
+          const existingBlockQual = map.get(blockQual) || [];
+          if (!existingBlockQual.some(existing => existing.id === app.id)) {
+            map.set(blockQual, [...existingBlockQual, app]);
+          }
         }
       }
     });
     return map;
   }, [dayAppointments]);
+
+  // Approve & Schedule handler for pending appointments
+  const handleApproveAppointment = (
+    appointment: Appointment,
+    targetStylistId?: string
+  ) => {
+    const assignedStylist = targetStylistId && targetStylistId !== 'cualquiera'
+      ? stylists.find(s => s.id === targetStylistId) || { id: targetStylistId, name: targetStylistId }
+      : (appointment.stylistId !== 'cualquiera' 
+          ? stylists.find(s => s.id === appointment.stylistId) || { id: appointment.stylistId, name: appointment.stylistName }
+          : stylists.find(s => s.id !== 'cualquiera') || stylists[0]);
+
+    const updatedData: Partial<Appointment> = {
+      status: 'Confirmada',
+      stylistId: assignedStylist.id,
+      stylistName: assignedStylist.name
+    };
+
+    updateAppointmentDetails(appointment.id, updatedData);
+
+    // Jump agenda view directly to the appointment's date so it's instantly visible
+    try {
+      const [y, m, d] = appointment.date.split('-').map(Number);
+      if (y && m && d) {
+        setSelectedDate(new Date(y, m - 1, d));
+      }
+    } catch (e) {}
+
+    // Switch active stylist in single view
+    if (assignedStylist.id && assignedStylist.id !== 'cualquiera') {
+      setActiveStylistId(assignedStylist.id);
+    }
+
+    setNotificationToast({
+      id: 'toast-' + Date.now(),
+      message: `✅ Cita de ${appointment.clientName} confirmada y agendada para ${assignedStylist.name} el ${appointment.date} a las ${formatTimeTo12h(appointment.time)}!`,
+      type: 'success'
+    });
+  };
 
   // Slot click handler
   const handleSlotClick = (stylist: Stylist, time: string, existingApp?: Appointment) => {
@@ -320,13 +409,13 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         };
       case 'Pendiente':
         return {
-          cardBg: 'bg-amber-50 border-amber-400 text-amber-950 hover:border-amber-600',
-          dot: 'bg-amber-500',
-          badge: 'bg-amber-100 text-amber-900 border-amber-300',
-          textColor: 'text-amber-950',
-          subColor: 'text-amber-800',
-          timeColor: 'text-amber-700',
-          label: 'Pendiente'
+          cardBg: 'bg-red-50/90 border-red-400 text-red-950 hover:border-red-600 ring-1 ring-red-300/80',
+          dot: 'bg-red-500',
+          badge: 'bg-red-100 text-red-800 border-red-300 font-bold',
+          textColor: 'text-red-950',
+          subColor: 'text-red-800',
+          timeColor: 'text-red-700',
+          label: 'Por Aprobar'
         };
       case 'Completada':
         return {
@@ -416,6 +505,45 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
       }`}
       id="matrix-agenda-main"
     >
+      {/* FLOATING REAL-TIME NOTIFICATION TOAST */}
+      <AnimatePresence>
+        {notificationToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className={`fixed top-4 right-4 z-50 max-w-md p-4 rounded-xl shadow-2xl border flex items-start gap-3 backdrop-blur-md ${
+              notificationToast.type === 'success'
+                ? 'bg-emerald-950/95 text-white border-emerald-500/50 ring-2 ring-emerald-500/20'
+                : notificationToast.type === 'warning'
+                ? 'bg-red-950/95 text-white border-red-500/60 ring-2 ring-red-500/30'
+                : 'bg-[#2C221C]/95 text-white border-[#8C6B4D]/50'
+            }`}
+          >
+            <div className="p-1 rounded-full bg-white/10 shrink-0 mt-0.5">
+              {notificationToast.type === 'success' ? (
+                <CheckCheck className="w-5 h-5 text-emerald-400" />
+              ) : notificationToast.type === 'warning' ? (
+                <Bell className="w-5 h-5 text-red-400 animate-bounce" />
+              ) : (
+                <Sparkles className="w-5 h-5 text-gold-champagne" />
+              )}
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-xs font-semibold leading-relaxed font-sans">
+                {notificationToast.message}
+              </p>
+            </div>
+            <button
+              onClick={() => setNotificationToast(null)}
+              className="text-white/60 hover:text-white transition-colors p-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 1. COMPACT RESPONSIVE TOP BAR */}
       <header className="bg-white border-b border-[#E2D8CC] px-3 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shrink-0 shadow-xs">
         
@@ -476,7 +604,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
           <div className="flex items-center bg-[#F2ECE5] p-0.5 rounded border border-[#D9CEC2]">
             <button
               onClick={() => setViewMode('single_stylist')}
-              className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1 ${
+              className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1 cursor-pointer ${
                 viewMode === 'single_stylist'
                   ? 'bg-white text-[#2C221C] shadow-xs'
                   : 'text-neutral-600 hover:text-neutral-900'
@@ -489,7 +617,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
 
             <button
               onClick={() => setViewMode('timeline')}
-              className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1 ${
+              className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1 cursor-pointer ${
                 viewMode === 'timeline'
                   ? 'bg-white text-[#2C221C] shadow-xs'
                   : 'text-neutral-600 hover:text-neutral-900'
@@ -502,7 +630,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
 
             <button
               onClick={() => setViewMode('matrix')}
-              className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1 ${
+              className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1 cursor-pointer ${
                 viewMode === 'matrix'
                   ? 'bg-white text-[#2C221C] shadow-xs'
                   : 'text-neutral-600 hover:text-neutral-900'
@@ -514,24 +642,22 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
             </button>
           </div>
 
-          {/* Pending Requests Button */}
+          {/* Pending Requests Noticeable Button (Light Red / Urgent) */}
           {pendingAppointments.length > 0 && (
             <button
               onClick={() => setActiveBottomModal('pending')}
-              className="px-2 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1 transition-colors shadow-xs"
-              title="Citas pendientes"
+              className="px-2.5 py-1 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1.5 transition-all shadow-md animate-pulse cursor-pointer ring-2 ring-red-300"
+              title={`${pendingAppointments.length} Cita(s) agendada(s) por el asistente web pendientes por aprobar`}
             >
-              <ClipboardList className="w-3.5 h-3.5 text-amber-600" />
-              <span className="bg-amber-600 text-white text-[9px] px-1 rounded-full font-mono">
-                {pendingAppointments.length}
-              </span>
+              <Bell className="w-3.5 h-3.5 animate-bounce" />
+              <span className="font-mono font-bold">{pendingAppointments.length} Por Aprobar</span>
             </button>
           )}
 
           {/* Quick Tools Trigger */}
           <button
             onClick={() => setActiveBottomModal('list')}
-            className="w-7 h-7 rounded bg-[#FAF8F5] hover:bg-[#F2ECE5] border border-[#D9CEC2] text-[#5C4A38] flex items-center justify-center transition-colors shadow-xs"
+            className="w-7 h-7 rounded bg-[#FAF8F5] hover:bg-[#F2ECE5] border border-[#D9CEC2] text-[#5C4A38] flex items-center justify-center transition-colors shadow-xs cursor-pointer"
             title="Buscador general de citas"
           >
             <Search className="w-3.5 h-3.5" />
@@ -539,7 +665,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
 
           <button
             onClick={handlePrint}
-            className="w-7 h-7 rounded bg-[#FAF8F5] hover:bg-[#F2ECE5] border border-[#D9CEC2] text-[#5C4A38] flex items-center justify-center transition-colors shadow-xs"
+            className="w-7 h-7 rounded bg-[#FAF8F5] hover:bg-[#F2ECE5] border border-[#D9CEC2] text-[#5C4A38] flex items-center justify-center transition-colors shadow-xs cursor-pointer"
             title="Imprimir hoja de trabajo"
           >
             <Printer className="w-3.5 h-3.5" />
@@ -547,6 +673,48 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         </div>
 
       </header>
+
+      {/* PROMINENT PENDING APPOINTMENTS ALERT BANNER (LIGHT RED / URGENT) */}
+      {pendingAppointments.length > 0 && (
+        <div className="bg-gradient-to-r from-red-50 via-rose-50/80 to-red-50 border-b border-red-300 px-3 sm:px-5 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2.5 shadow-xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center shrink-0 shadow-xs ring-2 ring-red-200">
+              <Bell className="w-3.5 h-3.5 animate-bounce" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-red-950 font-serif-luxury uppercase tracking-wide">
+                  ⚡ Solicitud de Cita Recibida (Asistente Web)
+                </span>
+                <span className="bg-red-500 text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded-full uppercase shadow-xs animate-pulse">
+                  {pendingAppointments.length} Por Aprobar
+                </span>
+              </div>
+              <p className="text-[11px] text-red-900 truncate mt-0.5">
+                <strong className="text-red-950 font-bold">{pendingAppointments[0].clientName}</strong> agendó <strong>{pendingAppointments[0].serviceName}</strong> para el <strong>{pendingAppointments[0].date}</strong> a las <strong>{formatTimeTo12h(pendingAppointments[0].time)}</strong> ({pendingAppointments[0].stylistName || 'Cualquier profesional'}).
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
+            <button
+              onClick={() => handleApproveAppointment(pendingAppointments[0])}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+              title="Aprobar y agendar automáticamente en la agenda"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Aprobar y Agendar</span>
+            </button>
+
+            <button
+              onClick={() => setActiveBottomModal('pending')}
+              className="px-2.5 py-1.5 bg-white hover:bg-red-100 border border-red-400 text-red-950 rounded text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+            >
+              <span>Revisar Todas ({pendingAppointments.length})</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 2. STYLIST SELECTOR TABS (Visible in mobile or when single_stylist mode is active) */}
       {(viewMode === 'single_stylist' || viewMode === 'timeline') && (
@@ -704,7 +872,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                                     </span>
                                   </div>
                                   <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${badge.badge}`}>
-                                    {app.status}
+                                    {badge.label}
                                   </span>
                                 </div>
 
@@ -725,6 +893,26 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                                   <p className="text-[10px] text-neutral-500 italic mt-1 bg-white/60 p-1 rounded border border-black/5">
                                     "{app.notes}"
                                   </p>
+                                )}
+
+                                {app.status === 'Pendiente' && (
+                                  <div className="mt-2 pt-2 border-t border-red-300/80 flex items-center justify-between gap-2 bg-red-50/80 p-1.5 rounded border border-red-200">
+                                    <span className="text-[10px] text-red-800 font-bold uppercase font-mono flex items-center gap-1.5">
+                                      <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                                      Por Aprobar
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleApproveAppointment(app, selectedStylistObj.id);
+                                      }}
+                                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                                    >
+                                      <Check className="w-3 h-3" />
+                                      <span>Aprobar Cita</span>
+                                    </button>
+                                  </div>
                                 )}
                               </div>
                             );
@@ -807,7 +995,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                             {app.time}
                           </span>
                           <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${badge.badge}`}>
-                            {app.status}
+                            {badge.label}
                           </span>
                         </div>
 
@@ -960,7 +1148,13 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                                         <span className="font-bold text-xs truncate max-w-[130px] text-neutral-900 font-serif-luxury">
                                           {app.clientName}
                                         </span>
-                                        <span className={`w-2 h-2 rounded-full shrink-0 ${getStatusBadge(app.status).dot}`} />
+                                        {app.status === 'Pendiente' ? (
+                                          <span className="text-[8px] bg-amber-500 text-white font-mono font-bold px-1 rounded uppercase animate-pulse">
+                                            Por Aprobar
+                                          </span>
+                                        ) : (
+                                          <span className={`w-2 h-2 rounded-full shrink-0 ${getStatusBadge(app.status).dot}`} />
+                                        )}
                                       </div>
                                       <div className="text-[10px] text-neutral-600 truncate mt-0.5">
                                         {app.serviceName}
@@ -1151,7 +1345,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                           <td className="p-2.5 font-serif-luxury text-neutral-900 font-medium">{app.stylistName}</td>
                           <td className="p-2.5">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono border ${getStatusBadge(app.status).badge}`}>
-                              {app.status}
+                              {getStatusBadge(app.status).label}
                             </span>
                           </td>
                           <td className="p-2.5 text-right space-x-1">
@@ -1195,63 +1389,151 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-2xl bg-white border border-[#D9CEC2] rounded-xl shadow-2xl p-6 text-left space-y-4 max-h-[85vh] flex flex-col"
+              className="w-full max-w-2xl bg-white border border-[#D9CEC2] rounded-xl shadow-2xl p-5 sm:p-6 text-left space-y-4 max-h-[88vh] flex flex-col"
             >
               <div className="flex items-center justify-between border-b border-[#EAE3DC] pb-3 shrink-0">
-                <div className="flex items-center gap-2 text-amber-700">
-                  <ClipboardList className="w-5 h-5" />
-                  <h3 className="font-serif-luxury text-lg font-bold text-neutral-900 uppercase tracking-wider">
-                    Citas Pendientes de Confirmación ({pendingAppointments.length})
-                  </h3>
+                <div className="flex items-center gap-2.5 text-red-700">
+                  <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-700">
+                    <Bell className="w-4 h-4 animate-bounce" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif-luxury text-base sm:text-lg font-bold text-neutral-900 uppercase tracking-wider">
+                      Solicitudes de Citas Por Aprobar ({pendingAppointments.length})
+                    </h3>
+                    <p className="text-[11px] text-neutral-500 font-mono">
+                      Citas agendadas por clientes vía Asistente Web que requieren aprobación inmediata
+                    </p>
+                  </div>
                 </div>
-                <button onClick={() => setActiveBottomModal(null)} className="text-neutral-400 hover:text-neutral-800 cursor-pointer">
+                <button onClick={() => setActiveBottomModal(null)} className="text-neutral-400 hover:text-neutral-800 p-1 cursor-pointer">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-2">
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
                 {pendingAppointments.length === 0 ? (
-                  <div className="text-center py-12 text-neutral-500 text-xs font-mono">
-                    🎉 No hay citas pendientes. Todas las citas están confirmadas.
+                  <div className="text-center py-12 space-y-2">
+                    <CheckCheck className="w-12 h-12 text-emerald-500 mx-auto" />
+                    <p className="text-sm font-bold text-neutral-800 font-serif-luxury uppercase">
+                      ¡Al día! No hay citas pendientes
+                    </p>
+                    <p className="text-xs text-neutral-500 font-mono">
+                      Todas las solicitudes agendadas han sido aprobadas y asignadas a la agenda.
+                    </p>
                   </div>
                 ) : (
                   pendingAppointments.map(app => (
-                    <div key={app.id} className="p-3.5 bg-[#FAF8F5] border border-amber-300 rounded-lg flex items-center justify-between gap-4">
-                      <div>
+                    <div 
+                      key={app.id} 
+                      className="p-4 bg-gradient-to-r from-red-50/80 via-white to-rose-50/40 border border-red-300 rounded-xl shadow-xs space-y-3"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-red-200/80 pb-2.5">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-neutral-900 uppercase font-serif-luxury">{app.clientName}</span>
-                          <span className="text-[10px] font-mono text-[#8C6B4D] bg-white px-1.5 py-0.5 rounded border border-[#D9CEC2] font-semibold">
-                            {app.date} · {app.time}
-                          </span>
+                          <div className="w-7 h-7 rounded-full bg-[#2C221C] text-gold-champagne flex items-center justify-center text-xs font-bold font-serif-luxury">
+                            {app.clientName.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <span className="font-bold text-sm text-neutral-900 uppercase font-serif-luxury">
+                              {app.clientName}
+                            </span>
+                            <span className="text-[10px] bg-red-100 text-red-800 border border-red-300 px-2 py-0.5 rounded font-mono font-bold ml-2 uppercase animate-pulse">
+                              Por Aprobar
+                            </span>
+                          </div>
                         </div>
-                        <p className="text-xs text-neutral-700 mt-0.5">
-                          {app.serviceName} con <strong className="text-neutral-900">{app.stylistName}</strong>
-                        </p>
+
+                        <div className="flex items-center gap-2 font-mono text-xs text-red-900 font-bold">
+                          <CalendarIcon className="w-3.5 h-3.5" />
+                          <span>{app.date}</span>
+                          <span>•</span>
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>{formatTimeTo12h(app.time)}</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-neutral-700">
+                        <div className="flex items-center gap-2">
+                          <Scissors className="w-3.5 h-3.5 text-[#8C6B4D] shrink-0" />
+                          <span>Servicio: <strong className="text-neutral-900 font-semibold">{app.serviceName}</strong></span>
+                        </div>
                         {app.clientPhone && (
-                          <p className="text-[10px] text-neutral-500 font-mono mt-0.5">
-                            Tel: {app.clientPhone}
-                          </p>
+                          <div className="flex items-center gap-2 font-mono text-neutral-700">
+                            <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>Teléfono: <strong>{app.clientPhone}</strong></span>
+                          </div>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={() => handleStatusChange(app.id, 'Confirmada')}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded uppercase tracking-wider flex items-center gap-1 shadow-xs cursor-pointer"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Confirmar</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActiveBottomModal(null);
-                            setEditingAppointment(app);
-                            setIsAppointmentModalOpen(true);
-                          }}
-                          className="px-2.5 py-1.5 bg-[#2C221C] hover:bg-[#8C6B4D] text-white text-xs rounded font-bold cursor-pointer"
-                        >
-                          Ver
-                        </button>
+                      {app.notes && (
+                        <div className="text-[11px] text-neutral-600 bg-white/80 p-2 rounded border border-red-200/60 italic">
+                          "{app.notes}"
+                        </div>
+                      )}
+
+                      {/* Stylist Assignment and Approval Bar */}
+                      <div className="pt-2 flex flex-wrap items-center justify-between gap-2.5 border-t border-red-200/80">
+                        <div className="flex items-center gap-2">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-[#8C6B4D] font-mono">
+                            Profesional:
+                          </label>
+                          <select
+                            value={app.stylistId}
+                            onChange={(e) => {
+                              const targetSt = stylists.find(s => s.id === e.target.value);
+                              if (targetSt) {
+                                updateAppointmentDetails(app.id, {
+                                  stylistId: targetSt.id,
+                                  stylistName: targetSt.name
+                                });
+                              }
+                            }}
+                            className="bg-white border border-[#D9CEC2] text-neutral-900 text-xs rounded px-2 py-1 font-serif-luxury uppercase font-semibold focus:border-[#8C6B4D] outline-none shadow-xs"
+                          >
+                            <option value="cualquiera">Cualquier Profesional</option>
+                            {stylists.filter(s => s.id !== 'cualquiera').map(st => (
+                              <option key={st.id} value={st.id}>
+                                {st.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {app.clientPhone && (
+                            <a
+                              href={`https://wa.me/${app.clientPhone.replace(/\D/g, '')}?text=Hola%20${encodeURIComponent(app.clientName)},%20le%20confirmamos%20su%20cita%20en%20CF%20Portadas%20para%20el%20día%20${app.date}%20a%20las%20${formatTimeTo12h(app.time)}%20con%20${encodeURIComponent(app.stylistName)}.`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
+                              title="Enviar mensaje por WhatsApp"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">WhatsApp</span>
+                            </a>
+                          )}
+
+                          <button
+                            onClick={() => {
+                              setActiveBottomModal(null);
+                              setEditingAppointment(app);
+                              setIsAppointmentModalOpen(true);
+                            }}
+                            className="px-2.5 py-1.5 bg-white hover:bg-[#F2ECE5] border border-[#D9CEC2] text-[#2C221C] text-xs rounded font-bold uppercase transition-colors cursor-pointer"
+                          >
+                            Editar
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              handleApproveAppointment(app, app.stylistId);
+                              setActiveBottomModal(null);
+                            }}
+                            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-colors cursor-pointer"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Aprobar y Agendar</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))

@@ -134,6 +134,23 @@ export const updateAppointmentStatus = (id: string, status: Appointment['status'
   });
 };
 
+export const updateAppointmentDetails = (id: string, updates: Partial<Appointment>): void => {
+  const index = cachedAppointments.findIndex(a => a.id === id);
+  if (index !== -1) {
+    cachedAppointments[index] = {
+      ...cachedAppointments[index],
+      ...updates
+    };
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cachedAppointments));
+    } catch (e) {}
+  }
+
+  updateDoc(doc(db, 'appointments', id), updates).catch((err) => {
+    console.error('Error updating appointment in Firestore:', err);
+  });
+};
+
 // Admin authentication helpers
 export const setAdminAuthenticated = (isAuth: boolean) => {
   if (isAuth) {

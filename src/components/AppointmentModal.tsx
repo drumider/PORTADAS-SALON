@@ -306,14 +306,14 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         ? st === 'Confirmada'
                           ? 'border-emerald-400 bg-emerald-100 text-emerald-950'
                           : st === 'Pendiente'
-                          ? 'border-amber-400 bg-amber-100 text-amber-950'
+                          ? 'border-red-400 bg-red-100 text-red-950 ring-1 ring-red-300'
                           : st === 'Completada'
                           ? 'border-blue-400 bg-blue-100 text-blue-950'
-                          : 'border-red-400 bg-red-100 text-red-950'
+                          : 'border-neutral-400 bg-neutral-200 text-neutral-800'
                         : 'border-[#E2D9CE] bg-[#FAF8F5] text-neutral-600 hover:text-neutral-900'
                     }`}
                   >
-                    {st}
+                    {st === 'Pendiente' ? 'Por Aprobar' : st}
                   </button>
                 ))}
               </div>
