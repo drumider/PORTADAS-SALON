@@ -24,7 +24,22 @@ export const ALL_SERVICES: Service[] = [
   { id: '300', code: '300', name: 'Ampolla Loreal', price: '₡12,000', priceNumber: 12000, durationText: '15min', durationMinutes: 15, category: 'Tratamientos Capilares', icon: Sparkles, description: 'Dosis concentrada de nutrición y brillo instantáneo L\'Oréal.' },
 
   // 6-8: Color / Keratina / Smartbond
-  { id: '301', code: '301', name: 'Aplicacion De Color', price: '₡22,000', priceNumber: 22000, durationText: '1h', durationMinutes: 60, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Aplicación experta de color raíz o global.' },
+  { 
+    id: '301', 
+    code: '301', 
+    name: 'Aplicacion De Color', 
+    price: '₡22,000', 
+    priceNumber: 22000, 
+    durationText: '1h', 
+    durationMinutes: 60, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Aplicación experta de color raíz o global.',
+    phases: [
+      { name: 'Aplicación de Color', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el producto' },
+      { name: 'Reposo de Color', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre durante reposo' }
+    ]
+  },
   { id: '321', code: '321', name: 'Aplicacion Keratina', price: '₡70,000', priceNumber: 70000, durationText: '2h 30min', durationMinutes: 150, category: 'Alisados y Keratinas', icon: Wind, description: 'Tratamiento de queratina regeneradora.' },
   { id: '333', code: '333', name: 'Aplicacion Smartbond', price: '₡6,000', priceNumber: 6000, durationText: '15min', durationMinutes: 15, category: 'Tratamientos Capilares', icon: Sparkles, description: 'Aditivo protector de puentes capilares durante la decoloración.' },
 
@@ -55,9 +70,60 @@ export const ALL_SERVICES: Service[] = [
   { id: '388', code: '388', name: 'Botox Cabello Muy Largo', price: '₡80,000', priceNumber: 80000, durationText: '3h 30min', durationMinutes: 210, category: 'Alisados y Keratinas', icon: Sparkles, description: 'Botox capilar para cabello abundante o extra largo.' },
 
   // 25-27: Esmaltes
-  { id: '237', code: '237', name: 'Cambio Esmalte', price: '₡7,000', priceNumber: 7000, durationText: '20min', durationMinutes: 20, category: 'Manicure y Pedicure', icon: Hand, description: 'Cambio de esmalte tradicional en manos o pies.' },
-  { id: '315', code: '315', name: 'Cambio Esmalte Gel Shine', price: '₡8,000', priceNumber: 8000, durationText: '30min', durationMinutes: 30, category: 'Manicure y Pedicure', icon: Hand, description: 'Esmaltado en gel efecto alto brillo Shine.' },
-  { id: '231', code: '231', name: 'Cambio Shellac', price: '₡10,000', priceNumber: 10000, durationText: '30min', durationMinutes: 30, category: 'Manicure y Pedicure', icon: Hand, description: 'Cambio de color permanente Shellac CND.' },
+  { 
+    id: '237', 
+    code: '237', 
+    name: 'Esmaltado', 
+    price: '₡7,000', 
+    priceNumber: 7000, 
+    durationText: '20min - 40min', 
+    durationMinutes: 20, 
+    category: 'Manicure y Pedicure', 
+    icon: Hand, 
+    description: 'Esmaltado profesional de uñas. Elige entre Manos, Pies o Manos y Pies.',
+    optionLabel: 'Zona a esmaltar',
+    options: [
+      { id: 'manos', name: 'Solo manos', price: '₡7,000', priceNumber: 7000, durationMinutes: 20, durationText: '20min' },
+      { id: 'pies', name: 'Solo pies', price: '₡8,000', priceNumber: 8000, durationMinutes: 25, durationText: '25min' },
+      { id: 'manos_pies', name: 'Manos y pies', price: '₡14,000', priceNumber: 14000, durationMinutes: 40, durationText: '40min' }
+    ]
+  },
+  { 
+    id: '315', 
+    code: '315', 
+    name: 'Esmaltado Gel Shine', 
+    price: '₡8,000', 
+    priceNumber: 8000, 
+    durationText: '30min - 60min', 
+    durationMinutes: 30, 
+    category: 'Manicure y Pedicure', 
+    icon: Hand, 
+    description: 'Esmaltado en gel efecto alto brillo Shine.',
+    optionLabel: 'Zona a esmaltar',
+    options: [
+      { id: 'gel_manos', name: 'Solo manos', price: '₡8,000', priceNumber: 8000, durationMinutes: 30, durationText: '30min' },
+      { id: 'gel_pies', name: 'Solo pies', price: '₡10,000', priceNumber: 10000, durationMinutes: 35, durationText: '35min' },
+      { id: 'gel_manos_pies', name: 'Manos y pies', price: '₡16,000', priceNumber: 16000, durationMinutes: 60, durationText: '1h' }
+    ]
+  },
+  { 
+    id: '231', 
+    code: '231', 
+    name: 'Esmaltado Shellac', 
+    price: '₡10,000', 
+    priceNumber: 10000, 
+    durationText: '30min - 60min', 
+    durationMinutes: 30, 
+    category: 'Manicure y Pedicure', 
+    icon: Hand, 
+    description: 'Esmaltado de larga duración Shellac CND.',
+    optionLabel: 'Zona a esmaltar',
+    options: [
+      { id: 'shellac_manos', name: 'Solo manos', price: '₡10,000', priceNumber: 10000, durationMinutes: 30, durationText: '30min' },
+      { id: 'shellac_pies', name: 'Solo pies', price: '₡12,000', priceNumber: 12000, durationMinutes: 35, durationText: '35min' },
+      { id: 'shellac_manos_pies', name: 'Manos y pies', price: '₡20,000', priceNumber: 20000, durationMinutes: 60, durationText: '1h' }
+    ]
+  },
 
   // 28: Cejas
   { id: '308', code: '308', name: 'Cejas Hilo', price: '₡8,000', priceNumber: 8000, durationText: '15min', durationMinutes: 15, category: 'Depilación y Rostro', icon: Sun, description: 'Depilación hindú con hilo para diseño limpio de cejas.' },
@@ -68,12 +134,104 @@ export const ALL_SERVICES: Service[] = [
   // 30: Colochos
   { id: '195', code: '195', name: 'Colochos', price: '₡15,000', priceNumber: 15000, durationText: '1h', durationMinutes: 60, category: 'Cortes y Peinados', icon: Feather, description: 'Formación y definición de rizos/ondas con tenaza o plancha.' },
 
-  // 31-35: Color Light
-  { id: '390', code: '390', name: 'Color Light Contorno', price: '₡30,000', priceNumber: 30000, durationText: '45min', durationMinutes: 45, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Aclaración focalizada de contorno frontal (Money Piece).' },
-  { id: '202', code: '202', name: 'Color Light Corto', price: '₡39,000', priceNumber: 39000, durationText: '1h', durationMinutes: 60, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Reflejos suaves de luz para cabello corto.' },
-  { id: '14', code: '14', name: 'Color Light Largo', price: '₡56,000', priceNumber: 56000, durationText: '2h 30min', durationMinutes: 150, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Iluminación multitonal para cabello largo.' },
-  { id: '203', code: '203', name: 'Color Light Mediano', price: '₡48,000', priceNumber: 48000, durationText: '2h', durationMinutes: 120, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Puntos de luz estratégicos para largo mediano.' },
-  { id: '205', code: '205', name: 'Color Light Muy Largo', price: '₡65,000', priceNumber: 65000, durationText: '2h', durationMinutes: 120, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Iluminación completa para cabello muy largo.' },
+  // 31-35: Color Light / Highlights
+  { 
+    id: '390', 
+    code: '390', 
+    name: 'Color Light Contorno', 
+    price: '₡30,000', 
+    priceNumber: 30000, 
+    durationText: '45min', 
+    durationMinutes: 45, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Aclaración focalizada de contorno frontal (Money Piece).',
+    phases: [
+      { name: 'Aplicación / Montaje', durationMinutes: 25, isStylistBusy: true, description: 'Montaje de papel y aplicación de aclarado' },
+      { name: 'Reposo / Tiempo de Espera', durationMinutes: 20, isStylistBusy: false, description: 'Estilista libre durante tiempo de reposo' }
+    ]
+  },
+  { 
+    id: '202', 
+    code: '202', 
+    name: 'Color Light Corto', 
+    price: '₡39,000', 
+    priceNumber: 39000, 
+    durationText: '1h', 
+    durationMinutes: 60, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Reflejos suaves de luz para cabello corto.',
+    phases: [
+      { name: 'Aplicación de Luces', durationMinutes: 30, isStylistBusy: true, description: 'Montaje técnico de mechas' },
+      { name: 'Reposo / Tiempo de Espera', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre mientras actúa la decoloración' }
+    ]
+  },
+  { 
+    id: '14', 
+    code: '14', 
+    name: 'Color Light Largo', 
+    price: '₡56,000', 
+    priceNumber: 56000, 
+    durationText: '2h 30min', 
+    durationMinutes: 150, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Iluminación multitonal para cabello largo.',
+    phases: [
+      { name: 'Aplicación / Montaje', durationMinutes: 60, isStylistBusy: true, description: 'Montaje técnico de papel y producto' },
+      { name: 'Reposo / Tiempo de Espera', durationMinutes: 60, isStylistBusy: false, description: 'Estilista libre durante 1 hora de reposo' },
+      { name: 'Matizado y Enjuague', durationMinutes: 30, isStylistBusy: true, description: 'Lavado, matiz y secado final' }
+    ]
+  },
+  { 
+    id: '203', 
+    code: '203', 
+    name: 'Color Light Mediano', 
+    price: '₡48,000', 
+    priceNumber: 48000, 
+    durationText: '2h', 
+    durationMinutes: 120, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Puntos de luz estratégicos para largo mediano.',
+    phases: [
+      { name: 'Aplicación de Luces', durationMinutes: 60, isStylistBusy: true, description: 'Montaje técnico de mechas' },
+      { name: 'Reposo / Tiempo de Espera', durationMinutes: 60, isStylistBusy: false, description: 'Estilista libre durante 1 hora de reposo' }
+    ]
+  },
+  { 
+    id: '205', 
+    code: '205', 
+    name: 'Color Light Muy Largo', 
+    price: '₡65,000', 
+    priceNumber: 65000, 
+    durationText: '2h', 
+    durationMinutes: 120, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Iluminación completa para cabello muy largo.',
+    phases: [
+      { name: 'Aplicación / Montaje', durationMinutes: 60, isStylistBusy: true, description: 'Montaje de mechas en cabello abundante' },
+      { name: 'Reposo / Tiempo de Espera', durationMinutes: 60, isStylistBusy: false, description: 'Estilista libre durante 1 hora de reposo' }
+    ]
+  },
+  { 
+    id: '400', 
+    code: '400', 
+    name: 'Highlights / Mechas', 
+    price: '₡55,000', 
+    priceNumber: 55000, 
+    durationText: '2h', 
+    durationMinutes: 120, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Técnica clásica de highlights o mechas con decoloración y matiz.',
+    phases: [
+      { name: 'Aplicación de Highlights', durationMinutes: 60, isStylistBusy: true, description: 'Montaje de papel y aplicación' },
+      { name: 'Reposo / Tiempo de Espera', durationMinutes: 60, isStylistBusy: false, description: 'Estilista libre durante 1 hora de reposo' }
+    ]
+  },
 
   // 36-44: Cortes
   { id: '23', code: '23', name: 'Corte & Blower Corto', price: '₡18,000', priceNumber: 18000, durationText: '45min', durationMinutes: 45, category: 'Cortes y Peinados', icon: Scissors, description: 'Diseño de corte y peinado con blower para corto.' },
@@ -237,16 +395,172 @@ export const ALL_SERVICES: Service[] = [
   { id: '312', code: '312', name: 'Thermo Blindaje Capilar', price: '₡35,000', priceNumber: 35000, durationText: '1h', durationMinutes: 60, category: 'Tratamientos Capilares', icon: Sparkles, description: 'Sellado térmico contra la humedad y frizz.' },
 
   // 159-169: Tintes
-  { id: '397', code: '397', name: 'Tinte', price: 'Según valoración', priceNumber: 0, durationText: '1h', durationMinutes: 60, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Tinte personalizado según diagnóstico profesional en salón.' },
-  { id: '206', code: '206', name: 'Tinte Corto', price: '₡31,000', priceNumber: 31000, durationText: '1h', durationMinutes: 60, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Tinte global para cabello corto.' },
-  { id: '314', code: '314', name: 'Tinte Hombre', price: '₡18,000', priceNumber: 18000, durationText: '45min', durationMinutes: 45, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Coloración rápida masculina para disimular canas.' },
-  { id: '210', code: '210', name: 'Tinte Inoa Corto', price: '₡31,000', priceNumber: 31000, durationText: '1h', durationMinutes: 60, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Tinte sin amoníaco L\'Oréal INOA para cabello corto.' },
-  { id: '212', code: '212', name: 'Tinte Inoa Largo', price: '₡44,000', priceNumber: 44000, durationText: '1h 30min', durationMinutes: 90, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Tinte sin amoníaco INOA para melena larga.' },
-  { id: '211', code: '211', name: 'Tinte Inoa Mediano', price: '₡41,000', priceNumber: 41000, durationText: '1h 15min', durationMinutes: 75, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Tinte sin amoníaco INOA para largo mediano.' },
-  { id: '213', code: '213', name: 'Tinte Inoa Muy Largo', price: '₡54,000', priceNumber: 54000, durationText: '1h 45min', durationMinutes: 105, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Tinte INOA vegetal/aceite para cabello extra largo.' },
-  { id: '208', code: '208', name: 'Tinte Largo', price: '₡41,000', priceNumber: 41000, durationText: '1h 30min', durationMinutes: 90, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Tinte global completo para melena larga.' },
-  { id: '207', code: '207', name: 'Tinte Mediano', price: '₡37,000', priceNumber: 37000, durationText: '1h 15min', durationMinutes: 75, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Tinte global para cabello mediano.' },
-  { id: '209', code: '209', name: 'Tinte Muy Largo', price: '₡46,000', priceNumber: 46000, durationText: '1h 45min', durationMinutes: 105, category: 'Coloración y Tintes', icon: Paintbrush, description: 'Tinte global para cabello muy largo o abundante.' },
+  { 
+    id: '397', 
+    code: '397', 
+    name: 'Tinte', 
+    price: 'Según valoración', 
+    priceNumber: 0, 
+    durationText: '1h', 
+    durationMinutes: 60, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Tinte personalizado según diagnóstico profesional en salón.',
+    phases: [
+      { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Reposo de Tinte', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita corta' }
+    ]
+  },
+  { 
+    id: '206', 
+    code: '206', 
+    name: 'Tinte Corto', 
+    price: '₡31,000', 
+    priceNumber: 31000, 
+    durationText: '1h', 
+    durationMinutes: 60, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Tinte global para cabello corto.',
+    phases: [
+      { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Reposo de Tinte', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita corta' }
+    ]
+  },
+  { 
+    id: '314', 
+    code: '314', 
+    name: 'Tinte Hombre', 
+    price: '₡18,000', 
+    priceNumber: 18000, 
+    durationText: '45min', 
+    durationMinutes: 45, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Coloración rápida masculina para disimular canas.',
+    phases: [
+      { name: 'Aplicación de Tinte', durationMinutes: 20, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Reposo de Tinte', durationMinutes: 25, isStylistBusy: false, description: 'Estilista libre durante reposo' }
+    ]
+  },
+  { 
+    id: '210', 
+    code: '210', 
+    name: 'Tinte Inoa Corto', 
+    price: '₡31,000', 
+    priceNumber: 31000, 
+    durationText: '1h', 
+    durationMinutes: 60, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Tinte sin amoníaco L\'Oréal INOA para cabello corto.',
+    phases: [
+      { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Reposo de Tinte', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita corta' }
+    ]
+  },
+  { 
+    id: '212', 
+    code: '212', 
+    name: 'Tinte Inoa Largo', 
+    price: '₡44,000', 
+    priceNumber: 44000, 
+    durationText: '1h 30min', 
+    durationMinutes: 90, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Tinte sin amoníaco INOA para melena larga.',
+    phases: [
+      { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Reposo de Tinte', durationMinutes: 45, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita corta' },
+      { name: 'Lavado y Secado', durationMinutes: 15, isStylistBusy: true, description: 'Lavado y toque final' }
+    ]
+  },
+  { 
+    id: '211', 
+    code: '211', 
+    name: 'Tinte Inoa Mediano', 
+    price: '₡41,000', 
+    priceNumber: 41000, 
+    durationText: '1h 15min', 
+    durationMinutes: 75, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Tinte sin amoníaco INOA para largo mediano.',
+    phases: [
+      { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Reposo de Tinte', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita corta' },
+      { name: 'Lavado y Secado', durationMinutes: 15, isStylistBusy: true, description: 'Lavado y toque final' }
+    ]
+  },
+  { 
+    id: '213', 
+    code: '213', 
+    name: 'Tinte Inoa Muy Largo', 
+    price: '₡54,000', 
+    priceNumber: 54000, 
+    durationText: '1h 45min', 
+    durationMinutes: 105, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Tinte INOA vegetal/aceite para cabello extra largo.',
+    phases: [
+      { name: 'Aplicación de Tinte', durationMinutes: 45, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Reposo de Tinte', durationMinutes: 45, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita' },
+      { name: 'Lavado y Secado', durationMinutes: 15, isStylistBusy: true, description: 'Lavado y secado final' }
+    ]
+  },
+  { 
+    id: '208', 
+    code: '208', 
+    name: 'Tinte Largo', 
+    price: '₡41,000', 
+    priceNumber: 41000, 
+    durationText: '1h 30min', 
+    durationMinutes: 90, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Tinte global completo para melena larga.',
+    phases: [
+      { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Reposo de Tinte', durationMinutes: 45, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita corta' },
+      { name: 'Lavado y Secado', durationMinutes: 15, isStylistBusy: true, description: 'Lavado y secado final' }
+    ]
+  },
+  { 
+    id: '207', 
+    code: '207', 
+    name: 'Tinte Mediano', 
+    price: '₡37,000', 
+    priceNumber: 37000, 
+    durationText: '1h 15min', 
+    durationMinutes: 75, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Tinte global para cabello mediano.',
+    phases: [
+      { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Reposo de Tinte', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita corta' },
+      { name: 'Lavado y Secado', durationMinutes: 15, isStylistBusy: true, description: 'Lavado y secado final' }
+    ]
+  },
+  { 
+    id: '209', 
+    code: '209', 
+    name: 'Tinte Muy Largo', 
+    price: '₡46,000', 
+    priceNumber: 46000, 
+    durationText: '1h 45min', 
+    durationMinutes: 105, 
+    category: 'Coloración y Tintes', 
+    icon: Paintbrush, 
+    description: 'Tinte global para cabello muy largo o abundante.',
+    phases: [
+      { name: 'Aplicación de Tinte', durationMinutes: 45, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Reposo de Tinte', durationMinutes: 45, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita' },
+      { name: 'Lavado y Secado', durationMinutes: 15, isStylistBusy: true, description: 'Lavado y secado final' }
+    ]
+  },
   { id: '286', code: '286', name: 'Tinte Ondulado Pestañas', price: '₡25,000', priceNumber: 25000, durationText: '45min', durationMinutes: 45, category: 'Depilación y Rostro', icon: Sun, description: 'Lifting, rizado permanente y tinte negro de pestañas.' },
 
   // 170-173: Tratamientos

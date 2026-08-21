@@ -1,3 +1,19 @@
+export interface ServicePhase {
+  name: string;
+  durationMinutes: number;
+  isStylistBusy: boolean; // true if stylist is hands-on busy, false if client is in reposo/waiting time
+  description?: string;
+}
+
+export interface ServiceOption {
+  id: string;
+  name: string;
+  price?: string;
+  priceNumber?: number;
+  durationMinutes?: number;
+  durationText?: string;
+}
+
 export interface Service {
   id: string;
   name: string;
@@ -9,6 +25,9 @@ export interface Service {
   category?: string;
   icon?: any;
   description?: string;
+  phases?: ServicePhase[];
+  options?: ServiceOption[];
+  optionLabel?: string;
 }
 
 export interface Stylist {
@@ -22,6 +41,17 @@ export interface Stylist {
 }
 
 export type AppointmentStatus = 'Confirmada' | 'Pendiente' | 'Completada' | 'Cancelada';
+
+export interface Client {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  notes?: string;
+  registeredAt: string; // ISO string
+  lastVisit?: string; // YYYY-MM-DD
+  totalAppointments: number;
+}
 
 export interface Appointment {
   id: string;
@@ -37,6 +67,8 @@ export interface Appointment {
   durationMinutes: number;
   status: AppointmentStatus;
   notes?: string;
+  cancellationReason?: string;
+  cancelledAt?: string;
   createdAt: string;
 }
 

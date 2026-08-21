@@ -17,6 +17,18 @@
         "notes": { "type": "string", "required": false },
         "createdAt": { "type": "string", "required": true }
       }
+    },
+    "Client": {
+      "collectionName": "clients",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "phone": { "type": "string", "required": true },
+        "email": { "type": "string", "required": false },
+        "notes": { "type": "string", "required": false },
+        "registeredAt": { "type": "string", "required": true },
+        "lastVisit": { "type": "string", "required": false },
+        "totalAppointments": { "type": "number", "required": false }
+      }
     }
   }
 }

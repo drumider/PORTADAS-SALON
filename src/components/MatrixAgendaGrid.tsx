@@ -41,9 +41,11 @@ import {
   ArrowRight,
   Send,
   CalendarPlus,
-  CheckCheck
+  CheckCheck,
+  Users,
+  UserPlus
 } from 'lucide-react';
-import { Appointment, AppointmentStatus, Stylist } from '../types';
+import { Appointment, AppointmentStatus, Stylist, Client } from '../types';
 import { STYLISTS as DEFAULT_STYLISTS, SERVICES } from '../constants';
 import { 
   getStoredAppointments, 
@@ -51,10 +53,43 @@ import {
   deleteAppointment, 
   updateAppointmentStatus, 
   updateAppointmentDetails,
-  subscribeToAppointments 
+  cancelAppointment,
+  subscribeToAppointments,
+  getStoredClients,
+  subscribeToClients
 } from '../utils/storage';
-import { normalizeTimeTo24h, formatTimeTo12h, formatTimeDisplay } from '../utils/timeUtils';
+import { 
+  normalizeTimeTo24h, 
+  formatTimeTo12h, 
+  formatTimeDisplay, 
+  timeToMinutes, 
+  minutesToTime24, 
+  formatDurationText,
+  calculateAppointmentRange,
+  getAppointmentPhasesTimeline,
+  getServicePhases
+} from '../utils/timeUtils';
 import { AppointmentModal } from './AppointmentModal';
+import { ClientDirectoryModal } from './ClientDirectoryModal';
+import { CancelAppointmentModal } from './CancelAppointmentModal';
+import { ExpandDurationModal } from './ExpandDurationModal';
+
+export interface SlotAppointmentEntry {
+  appointment: Appointment;
+  isStart: boolean;
+  isContinuation: boolean;
+  startSlot24: string;
+  endSlot24: string;
+  startSlot12: string;
+  endSlot12: string;
+  durationMinutes: number;
+  durationText: string;
+  slotIndex: number;
+  totalSlots: number;
+  isStylistBusy: boolean;
+  phaseName: string;
+  isReposoFreeSlot: boolean;
+}
 
 interface MatrixAgendaGridProps {
   onClose?: () => void;
@@ -105,7 +140,37 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
   const [stylists, setStylists] = useState<Stylist[]>(() => {
     try {
       const saved = localStorage.getItem('cf_portadas_custom_stylists');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        let parsed = JSON.parse(saved) as Stylist[];
+        // Fix spelling of Yorleny if previously saved as Jorleny
+        parsed = parsed.map(st => {
+          if (st.id === 'jorleny' || st.name.toLowerCase() === 'jorleny') {
+            return {
+              ...st,
+              id: 'yorleny',
+              name: 'Yorleny',
+              avatarLetter: 'Y',
+              role: 'Manicurista'
+            };
+          }
+          return st;
+        });
+
+        // Ensure all DEFAULT_STYLISTS (including Yorleny and Mariela) are present
+        DEFAULT_STYLISTS.forEach(defSt => {
+          const exists = parsed.some(s => s.id === defSt.id || s.name.toLowerCase() === defSt.name.toLowerCase());
+          if (!exists) {
+            const anyIdx = parsed.findIndex(s => s.id === 'cualquiera');
+            if (anyIdx !== -1) {
+              parsed.splice(anyIdx, 0, defSt);
+            } else {
+              parsed.push(defSt);
+            }
+          }
+        });
+
+        return parsed;
+      }
     } catch (e) {}
     return DEFAULT_STYLISTS;
   });
@@ -119,7 +184,23 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
   // Modals & Drawers state
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [cancellingAppointment, setCancellingAppointment] = useState<Appointment | null>(null);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [expandingAppointment, setExpandingAppointment] = useState<Appointment | null>(null);
+  const [isExpandModalOpen, setIsExpandModalOpen] = useState(false);
   const [modalInitialSlot, setModalInitialSlot] = useState<{ stylistId: string; time: string } | null>(null);
+  const [prefilledClientForBooking, setPrefilledClientForBooking] = useState<Client | null>(null);
+
+  // Client Directory Modal State
+  const [isClientDirectoryOpen, setIsClientDirectoryOpen] = useState(false);
+  const [clientsCount, setClientsCount] = useState<number>(() => getStoredClients().length);
+
+  useEffect(() => {
+    const unsub = subscribeToClients((cls) => {
+      setClientsCount(cls.length);
+    });
+    return () => unsub();
+  }, []);
 
   // Bottom action bar modals
   const [activeBottomModal, setActiveBottomModal] = useState<
@@ -272,46 +353,65 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
       .sort((a, b) => a.time.localeCompare(b.time));
   }, [appointments, selectedDateStr]);
 
-  // Map appointments by stylistId and time with normalized times (supporting 12h/24h)
+  // Map appointments by stylistId and time with normalized times, covering full service duration and phase state (busy vs reposo/free)
   const appointmentMatrix = useMemo(() => {
-    const map = new Map<string, Appointment[]>();
+    const map = new Map<string, SlotAppointmentEntry[]>();
+
     dayAppointments.forEach(app => {
-      const normalized24 = normalizeTimeTo24h(app.time);
-      const [hStr, mStr] = normalized24.split(':');
-      const h = parseInt(hStr, 10);
-      const m = parseInt(mStr, 10);
+      const normalizedStart24 = normalizeTimeTo24h(app.time);
+      const startMin = timeToMinutes(normalizedStart24);
+      const serviceDuration = app.durationMinutes || (SERVICES.find(s => s.id === app.serviceId)?.durationMinutes || 60);
+      const endMin = startMin + serviceDuration;
+      const end24 = minutesToTime24(endMin);
+      const start12 = formatTimeTo12h(normalizedStart24);
+      const end12 = formatTimeTo12h(end24);
+      const durationText = formatDurationText(serviceDuration);
+      const totalSlots = Math.max(1, Math.ceil(serviceDuration / 30));
+      const timeline = getAppointmentPhasesTimeline(app);
 
-      // Determine target 30-min block
-      const targetM = m < 30 ? '00' : '30';
-      const targetSlotTime = `${String(h).padStart(2, '0')}:${targetM}`;
+      let slotIndex = 0;
+      for (let t = startMin; t < endMin; t += 30) {
+        const slot24 = minutesToTime24(t);
+        const isStart = (t === startMin);
+        const isContinuation = !isStart;
 
-      const exactKey = `${app.stylistId}_${normalized24}`;
-      const existingExact = map.get(exactKey) || [];
-      if (!existingExact.some(existing => existing.id === app.id)) {
-        map.set(exactKey, [...existingExact, app]);
-      }
+        // Find which phase of the service is active at this time slot t
+        const currentPhase = timeline.find(p => t >= p.startMin && t < p.endMin) || timeline[0];
+        const isStylistBusy = currentPhase ? currentPhase.isStylistBusy : true;
+        const phaseName = currentPhase ? currentPhase.name : 'Servicio';
+        const isReposoFreeSlot = !isStylistBusy;
 
-      const blockKey = `${app.stylistId}_${targetSlotTime}`;
-      if (blockKey !== exactKey) {
-        const existingBlock = map.get(blockKey) || [];
-        if (!existingBlock.some(existing => existing.id === app.id)) {
-          map.set(blockKey, [...existingBlock, app]);
-        }
-      }
+        const entry: SlotAppointmentEntry = {
+          appointment: app,
+          isStart,
+          isContinuation,
+          startSlot24: normalizedStart24,
+          endSlot24: end24,
+          startSlot12: start12,
+          endSlot12: end12,
+          durationMinutes: serviceDuration,
+          durationText,
+          slotIndex,
+          totalSlots,
+          isStylistBusy,
+          phaseName,
+          isReposoFreeSlot
+        };
 
-      if (app.stylistId === 'cualquiera') {
-        const exactQual = `cualquiera_${normalized24}`;
-        const existingQual = map.get(exactQual) || [];
-        if (!existingQual.some(existing => existing.id === app.id)) {
-          map.set(exactQual, [...existingQual, app]);
-        }
-        const blockQual = `cualquiera_${targetSlotTime}`;
-        if (blockQual !== exactQual) {
-          const existingBlockQual = map.get(blockQual) || [];
-          if (!existingBlockQual.some(existing => existing.id === app.id)) {
-            map.set(blockQual, [...existingBlockQual, app]);
+        const cleanAppStylistId = app.stylistId === 'jorleny' ? 'yorleny' : app.stylistId;
+        const targetStylistIds = cleanAppStylistId === 'cualquiera'
+          ? ['cualquiera']
+          : [cleanAppStylistId];
+
+        targetStylistIds.forEach(stId => {
+          const key = `${stId}_${slot24}`;
+          const existing = map.get(key) || [];
+          if (!existing.some(e => e.appointment.id === app.id)) {
+            map.set(key, [...existing, entry]);
           }
-        }
+        });
+
+        slotIndex++;
       }
     });
     return map;
@@ -382,6 +482,41 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
     deleteAppointment(id);
     setIsAppointmentModalOpen(false);
     setEditingAppointment(null);
+  };
+
+  // Open Cancel Modal handler
+  const handleOpenCancelModal = (appointment: Appointment) => {
+    setCancellingAppointment(appointment);
+    setIsCancelModalOpen(true);
+  };
+
+  // Open Expand Duration Modal handler
+  const handleOpenExpandModal = (appointment: Appointment, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setExpandingAppointment(appointment);
+    setIsExpandModalOpen(true);
+  };
+
+  // Confirm Expand Duration handler
+  const handleConfirmExpand = (appointmentId: string, newDurationMinutes: number) => {
+    updateAppointmentDetails(appointmentId, { durationMinutes: newDurationMinutes });
+    const targetApp = appointments.find(a => a.id === appointmentId);
+    setNotificationToast({
+      id: 'toast-expand-' + Date.now(),
+      message: `⏱️ Duración de cita de ${targetApp?.clientName || 'Cliente'} actualizada a ${newDurationMinutes} min.`,
+      type: 'success'
+    });
+  };
+
+  // Confirm Cancellation handler
+  const handleConfirmCancellation = (appointmentId: string, reason: string) => {
+    cancelAppointment(appointmentId, reason);
+    const targetApp = appointments.find(a => a.id === appointmentId);
+    setNotificationToast({
+      id: 'toast-cancel-' + Date.now(),
+      message: `🚫 Cita de ${targetApp?.clientName || 'Cliente'} cancelada ("${reason}"). El horario ha quedado libre.`,
+      type: 'warning'
+    });
   };
 
   // Quick Status change
@@ -656,6 +791,19 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
 
           {/* Quick Tools Trigger */}
           <button
+            onClick={() => setIsClientDirectoryOpen(true)}
+            className="px-2.5 py-1 bg-white hover:bg-[#FAF8F5] border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#2C221C] text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            title="Directorio de Clientes Registrados"
+            id="admin-topbar-clientes-btn"
+          >
+            <Users className="w-3.5 h-3.5 text-[#8C6B4D]" />
+            <span className="hidden sm:inline">Clientes</span>
+            <span className="bg-[#8C6B4D] text-white text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full">
+              {clientsCount}
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveBottomModal('list')}
             className="w-7 h-7 rounded bg-[#FAF8F5] hover:bg-[#F2ECE5] border border-[#D9CEC2] text-[#5C4A38] flex items-center justify-center transition-colors shadow-xs cursor-pointer"
             title="Buscador general de citas"
@@ -856,13 +1004,63 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                     <div className="flex-1 min-w-0">
                       {slotAppointments.length > 0 ? (
                         <div className="space-y-2">
-                          {slotAppointments.map((app) => {
+                          {slotAppointments.map((entry) => {
+                            const app = entry.appointment;
                             const badge = getStatusBadge(app.status);
+
+                            if (entry.isReposoFreeSlot) {
+                              return (
+                                <div
+                                  key={`${app.id}_reposo_${entry.slotIndex}`}
+                                  onClick={() => handleSlotClick(selectedStylistObj, timeSlot, app)}
+                                  className="p-2 rounded-md border border-dashed border-emerald-400 bg-emerald-50/70 text-left cursor-pointer transition-all hover:shadow-xs flex items-center justify-between gap-2"
+                                  title={`Tiempo de espera / reposo (${entry.phaseName}): ${app.clientName}. Estilista libre para atender otra cita.`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-emerald-700 font-mono text-xs font-bold shrink-0">⏳ {entry.phaseName}:</span>
+                                    <span className="font-bold text-xs uppercase font-serif-luxury truncate text-emerald-950">
+                                      {app.clientName}
+                                    </span>
+                                    <span className="text-[10px] text-emerald-800 font-mono bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-300 shrink-0 font-bold">
+                                      Estilista libre
+                                    </span>
+                                  </div>
+                                  <span className="text-[9px] font-mono font-bold bg-emerald-200/80 text-emerald-950 border border-emerald-300 px-2 py-0.5 rounded shrink-0">
+                                    {entry.startSlot12} - {entry.endSlot12}
+                                  </span>
+                                </div>
+                              );
+                            }
+
+                            if (entry.isContinuation) {
+                              return (
+                                <div
+                                  key={`${app.id}_cont_${entry.slotIndex}`}
+                                  onClick={() => handleSlotClick(selectedStylistObj, timeSlot, app)}
+                                  className={`p-2 rounded-md border border-dashed text-left cursor-pointer transition-all ${badge.cardBg} hover:shadow-xs flex items-center justify-between gap-2`}
+                                  title={`Cita en curso: ${app.clientName} (${entry.startSlot12} a ${entry.endSlot12})`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-[#8C6B4D] font-mono text-xs font-bold shrink-0">↳ En curso ({entry.phaseName}):</span>
+                                    <span className="font-bold text-xs uppercase font-serif-luxury truncate text-neutral-800">
+                                      {app.clientName}
+                                    </span>
+                                    <span className="text-[10px] text-neutral-500 truncate hidden sm:inline">
+                                      · {app.serviceName}
+                                    </span>
+                                  </div>
+                                  <span className="text-[9px] font-mono font-bold bg-[#8C6B4D]/10 text-[#8C6B4D] border border-[#8C6B4D]/25 px-2 py-0.5 rounded shrink-0">
+                                    {entry.startSlot12} - {entry.endSlot12} ({entry.durationText})
+                                  </span>
+                                </div>
+                              );
+                            }
+
                             return (
                               <div
                                 key={app.id}
                                 onClick={() => handleSlotClick(selectedStylistObj, timeSlot, app)}
-                                className={`p-2.5 rounded-md border text-left cursor-pointer transition-all ${badge.cardBg} hover:shadow-md`}
+                                className={`p-2.5 rounded-md border text-left cursor-pointer transition-all ${badge.cardBg} hover:shadow-md relative overflow-hidden`}
                               >
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex items-center gap-1.5 min-w-0">
@@ -871,9 +1069,14 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                                       {app.clientName}
                                     </span>
                                   </div>
-                                  <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${badge.badge}`}>
-                                    {badge.label}
-                                  </span>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <span className="text-[9px] bg-white/80 border border-neutral-300 font-mono font-bold text-neutral-700 px-1.5 py-0.5 rounded">
+                                      ⏱️ {entry.startSlot12} - {entry.endSlot12} ({entry.durationText})
+                                    </span>
+                                    <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${badge.badge}`}>
+                                      {badge.label}
+                                    </span>
+                                  </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-neutral-700 mt-1.5">
@@ -895,8 +1098,63 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                                   </p>
                                 )}
 
+                                {/* Admin Quick Controls for Appointment */}
+                                <div className="mt-2 pt-2 border-t border-neutral-200/80 flex items-center justify-between gap-1.5 bg-white/80 p-1 rounded">
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSlotClick(selectedStylistObj, timeSlot, app);
+                                      }}
+                                      className="px-2 py-1 bg-[#2C221C] hover:bg-[#8C6B4D] text-white rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                                      title="Modificar horario, estilista o reasignar cliente"
+                                    >
+                                      <Edit3 className="w-2.5 h-2.5 text-gold-champagne" />
+                                      <span>Reasignar / Editar</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenExpandModal(app, e);
+                                      }}
+                                      className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors"
+                                      title="Expandir o ajustar duración de esta cita"
+                                    >
+                                      <Clock className="w-2.5 h-2.5 text-amber-700" />
+                                      <span>Expandir Tiempo</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenCancelModal(app);
+                                      }}
+                                      className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors"
+                                      title="Cancelar cita con motivo y liberar horario"
+                                    >
+                                      <X className="w-2.5 h-2.5 text-rose-600" />
+                                      <span>Cancelar</span>
+                                    </button>
+                                  </div>
+
+                                  {app.clientPhone && (
+                                    <a
+                                      href={`https://wa.me/${app.clientPhone.replace(/\D/g, '')}?text=Hola%20${encodeURIComponent(app.clientName)},%20le%20escribimos%20de%20CF%20Portadas%20respecto%20a%20su%20cita.`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="p-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] cursor-pointer"
+                                      title="WhatsApp"
+                                    >
+                                      <MessageSquare className="w-2.5 h-2.5" />
+                                    </a>
+                                  )}
+                                </div>
+
                                 {app.status === 'Pendiente' && (
-                                  <div className="mt-2 pt-2 border-t border-red-300/80 flex items-center justify-between gap-2 bg-red-50/80 p-1.5 rounded border border-red-200">
+                                  <div className="mt-1 pt-1.5 border-t border-red-300/80 flex items-center justify-between gap-2 bg-red-50/80 p-1.5 rounded border border-red-200">
                                     <span className="text-[10px] text-red-800 font-bold uppercase font-mono flex items-center gap-1.5">
                                       <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
                                       Por Aprobar
@@ -917,6 +1175,22 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                               </div>
                             );
                           })}
+                          {!slotAppointments.some(e => e.isStylistBusy) && (
+                            <button
+                              type="button"
+                              onClick={() => handleSlotClick(selectedStylistObj, timeSlot)}
+                              className="w-full py-1.5 px-3 rounded border border-dashed border-emerald-400/80 hover:border-emerald-600 bg-emerald-50/50 hover:bg-emerald-100/70 text-emerald-950 text-xs font-medium transition-all flex items-center justify-between cursor-pointer"
+                            >
+                              <span className="text-[10px] text-emerald-800 font-mono flex items-center gap-1">
+                                <Sparkles className="w-3 h-3 text-emerald-600" />
+                                <span>Espacio disponible en reposo a las {timeSlot} (permite cita corta)</span>
+                              </span>
+                              <span className="text-[9px] text-emerald-950 font-bold uppercase tracking-wider bg-white px-2 py-0.5 rounded border border-emerald-300 flex items-center gap-1 shadow-xs">
+                                <Plus className="w-3 h-3" />
+                                <span>Agendar aquí</span>
+                              </span>
+                            </button>
+                          )}
                         </div>
                       ) : isOff ? (
                         <div 
@@ -990,10 +1264,20 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                       className={`bg-white border rounded-lg p-3.5 shadow-xs transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${badge.cardBg}`}
                     >
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-base font-bold font-mono text-neutral-900">
                             {app.time}
                           </span>
+                          {(() => {
+                            const norm24 = normalizeTimeTo24h(app.time);
+                            const dur = app.durationMinutes || (SERVICES.find(s => s.id === app.serviceId)?.durationMinutes || 60);
+                            const range = calculateAppointmentRange(norm24, dur);
+                            return (
+                              <span className="text-[10px] bg-white/80 border border-neutral-300 font-mono font-bold text-neutral-700 px-1.5 py-0.5 rounded">
+                                ⏱️ {range.startTime12} - {range.endTime12} ({range.durationText})
+                              </span>
+                            );
+                          })()}
                           <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${badge.badge}`}>
                             {badge.label}
                           </span>
@@ -1044,8 +1328,17 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                             setIsAppointmentModalOpen(true);
                           }}
                           className="px-2.5 py-1.5 bg-[#2C221C] hover:bg-[#8C6B4D] text-white text-[11px] font-bold rounded uppercase cursor-pointer"
+                          title="Reasignar o editar cita"
                         >
-                          Editar
+                          Reasignar / Editar
+                        </button>
+
+                        <button
+                          onClick={() => handleOpenCancelModal(app)}
+                          className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 text-[11px] font-bold rounded uppercase cursor-pointer transition-colors"
+                          title="Cancelar cita y liberar horario"
+                        >
+                          Cancelar
                         </button>
                       </div>
                     </div>
@@ -1060,14 +1353,14 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         {/* VIEW C: FULL MULTI-COLUMN MATRIX (Horizontal Scrolling)   */}
         {/* ========================================================= */}
         {viewMode === 'matrix' && (
-          <div className="overflow-x-auto pb-6 bg-white border border-[#E2D8CC] rounded-lg shadow-xs">
+          <div className="overflow-x-auto pb-6 bg-white border-2 border-[#8C7A68] rounded-lg shadow-sm">
             <div className="min-w-[760px] w-full">
               <table className="w-full border-collapse text-left">
                 
                 {/* Table Header: HORA + Stylists */}
-                <thead className="bg-[#F4EEE6] border-b-2 border-[#D9CEC2] sticky top-0 z-20">
+                <thead className="bg-[#EFE7DC] border-b-2 border-[#6B5744] sticky top-0 z-20">
                   <tr>
-                    <th className="w-20 px-3 py-2.5 border-r border-[#E2D8CC] text-center bg-[#F0EAE1] sticky left-0 z-30 font-mono text-[10px] font-bold text-[#5C4A38] uppercase">
+                    <th className="w-20 px-3 py-2.5 border-r-2 border-[#6B5744] text-center bg-[#E5DCD0] sticky left-0 z-30 font-mono text-[10px] font-bold text-[#3B2D20] uppercase">
                       HORA
                     </th>
 
@@ -1078,7 +1371,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                       return (
                         <th
                           key={stylist.id}
-                          className="px-3 py-2 border-r border-[#E2D8CC] text-center min-w-[190px] max-w-[240px] bg-[#FAF8F5]"
+                          className="px-3 py-2.5 border-r-2 border-[#8C7A68] text-center min-w-[190px] max-w-[240px] bg-[#FAF8F5] last:border-r-0"
                         >
                           <div className="flex flex-col items-center justify-center">
                             <div className="flex items-center gap-1.5">
@@ -1091,7 +1384,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                                 </span>
                               )}
                             </div>
-                            <span className="text-[9px] text-[#7C6652] font-mono tracking-wider uppercase truncate mt-0.5">
+                            <span className="text-[9px] text-[#5C4A38] font-mono font-semibold tracking-wider uppercase truncate mt-0.5">
                               {stylist.role}
                             </span>
                           </div>
@@ -1102,7 +1395,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                 </thead>
 
                 {/* Table Body: Time Rows */}
-                <tbody className="divide-y divide-[#EAE3DC] bg-white">
+                <tbody className="divide-y-2 divide-[#D4C8BC] bg-white">
                   {timeSlots.map((timeSlot) => {
                     const [slotH, slotM] = timeSlot.split(':').map(Number);
                     const now = new Date();
@@ -1116,7 +1409,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                         }`}
                       >
                         {/* Time Column (Sticky) */}
-                        <td className="w-20 px-2 py-2 border-r border-[#E2D8CC] text-center bg-[#F0EAE1] sticky left-0 z-10 font-mono text-[11px] text-[#5C4A38] font-bold">
+                        <td className="w-20 px-2 py-2 border-r-2 border-[#6B5744] text-center bg-[#E5DCD0] sticky left-0 z-10 font-mono text-[11px] text-[#3B2D20] font-bold">
                           {timeSlot}
                         </td>
 
@@ -1131,36 +1424,96 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                           return (
                             <td
                               key={stylist.id}
-                              className="px-2 py-1.5 border-r border-[#E2D8CC] align-middle text-center"
+                              className="px-2 py-1.5 border-r-2 border-[#8C7A68] last:border-r-0 align-middle text-center"
                             >
                               {slotAppointments.length > 0 ? (
                                 <div className="space-y-1">
-                                  {slotAppointments.map((app) => (
-                                    <div
-                                      key={app.id}
-                                      onClick={() => handleSlotClick(stylist, timeSlot, app)}
-                                      className={`p-1.5 rounded text-left border cursor-pointer transition-all shadow-xs hover:shadow-md ${
-                                        getStatusBadge(app.status).cardBg
-                                      }`}
-                                      title={`Cita: ${app.clientName} - ${app.serviceName}`}
-                                    >
-                                      <div className="flex items-center justify-between gap-1">
-                                        <span className="font-bold text-xs truncate max-w-[130px] text-neutral-900 font-serif-luxury">
-                                          {app.clientName}
-                                        </span>
-                                        {app.status === 'Pendiente' ? (
-                                          <span className="text-[8px] bg-amber-500 text-white font-mono font-bold px-1 rounded uppercase animate-pulse">
-                                            Por Aprobar
+                                  {slotAppointments.map((entry) => {
+                                    const app = entry.appointment;
+                                    const badge = getStatusBadge(app.status);
+
+                                    if (entry.isReposoFreeSlot) {
+                                      return (
+                                        <div
+                                          key={`${app.id}_reposo_${entry.slotIndex}`}
+                                          onClick={() => handleSlotClick(stylist, timeSlot, app)}
+                                          className="p-1 rounded text-left border border-dashed border-emerald-400 bg-emerald-50 text-emerald-950 cursor-pointer transition-all hover:shadow-xs"
+                                          title={`Reposo (${entry.phaseName}): ${app.clientName}. Estilista libre para atender otra cita.`}
+                                        >
+                                          <div className="flex items-center justify-between gap-1">
+                                            <span className="text-[9px] font-bold text-emerald-800 font-mono truncate">
+                                              ⏳ {entry.phaseName}
+                                            </span>
+                                            <span className="text-[8px] font-mono bg-emerald-200/80 text-emerald-950 font-bold px-1 rounded shrink-0">
+                                              Libre
+                                            </span>
+                                          </div>
+                                          <div className="text-[9px] text-emerald-700 truncate font-serif-luxury">
+                                            ↳ {app.clientName}
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+
+                                    if (entry.isContinuation) {
+                                      return (
+                                        <div
+                                          key={`${app.id}_cont_${entry.slotIndex}`}
+                                          onClick={() => handleSlotClick(stylist, timeSlot, app)}
+                                          className={`p-1 rounded text-left border border-dashed cursor-pointer transition-all opacity-85 hover:opacity-100 ${badge.cardBg}`}
+                                          title={`En progreso (${entry.startSlot12} a ${entry.endSlot12}): ${app.clientName} - ${app.serviceName}`}
+                                        >
+                                          <div className="flex items-center justify-between gap-1">
+                                            <span className="text-[10px] text-neutral-700 font-mono truncate">
+                                              ↳ {app.clientName}
+                                            </span>
+                                            <span className="text-[8px] font-mono text-neutral-500 shrink-0">
+                                              {entry.startSlot24}-{entry.endSlot24}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+
+                                    return (
+                                      <div
+                                        key={app.id}
+                                        onClick={() => handleSlotClick(stylist, timeSlot, app)}
+                                        className={`p-1.5 rounded text-left border cursor-pointer transition-all shadow-xs hover:shadow-md ${badge.cardBg}`}
+                                        title={`Cita: ${app.clientName} (${entry.startSlot12} a ${entry.endSlot12}) - ${app.serviceName}`}
+                                      >
+                                        <div className="flex items-center justify-between gap-1">
+                                          <span className="font-bold text-xs truncate max-w-[130px] text-neutral-900 font-serif-luxury">
+                                            {app.clientName}
                                           </span>
-                                        ) : (
-                                          <span className={`w-2 h-2 rounded-full shrink-0 ${getStatusBadge(app.status).dot}`} />
-                                        )}
+                                          {app.status === 'Pendiente' ? (
+                                            <span className="text-[8px] bg-red-600 text-white font-mono font-bold px-1 rounded uppercase animate-pulse">
+                                              Por Aprobar
+                                            </span>
+                                          ) : (
+                                            <span className={`w-2 h-2 rounded-full shrink-0 ${badge.dot}`} />
+                                          )}
+                                        </div>
+                                        <div className="text-[10px] text-neutral-600 truncate mt-0.5 flex items-center justify-between">
+                                          <span className="truncate">{app.serviceName}</span>
+                                          <span className="text-[8px] font-mono font-bold text-[#8C6B4D] ml-1 shrink-0">
+                                            {entry.durationText}
+                                          </span>
+                                        </div>
                                       </div>
-                                      <div className="text-[10px] text-neutral-600 truncate mt-0.5">
-                                        {app.serviceName}
-                                      </div>
-                                    </div>
-                                  ))}
+                                    );
+                                  })}
+                                  {!slotAppointments.some(e => e.isStylistBusy) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSlotClick(stylist, timeSlot)}
+                                      className="w-full mt-1 py-0.5 px-1 rounded bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-dashed border-emerald-300 text-emerald-900 font-mono text-[8px] font-bold transition-all flex items-center justify-center gap-0.5 cursor-pointer shadow-2xs"
+                                      title="Estilista libre durante reposo - Clic para agendar cita corta"
+                                    >
+                                      <Plus className="w-2 h-2" />
+                                      <span>+ Cita en reposo</span>
+                                    </button>
+                                  )}
                                 </div>
                               ) : isOff ? (
                                 <div 
@@ -1173,7 +1526,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                                 <button
                                   type="button"
                                   onClick={() => handleSlotClick(stylist, timeSlot)}
-                                  className="w-full h-7 px-2 rounded bg-white hover:bg-[#8C6B4D] hover:text-white border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#3D3025] font-mono text-[10px] font-semibold transition-all flex items-center justify-center gap-1 shadow-xs cursor-pointer group/btn"
+                                  className="w-full h-7 px-2 rounded bg-white hover:bg-[#8C6B4D] hover:text-white border border-[#B5916A]/60 hover:border-[#8C6B4D] text-[#2C221C] font-mono text-[10px] font-bold transition-all flex items-center justify-center gap-1 shadow-xs cursor-pointer group/btn"
                                 >
                                   <span>{timeSlot}</span>
                                   <Plus className="w-2.5 h-2.5 opacity-0 group-hover/btn:opacity-100 text-white" />
@@ -1349,6 +1702,16 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                             </span>
                           </td>
                           <td className="p-2.5 text-right space-x-1">
+                            <button
+                              onClick={() => {
+                                setActiveBottomModal(null);
+                                handleOpenExpandModal(app);
+                              }}
+                              className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded text-[10px] uppercase font-bold cursor-pointer"
+                              title="Expandir o ajustar duración"
+                            >
+                              Expandir
+                            </button>
                             <button
                               onClick={() => {
                                 setActiveBottomModal(null);
@@ -1642,11 +2005,48 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
           setIsAppointmentModalOpen(false);
           setEditingAppointment(null);
           setModalInitialSlot(null);
+          setPrefilledClientForBooking(null);
         }}
         onSave={handleSaveAppointment}
         onDelete={handleDeleteAppointment}
         initialAppointment={modalAppointmentData}
         selectedDate={selectedDateStr}
+        prefilledClient={prefilledClientForBooking}
+      />
+
+      {/* CANCEL APPOINTMENT MODAL */}
+      <CancelAppointmentModal
+        isOpen={isCancelModalOpen}
+        onClose={() => {
+          setIsCancelModalOpen(false);
+          setCancellingAppointment(null);
+        }}
+        onConfirmCancel={handleConfirmCancellation}
+        appointment={cancellingAppointment}
+      />
+
+      {/* EXPAND DURATION MODAL */}
+      <ExpandDurationModal
+        isOpen={isExpandModalOpen}
+        onClose={() => {
+          setIsExpandModalOpen(false);
+          setExpandingAppointment(null);
+        }}
+        onConfirmExpand={handleConfirmExpand}
+        appointment={expandingAppointment}
+      />
+
+      {/* CLIENT DIRECTORY MODAL */}
+      <ClientDirectoryModal
+        isOpen={isClientDirectoryOpen}
+        onClose={() => setIsClientDirectoryOpen(false)}
+        onBookAppointmentForClient={(client) => {
+          setPrefilledClientForBooking(client);
+          setEditingAppointment(null);
+          setModalInitialSlot({ stylistId: activeStylistId, time: '10:00' });
+          setIsAppointmentModalOpen(true);
+        }}
+        appointments={appointments}
       />
 
       {/* 5. BOTTOM COMMAND DOCK (Identical to original desktop layout) */}
@@ -1670,6 +2070,15 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         {/* Right: Quick Action Buttons */}
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setIsClientDirectoryOpen(true)}
+            className="px-2.5 py-1 text-[#2C221C] hover:text-[#8C6B4D] hover:bg-[#FAF8F5] border border-[#D9CEC2] rounded transition-colors flex items-center gap-1.5 font-mono text-xs cursor-pointer shadow-2xs font-semibold"
+            title="Ver o registrar clientes"
+          >
+            <Users className="w-3.5 h-3.5 text-[#8C6B4D]" />
+            <span>Directorio Clientes ({clientsCount})</span>
+          </button>
+
+          <button
             onClick={() => setActiveBottomModal('help')}
             className="px-2.5 py-1 text-neutral-600 hover:text-neutral-900 hover:bg-[#FAF8F5] border border-transparent hover:border-[#D9CEC2] rounded transition-colors flex items-center gap-1 font-mono text-xs cursor-pointer"
             title="Ayuda del sistema"
@@ -1690,6 +2099,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
           <button
             onClick={() => {
               setEditingAppointment(null);
+              setPrefilledClientForBooking(null);
               setModalInitialSlot({ stylistId: activeStylistId, time: '09:00' });
               setIsAppointmentModalOpen(true);
             }}

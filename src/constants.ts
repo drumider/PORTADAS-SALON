@@ -49,12 +49,20 @@ export const STYLISTS: Stylist[] = [
     allowedCategories: ['Alisados y Keratinas', 'Coloración y Tintes', 'Cortes y Peinados', 'Tratamientos Capilares', 'Manicure y Pedicure', 'Depilación y Rostro', 'Maquillaje y Masajes', 'Paquetes y Promociones'] 
   },
   { 
-    id: 'jorleny', 
-    name: 'Jorleny', 
+    id: 'yorleny', 
+    name: 'Yorleny', 
     role: 'Manicurista', 
-    avatarLetter: 'J', 
+    avatarLetter: 'Y', 
     offDays: [3],
-    allowedCategories: ['Manicure y Pedicure', 'Depilación y Rostro', 'Maquillaje y Masajes', 'Paquetes y Promociones'] 
+    allowedCategories: ['Manicure y Pedicure', 'Depilación y Rostro', 'Maquillaje y Masajes', 'Paquetes y Promociones', 'Cortes y Peinados', 'Tratamientos Capilares'] 
+  },
+  { 
+    id: 'mariela', 
+    name: 'Mariela', 
+    role: 'Manicurista', 
+    avatarLetter: 'M', 
+    offDays: [1],
+    allowedCategories: ['Manicure y Pedicure', 'Depilación y Rostro', 'Maquillaje y Masajes', 'Paquetes y Promociones', 'Cortes y Peinados', 'Tratamientos Capilares'] 
   },
   { 
     id: 'cualquiera', 

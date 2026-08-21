@@ -4,5 +4,8 @@ service cloud.firestore {
     match /appointments/{appointmentId} {
       allow read, create, update, delete: if true;
     }
+    match /clients/{clientId} {
+      allow read, create, update, delete: if true;
+    }
   }
 }

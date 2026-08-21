@@ -15,11 +15,22 @@ import {
   Check, 
   Sparkles,
   AlertCircle,
-  ChevronDown
+  ChevronDown,
+  Hand
 } from 'lucide-react';
 import { Service, Stylist, Appointment } from '../types';
 import { SERVICES, STYLISTS, SERVICE_CATEGORIES, TIME_SLOTS } from '../constants';
-import { normalizeTimeTo24h, formatTimeTo12h } from '../utils/timeUtils';
+import { 
+  normalizeTimeTo24h, 
+  formatTimeTo12h, 
+  timeToMinutes, 
+  minutesToTime12, 
+  calculateAppointmentRange, 
+  doIntervalsOverlap,
+  formatDurationText,
+  checkStylistBookingFeasibility,
+  getServicePhases
+} from '../utils/timeUtils';
 
 interface ClientBookingWidgetProps {
   existingAppointments: Appointment[];
@@ -32,8 +43,11 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
   externalSelectedService,
   onSaveAppointment
 }) => {
-  // Selection State
-  const [selectedService, setSelectedService] = useState<Service | null>(SERVICES[0] || null);
+  // Selection State - default to classic Blower Corto
+  const [selectedService, setSelectedService] = useState<Service | null>(() => {
+    return SERVICES.find(s => s.name === 'Blower Corto') || SERVICES.find(s => s.id === '03') || SERVICES[0] || null;
+  });
+  const [selectedOptionId, setSelectedOptionId] = useState<string>('');
   const [selectedStylist, setSelectedStylist] = useState<Stylist | null>(STYLISTS[0] || null);
   const [bookingDate, setBookingDate] = useState<string>('');
   const [bookingTime, setBookingTime] = useState<string>('');
@@ -59,10 +73,50 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
   useEffect(() => {
     if (externalSelectedService) {
       setSelectedService(externalSelectedService);
+      if (externalSelectedService.options && externalSelectedService.options.length > 0) {
+        setSelectedOptionId(externalSelectedService.options[0].id);
+      } else {
+        setSelectedOptionId('');
+      }
       setConfirmedAppointment(null);
       setBookingError(null);
     }
   }, [externalSelectedService]);
+
+  // If selected service has options and no option selected, default to the first option
+  useEffect(() => {
+    if (selectedService?.options && selectedService.options.length > 0) {
+      if (!selectedOptionId || !selectedService.options.some(o => o.id === selectedOptionId)) {
+        setSelectedOptionId(selectedService.options[0].id);
+      }
+    } else {
+      setSelectedOptionId('');
+    }
+  }, [selectedService]);
+
+  // Derived effective service option and calculated attributes
+  const currentOption = useMemo(() => {
+    if (!selectedService?.options || selectedService.options.length === 0) return null;
+    return selectedService.options.find(o => o.id === selectedOptionId) || selectedService.options[0];
+  }, [selectedService, selectedOptionId]);
+
+  const effectiveDurationMinutes = useMemo(() => {
+    if (currentOption?.durationMinutes) return currentOption.durationMinutes;
+    return selectedService?.durationMinutes || 60;
+  }, [selectedService, currentOption]);
+
+  const effectivePrice = useMemo(() => {
+    if (currentOption?.price) return currentOption.price;
+    return selectedService?.price || '';
+  }, [selectedService, currentOption]);
+
+  const effectiveServiceName = useMemo(() => {
+    if (!selectedService) return '';
+    if (currentOption) {
+      return `${selectedService.name} (${currentOption.name})`;
+    }
+    return selectedService.name;
+  }, [selectedService, currentOption]);
 
   // Generate 8 upcoming open business days (skipping Sundays)
   const availableDays = useMemo(() => {
@@ -130,18 +184,31 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
     return stylist.offDays.includes(dayOfWeek);
   };
 
-  // Check if a time slot is occupied
-  const isSlotOccupied = (timeSlot: string, dateStr: string, stylistId: string) => {
-    if (!dateStr || !stylistId) return false;
-    const targetTime24 = normalizeTimeTo24h(timeSlot);
-    return existingAppointments.some((app) => {
-      if (app.date !== dateStr) return false;
-      if (app.status === 'Cancelada') return false;
-      if (stylistId !== 'cualquiera' && app.stylistId !== 'cualquiera' && app.stylistId !== stylistId) {
-        return false;
-      }
-      return normalizeTimeTo24h(app.time) === targetTime24;
+  // Check if a time slot is available for booking considering active stylist busy phases vs reposo free gaps
+  const checkSlotAvailability = (timeSlot: string, dateStr: string, stylistId: string, durationMin?: number) => {
+    if (!dateStr || !stylistId || !selectedService) return { available: true };
+    
+    const result = checkStylistBookingFeasibility({
+      stylistId,
+      dateStr,
+      startTime: timeSlot,
+      service: selectedService,
+      durationMinutes: durationMin || selectedService.durationMinutes,
+      existingAppointments,
+      isStylistOff: (st, d) => isStylistOff(st, d),
+      allStylists: STYLISTS
     });
+
+    return {
+      available: result.allowed,
+      reason: result.reason,
+      isDuringReposo: result.isDuringReposo,
+      conflictingApp: result.conflictingAppointment
+    };
+  };
+
+  const isSlotOccupied = (timeSlot: string, dateStr: string, stylistId: string) => {
+    return !checkSlotAvailability(timeSlot, dateStr, stylistId).available;
   };
 
   // Available Stylists
@@ -152,6 +219,22 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
       return st.allowedCategories.includes(selectedService.category);
     });
   }, [selectedService]);
+
+  // Keep selected stylist valid when category changes
+  useEffect(() => {
+    if (selectedStylist && availableStylists.length > 0) {
+      const exists = availableStylists.some(st => st.id === selectedStylist.id);
+      if (!exists) {
+        setSelectedStylist(availableStylists[0]);
+      }
+    }
+  }, [availableStylists, selectedStylist]);
+
+  // Selected Time Range info
+  const selectedBookingRange = useMemo(() => {
+    if (!bookingTime || !selectedService) return null;
+    return calculateAppointmentRange(bookingTime, effectiveDurationMinutes);
+  }, [bookingTime, selectedService, effectiveDurationMinutes]);
 
   // Handle Form Submission
   const handleSubmitBooking = async (sendWhatsApp: boolean = true) => {
@@ -187,8 +270,10 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
       return;
     }
 
-    if (isSlotOccupied(bookingTime, bookingDate, selectedStylist.id)) {
-      setBookingError(`El horario ${bookingTime} ya está ocupado. Elige otra hora disponible.`);
+    const slotCheck = checkSlotAvailability(bookingTime, bookingDate, selectedStylist.id, effectiveDurationMinutes);
+    if (!slotCheck.available) {
+      const range = calculateAppointmentRange(bookingTime, effectiveDurationMinutes);
+      setBookingError(`El bloque de ${range.startTime12} a ${range.endTime12} (${range.durationText}) no está disponible. ${slotCheck.reason || 'Por favor elige otra hora.'}`);
       return;
     }
 
@@ -199,19 +284,19 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
       const formattedDate = chosenDay ? chosenDay.formatted : bookingDate;
 
       const normalizedTime24 = normalizeTimeTo24h(bookingTime);
-      const displayTime12 = formatTimeTo12h(bookingTime);
+      const bookingRange = calculateAppointmentRange(bookingTime, effectiveDurationMinutes);
 
       const newApp = {
         clientName: clientName.trim(),
         clientPhone: clientPhone.trim(),
         clientEmail: '',
         serviceId: selectedService.id,
-        serviceName: selectedService.name,
+        serviceName: effectiveServiceName,
         stylistId: selectedStylist.id,
         stylistName: selectedStylist.name,
         date: bookingDate,
         time: normalizedTime24,
-        durationMinutes: selectedService.durationMinutes || 60,
+        durationMinutes: effectiveDurationMinutes,
         status: 'Pendiente',
         notes: customNote.trim()
       };
@@ -225,10 +310,11 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
           `🔖 *Código de Cita:* ${appointmentId}\n` +
           `👤 *Cliente:* ${clientName.trim()}\n` +
           `📱 *Teléfono:* ${clientPhone.trim()}\n` +
-          `💇‍♀️ *Servicio:* ${selectedService.name} (${selectedService.price})\n` +
+          `💅 *Servicio:* ${effectiveServiceName} (${effectivePrice})\n` +
+          `⏱️ *Duración Estimada:* ${bookingRange.durationText}\n` +
           `✂️ *Especialista:* ${selectedStylist.name}\n` +
           `📅 *Fecha:* ${formattedDate}\n` +
-          `⏰ *Hora:* ${displayTime12 || bookingTime}\n` +
+          `⏰ *Horario Reservado:* ${bookingRange.startTime12} a ${bookingRange.endTime12}\n` +
           (customNote.trim() ? `📝 *Nota:* ${customNote.trim()}\n\n` : `\n`) +
           `Por favor me confirman en recepción. ¡Muchas gracias!`;
 
@@ -238,8 +324,9 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
           id: appointmentId,
           ...newApp,
           formattedDate,
-          displayTime: displayTime12 || bookingTime,
-          price: selectedService.price,
+          displayTime: `${bookingRange.startTime12} - ${bookingRange.endTime12}`,
+          durationText: bookingRange.durationText,
+          price: effectivePrice,
           waUrl
         });
 
@@ -412,10 +499,10 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-white font-medium truncate group-hover:text-gold-champagne transition-colors">
-                    {selectedService?.name || 'Selecciona un servicio...'}
+                    {effectiveServiceName || 'Selecciona un servicio...'}
                   </p>
                   <p className="text-[10px] text-gray-400 font-mono mt-0.5">
-                    {selectedService?.price} · {selectedService?.durationText || `${selectedService?.durationMinutes}m`}
+                    {effectivePrice} · {formatDurationText(effectiveDurationMinutes)}
                   </p>
                 </div>
               </div>
@@ -424,34 +511,132 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
                 <ChevronDown className="w-3 h-3" />
               </div>
             </button>
+
+            {/* Service Options (e.g. Esmaltado: Solo manos, Solo pies, Manos y pies) */}
+            {selectedService?.options && selectedService.options.length > 0 && (
+              <div className="p-2.5 bg-[#17161b] border border-gold-champagne/30 rounded space-y-1.5 mt-1.5 animate-fadeIn">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-gold-champagne font-medium flex items-center gap-1">
+                    <Hand className="w-3.5 h-3.5 text-gold-champagne" />
+                    {selectedService.optionLabel || 'Selecciona la opción deseada'}:
+                  </span>
+                  <span className="text-[9px] font-mono text-gray-400 uppercase">3 opciones</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {selectedService.options.map((opt) => {
+                    const isOptSelected = (selectedOptionId === opt.id) || (!selectedOptionId && opt.id === selectedService.options![0].id);
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedOptionId(opt.id);
+                          setBookingError(null);
+                        }}
+                        className={`py-2 px-1.5 rounded border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
+                          isOptSelected
+                            ? 'bg-gradient-to-b from-gold-champagne to-[#c49d70] border-gold-champagne text-dark-bg font-bold shadow-md ring-1 ring-gold-champagne scale-[1.02]'
+                            : 'bg-[#202026] border-white/10 hover:border-gold-champagne/40 text-gray-300 active:bg-white/10'
+                        }`}
+                      >
+                        <span className={`text-[11px] font-medium leading-tight ${isOptSelected ? 'text-dark-bg font-bold' : 'text-white'}`}>
+                          {opt.name}
+                        </span>
+                        {opt.price && (
+                          <span className={`text-[10px] font-mono ${isOptSelected ? 'text-dark-bg/90 font-bold' : 'text-gold-champagne'}`}>
+                            {opt.price}
+                          </span>
+                        )}
+                        <span className={`text-[8px] font-mono ${isOptSelected ? 'text-dark-bg/80' : 'text-gray-400'}`}>
+                          {opt.durationText || `${opt.durationMinutes}m`}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Service Phases Details (Tinte / Highlights / Decoloraciones) */}
+            {(() => {
+              if (!selectedService) return null;
+              const phases = getServicePhases(selectedService);
+              const hasReposo = phases.some(p => !p.isStylistBusy);
+              if (!hasReposo) return null;
+
+              return (
+                <div className="p-2 bg-[#1f1d18] border border-[#B5916A]/30 rounded space-y-1 mt-1 text-[10px]">
+                  <div className="flex items-center justify-between text-[#E5C39C] font-semibold">
+                    <span className="flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-gold-champagne" />
+                      Fases del servicio ({selectedService.name}):
+                    </span>
+                    <span className="font-mono text-[9px] bg-gold-champagne/15 text-gold-champagne px-1.5 py-0.5 rounded">
+                      Total: {formatDurationText(selectedService.durationMinutes)}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-0.5">
+                    {phases.map((phase, idx) => (
+                      <div 
+                        key={idx}
+                        className={`px-2 py-1 rounded border flex items-center justify-between gap-1 ${
+                          phase.isStylistBusy
+                            ? 'bg-amber-950/40 border-amber-500/30 text-amber-200'
+                            : 'bg-emerald-950/40 border-emerald-500/30 text-emerald-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1 truncate">
+                          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: phase.isStylistBusy ? '#F59E0B' : '#10B981' }} />
+                          <span className="truncate">{phase.name}</span>
+                        </div>
+                        <span className="font-mono font-bold shrink-0 text-[9px]">
+                          {phase.durationMinutes}m {phase.isStylistBusy ? '(Ocupado)' : '(Libre/Reposo)'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* 2. ESPECIALISTA (Compact Chips) */}
           <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-widest text-gold-champagne/80 font-mono font-medium block">
-              2. Especialista:
-            </label>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] uppercase tracking-widest text-gold-champagne/80 font-mono font-medium block">
+                2. Especialista:
+              </label>
+              {selectedStylist && (
+                <span className="text-[9px] font-mono text-gray-400 truncate">
+                  {selectedStylist.name} · <span className="text-gold-champagne/90">{selectedStylist.role.split('/')[0]}</span>
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
               {availableStylists.map((st) => {
                 const isSelected = selectedStylist?.id === st.id;
+                const shortRole = st.id === 'cualquiera' ? 'Primero libre' : (st.role.includes('Manicurista') ? 'Manicurista' : st.role.split('/')[0].trim());
                 return (
                   <button
                     key={st.id}
                     type="button"
                     onClick={() => setSelectedStylist(st)}
-                    className={`p-2 rounded border text-center transition-all flex flex-col items-center justify-center gap-1 ${
+                    className={`p-2 rounded border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
                       isSelected
                         ? 'bg-gold-champagne border-gold-champagne text-dark-bg font-bold shadow-md ring-1 ring-gold-champagne'
                         : 'bg-[#1a1a1e] border-white/10 hover:border-gold-champagne/40 text-gray-300 active:bg-white/10'
                     }`}
                   >
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold font-serif-luxury ${
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold font-serif-luxury mb-0.5 ${
                       isSelected ? 'bg-dark-bg text-gold-champagne' : 'bg-black/60 border border-white/20 text-white'
                     }`}>
                       {st.avatarLetter}
                     </span>
-                    <span className="text-[10px] uppercase tracking-wider truncate w-full font-medium">
+                    <span className="text-[11px] uppercase tracking-wider truncate w-full font-medium leading-tight">
                       {st.name.split(' ')[0]}
+                    </span>
+                    <span className={`text-[8px] truncate w-full font-mono ${isSelected ? 'text-dark-bg/80 font-bold' : 'text-gray-400'}`}>
+                      {shortRole}
                     </span>
                   </button>
                 );
@@ -511,18 +696,33 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
               <label className="text-[10px] uppercase tracking-widest text-gold-champagne/80 font-mono font-medium block">
-                4. Hora (Bloques de 30 min):
+                4. Hora de Inicio:
               </label>
-              {bookingTime && (
-                <span className="text-[9px] text-emerald-400 font-mono font-bold">
-                  Seleccionado: {bookingTime}
+              {selectedService && (
+                <span className="text-[9px] bg-gold-champagne/15 text-gold-champagne border border-gold-champagne/30 font-mono px-1.5 py-0.5 rounded font-bold">
+                  Duración: {formatDurationText(selectedService.durationMinutes)}
                 </span>
               )}
             </div>
 
-            <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 max-h-40 overflow-y-auto pr-0.5 custom-scrollbar">
+            {selectedBookingRange && (
+              <div className="bg-emerald-950/40 border border-emerald-500/40 px-2.5 py-1.5 rounded flex items-center justify-between text-[11px] animate-fadeIn">
+                <div className="flex items-center gap-1.5 text-emerald-300">
+                  <Clock className="w-3.5 h-3.5 shrink-0" />
+                  <span>
+                    Bloque reservado: <strong className="font-mono text-emerald-200">{selectedBookingRange.startTime12} a {selectedBookingRange.endTime12}</strong> ({selectedBookingRange.durationText})
+                  </span>
+                </div>
+                <span className="text-[9px] bg-emerald-500/20 text-emerald-300 font-mono px-1.5 py-0.5 rounded uppercase font-bold">
+                  Bloqueo automático
+                </span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 max-h-44 overflow-y-auto pr-0.5 custom-scrollbar">
               {TIME_SLOTS.map((time) => {
-                const isOccupied = isSlotOccupied(time, bookingDate, selectedStylist?.id || '');
+                const availability = checkSlotAvailability(time, bookingDate, selectedStylist?.id || '', selectedService?.durationMinutes);
+                const isOccupied = !availability.available;
                 const isSelected = bookingTime === time;
 
                 return (
@@ -531,15 +731,21 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
                     type="button"
                     disabled={isOccupied}
                     onClick={() => setBookingTime(time)}
-                    className={`py-2 px-1 rounded border text-center text-xs font-mono transition-all flex flex-col items-center justify-center min-h-[36px] ${
+                    title={isOccupied ? availability.reason || 'Horario no disponible' : `Reservar a las ${time}`}
+                    className={`py-2 px-1 rounded border text-center text-xs font-mono transition-all flex flex-col items-center justify-center min-h-[38px] relative ${
                       isOccupied
-                        ? 'opacity-30 bg-red-950/20 border-red-900/30 text-red-400 line-through cursor-not-allowed text-[10px]'
+                        ? 'opacity-35 bg-red-950/20 border-red-900/30 text-red-400 line-through cursor-not-allowed text-[10px]'
                         : isSelected
                           ? 'bg-gold-champagne border-gold-champagne text-dark-bg font-bold shadow-md ring-1 ring-gold-champagne'
                           : 'bg-[#1a1a1e] border-white/10 hover:border-gold-champagne/50 text-gray-200 active:bg-white/10'
                     }`}
                   >
                     <span>{time}</span>
+                    {availability.isDuringReposo && !isOccupied && (
+                      <span className={`text-[7px] font-sans font-bold uppercase tracking-tight ${isSelected ? 'text-dark-bg' : 'text-emerald-400'}`}>
+                        ✨ Reposo
+                      </span>
+                    )}
                   </button>
                 );
               })}

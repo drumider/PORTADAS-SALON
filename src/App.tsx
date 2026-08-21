@@ -82,7 +82,7 @@ const GALLERY: GalleryItem[] = [
     id: 'g4',
     title: 'Manicure Minimal Champagne',
     service: 'Manicure y Pedicure',
-    stylist: 'Fernando',
+    stylist: 'Yorleny',
     image: getImageUrl('manicura.jpg')
   },
   {
@@ -654,9 +654,23 @@ export default function App() {
                             </h3>
                             
                             {/* Description */}
-                            <p className="text-gray-light/60 text-xs font-light leading-relaxed mb-4 line-clamp-2">
+                            <p className="text-gray-light/60 text-xs font-light leading-relaxed mb-3 line-clamp-2">
                               {service.description || `Tratamiento exclusivo de ${service.category || 'Salón CF Portadas'}.`}
                             </p>
+
+                            {/* Service Options Pills if configured */}
+                            {service.options && service.options.length > 0 && (
+                              <div className="mb-3 flex flex-wrap gap-1">
+                                {service.options.map(opt => (
+                                  <span
+                                    key={opt.id}
+                                    className="text-[9px] font-mono px-1.5 py-0.5 bg-dark-bg/80 border border-gold-champagne/30 text-gold-champagne/90 rounded"
+                                  >
+                                    {opt.name}{opt.price ? ` (${opt.price})` : ''}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
 
                           {/* Meta info & CTA */}
