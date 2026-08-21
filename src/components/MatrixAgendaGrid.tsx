@@ -398,7 +398,13 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
           isReposoFreeSlot
         };
 
-        const cleanAppStylistId = app.stylistId === 'jorleny' ? 'yorleny' : app.stylistId;
+        const rawId = (app.stylistId || '').toLowerCase().trim();
+        const matchedSt = stylists.find(s => 
+          s.id.toLowerCase() === rawId || 
+          s.name.toLowerCase() === rawId ||
+          (app.stylistName && s.name.toLowerCase() === app.stylistName.toLowerCase().trim())
+        );
+        const cleanAppStylistId = matchedSt ? matchedSt.id : (rawId === 'jorleny' ? 'yorleny' : (rawId || 'cualquiera'));
         const targetStylistIds = cleanAppStylistId === 'cualquiera'
           ? ['cualquiera']
           : [cleanAppStylistId];

@@ -22,7 +22,8 @@ import {
   minutesToTime24, 
   minutesToTime12, 
   formatDurationText,
-  doIntervalsOverlap
+  doIntervalsOverlap,
+  isSameStylist
 } from '../utils/timeUtils';
 import { getStoredAppointments } from '../utils/storage';
 
@@ -107,7 +108,7 @@ export const ExpandDurationModal: React.FC<ExpandDurationModalProps> = ({
       a.id !== appointment.id && 
       a.date === appointment.date && 
       a.status !== 'Cancelada' &&
-      (a.stylistId === appointment.stylistId || appointment.stylistId === 'cualquiera')
+      isSameStylist(a.stylistId, a.stylistName, appointment.stylistId, appointment.stylistName)
     );
 
     for (const other of otherApps) {

@@ -13,6 +13,21 @@ const APPOINTMENTS_STORAGE_KEY = 'cf_portadas_appointments_v1';
 const CLIENTS_STORAGE_KEY = 'cf_portadas_clients_v1';
 const ADMIN_AUTH_KEY = 'cf_portadas_admin_auth_v1';
 
+// Helper to clean objects for Firestore (removes any undefined values)
+export function sanitizeForFirestore<T extends Record<string, any>>(obj: T): T {
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      if (value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+        result[key] = sanitizeForFirestore(value);
+      } else {
+        result[key] = value;
+      }
+    }
+  }
+  return result as T;
+}
+
 // Helper to normalize phone numbers for accurate deduplication
 export const normalizePhone = (phone: string): string => {
   if (!phone) return '';
@@ -202,7 +217,7 @@ export const saveClient = (
   } catch (e) {}
 
   // Save to Firestore in cloud
-  setDoc(doc(db, 'clients', id), finalClient, { merge: true }).catch((err) => {
+  setDoc(doc(db, 'clients', id), sanitizeForFirestore(finalClient), { merge: true }).catch((err) => {
     console.error('Error writing client to Firestore:', err);
   });
 
@@ -271,7 +286,7 @@ export const updateClient = (id: string, updates: Partial<Client>): void => {
     } catch (e) {}
   }
 
-  updateDoc(doc(db, 'clients', id), updates).catch((err) => {
+  updateDoc(doc(db, 'clients', id), sanitizeForFirestore(updates)).catch((err) => {
     console.error('Error updating client in Firestore:', err);
   });
 };
@@ -298,7 +313,7 @@ export const saveAppointment = (appointment: Omit<Appointment, 'id' | 'createdAt
   } catch (e) {}
 
   // Save to cloud Firestore for real-time sync across all devices
-  setDoc(doc(db, 'appointments', id), finalApp, { merge: true }).catch((err) => {
+  setDoc(doc(db, 'appointments', id), sanitizeForFirestore(finalApp), { merge: true }).catch((err) => {
     console.error('Error writing appointment to Firestore:', err);
   });
 
@@ -345,11 +360,11 @@ export const cancelAppointment = (id: string, reason: string): void => {
     } catch (e) {}
   }
 
-  updateDoc(doc(db, 'appointments', id), { 
+  updateDoc(doc(db, 'appointments', id), sanitizeForFirestore({ 
     status: 'Cancelada',
     cancellationReason: trimmedReason,
     cancelledAt: now
-  }).catch((err) => {
+  })).catch((err) => {
     console.error('Error cancelling appointment in Firestore:', err);
   });
 };
@@ -363,7 +378,7 @@ export const updateAppointmentStatus = (id: string, status: Appointment['status'
     } catch (e) {}
   }
 
-  updateDoc(doc(db, 'appointments', id), { status }).catch((err) => {
+  updateDoc(doc(db, 'appointments', id), sanitizeForFirestore({ status })).catch((err) => {
     console.error('Error updating appointment status in Firestore:', err);
   });
 };
@@ -380,7 +395,7 @@ export const updateAppointmentDetails = (id: string, updates: Partial<Appointmen
     } catch (e) {}
   }
 
-  updateDoc(doc(db, 'appointments', id), updates).catch((err) => {
+  updateDoc(doc(db, 'appointments', id), sanitizeForFirestore(updates)).catch((err) => {
     console.error('Error updating appointment in Firestore:', err);
   });
 };

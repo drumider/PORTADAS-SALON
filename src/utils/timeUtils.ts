@@ -366,6 +366,51 @@ export interface SlotFeasibilityResult {
 }
 
 /**
+ * Resolves any stylist ID or string name to a canonical unique ID.
+ */
+export function getCanonicalStylistId(stylistId?: string, stylistName?: string): string {
+  const rawId = (stylistId || '').toLowerCase().trim();
+  const rawName = (stylistName || '').toLowerCase().trim();
+
+  if (rawId === 'carlos' || rawName === 'carlos' || rawId.startsWith('carlos') || rawName.startsWith('carlos')) return 'carlos';
+  if (rawId === 'fernando' || rawName === 'fernando' || rawId.startsWith('fernando') || rawName.startsWith('fernando')) return 'fernando';
+  if (rawId === 'junior' || rawName === 'junior' || rawId.startsWith('junior') || rawName.startsWith('junior')) return 'junior';
+  if (rawId === 'jessica' || rawName === 'jessica' || rawId.startsWith('jessica') || rawName.startsWith('jessica')) return 'jessica';
+  if (rawId === 'yorleny' || rawId === 'jorleny' || rawName === 'yorleny' || rawName === 'jorleny' || rawId.startsWith('yorleny') || rawName.startsWith('yorleny') || rawId.startsWith('jorleny') || rawName.startsWith('jorleny')) return 'yorleny';
+  if (rawId === 'mariela' || rawName === 'mariela' || rawId.startsWith('mariela') || rawName.startsWith('mariela')) return 'mariela';
+  if (rawId === 'cualquiera' || rawName === 'cualquiera' || rawId.startsWith('cualquier') || rawName.startsWith('cualquier')) return 'cualquiera';
+
+  // If already matches a known simple string
+  if (rawId) return rawId;
+  if (rawName) return rawName;
+  return 'cualquiera';
+}
+
+/**
+ * Checks if an appointment belongs to a target stylist.
+ * Guarantees that appointments for Carlos NEVER collide with Fernando, Junior, Jessica, etc.
+ */
+export function isSameStylist(
+  appStylistId?: string,
+  appStylistName?: string,
+  targetStylistId?: string,
+  targetStylistName?: string
+): boolean {
+  if (!targetStylistId && !targetStylistName) return false;
+  if (!appStylistId && !appStylistName) return false;
+
+  const canonicalApp = getCanonicalStylistId(appStylistId, appStylistName);
+  const canonicalTarget = getCanonicalStylistId(targetStylistId, targetStylistName);
+
+  // If either is 'cualquiera' or empty, they do not match as a specific stylist
+  if (!canonicalApp || !canonicalTarget || canonicalApp === 'cualquiera' || canonicalTarget === 'cualquiera') {
+    return false;
+  }
+
+  return canonicalApp === canonicalTarget;
+}
+
+/**
  * Checks whether a candidate booking can be scheduled for a stylist at a given date/time.
  * 
  * Regla de agendamiento:
@@ -426,19 +471,19 @@ export function checkStylistBookingFeasibility({
 
   // If specific stylist is chosen
   if (stylistId && stylistId !== 'cualquiera') {
+    const stylistObj = allStylists ? allStylists.find(s => s.id === stylistId || s.name.toLowerCase() === stylistId.toLowerCase()) : undefined;
+
     // Check if stylist is off
-    if (allStylists && isStylistOff) {
-      const stylistObj = allStylists.find(s => s.id === stylistId);
-      if (stylistObj && isStylistOff(stylistObj, dateStr)) {
-        return {
-          allowed: false,
-          reason: `${stylistObj.name} no labora en la fecha seleccionada.`
-        };
-      }
+    if (stylistObj && isStylistOff && isStylistOff(stylistObj, dateStr)) {
+      return {
+        allowed: false,
+        reason: `${stylistObj.name} no labora en la fecha seleccionada.`
+      };
     }
 
-    const stylistApps = dayApps.filter(
-      a => a.stylistId === stylistId || a.stylistId === 'cualquiera'
+    // STRICT ISOLATION: Only check appointments assigned specifically to this stylist
+    const stylistApps = dayApps.filter(a => 
+      isSameStylist(a.stylistId, a.stylistName, stylistId, stylistObj?.name)
     );
 
     let isDuringReposo = false;
@@ -452,9 +497,10 @@ export function checkStylistBookingFeasibility({
         for (const exBusy of existingBusyIntervals) {
           // If intervals overlap
           if (doIntervalsOverlap(candBusy.startMin, candBusy.endMin, exBusy.startMin, exBusy.endMin)) {
+            const displayName = stylistObj?.name || 'El especialista';
             return {
               allowed: false,
-              reason: `El estilista está ocupado con ${existingApp.clientName} (${existingApp.serviceName} - ${exBusy.phaseName}) de ${minutesToTime12(exBusy.startMin)} a ${minutesToTime12(exBusy.endMin)}.`,
+              reason: `${displayName} ya tiene una cita con ${existingApp.clientName} (${existingApp.serviceName} - ${exBusy.phaseName}) de ${minutesToTime12(exBusy.startMin)} a ${minutesToTime12(exBusy.endMin)}.`,
               conflictingAppointment: existingApp
             };
           }
