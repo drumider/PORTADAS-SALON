@@ -5,6 +5,7 @@ import { Appointment, AppointmentStatus, Client } from '../types';
 import { SERVICES, STYLISTS, TIME_SLOTS } from '../constants';
 import { getStoredClients, subscribeToClients, normalizePhone, getStoredAppointments } from '../utils/storage';
 import { calculateAppointmentRange, formatDurationText, normalizeTimeTo24h, checkStylistBookingFeasibility, getServicePhases } from '../utils/timeUtils';
+import { searchAndRankServices } from '../utils/serviceSearch';
 
 interface AppointmentModalProps {
   isOpen: boolean;
@@ -28,6 +29,14 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
   const defaultService = useMemo(() => {
     return SERVICES.find(s => s.name === 'Blower Corto') || SERVICES.find(s => s.id === '03') || SERVICES[0];
   }, []);
+
+  const getLocalTodayDate = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
 
   const resolveService = (sId?: string, sName?: string) => {
     if (sId) {
@@ -117,7 +126,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
       setClientEmail(prefilledClient.email || '');
       setServiceId(defaultService.id);
       setStylistId(STYLISTS[0].id);
-      setDate(selectedDate || new Date().toISOString().split('T')[0]);
+      setDate(selectedDate || getLocalTodayDate());
       setTime('10:00');
       setStatus('Confirmada');
       setNotes(prefilledClient.notes || '');
@@ -151,7 +160,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
       const rawStylistId = initialAppointment.stylistId || '';
       const cleanStylistId = (rawStylistId === 'jorleny' ? 'yorleny' : rawStylistId) || STYLISTS[0].id;
       setStylistId(cleanStylistId);
-      setDate(initialAppointment.date || selectedDate || new Date().toISOString().split('T')[0]);
+      setDate(initialAppointment.date || selectedDate || getLocalTodayDate());
       setTime(initialAppointment.time || '10:00');
       setStatus(initialAppointment.status || 'Confirmada');
       setNotes(initialAppointment.notes || '');
@@ -166,7 +175,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
       setSelectedOptionId(defaultService.options?.[0]?.id || '');
       setCustomDurationMinutes(defaultService.options?.[0]?.durationMinutes || defaultService.durationMinutes || 60);
       setStylistId(STYLISTS[0].id);
-      setDate(selectedDate || new Date().toISOString().split('T')[0]);
+      setDate(selectedDate || getLocalTodayDate());
       setTime('10:00');
       setStatus('Confirmada');
       setNotes('');
@@ -395,8 +404,25 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 <input
                   type="text"
                   value={serviceSearch}
-                  onChange={(e) => setServiceSearch(e.target.value)}
-                  placeholder="Filtrar por código o nombre (ej. 218)..."
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setServiceSearch(val);
+                    if (val.trim()) {
+                      const ranked = searchAndRankServices(SERVICES, val);
+                      if (ranked.length > 0) {
+                        const topService = ranked[0];
+                        setServiceId(topService.id);
+                        if (topService.options && topService.options.length > 0) {
+                          setSelectedOptionId(topService.options[0].id);
+                          setCustomDurationMinutes(topService.options[0].durationMinutes || topService.durationMinutes || 60);
+                        } else {
+                          setSelectedOptionId('');
+                          setCustomDurationMinutes(topService.durationMinutes || 60);
+                        }
+                      }
+                    }
+                  }}
+                  placeholder="Filtrar por código o nombre (ej. k, keratina, 218)..."
                   className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-2.5 py-1.5 outline-none font-sans"
                 />
 
@@ -417,11 +443,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-xs px-2.5 py-2.5 outline-none font-medium"
                 >
                   {(() => {
-                    const filtered = SERVICES.filter(s => {
-                      if (!serviceSearch.trim()) return true;
-                      const q = serviceSearch.toLowerCase().trim();
-                      return s.name.toLowerCase().includes(q) || (s.code && s.code.toLowerCase().includes(q));
-                    });
+                    const filtered = searchAndRankServices(SERVICES, serviceSearch);
                     
                     // If current serviceId is not in filtered list, include it so the select doesn't break
                     const currentInFiltered = filtered.some(s => s.id === serviceId);

@@ -67,6 +67,51 @@ const getLocalStorageClients = (): Client[] => {
 cachedAppointments = getLocalStorageAppointments();
 cachedClients = getLocalStorageClients();
 
+// Active subscribers for instant in-app reactivity
+type AppointmentCallback = (apps: Appointment[]) => void;
+type ClientCallback = (clients: Client[]) => void;
+
+const appointmentSubscribers = new Set<AppointmentCallback>();
+const clientSubscribers = new Set<ClientCallback>();
+
+const notifyAppointmentSubscribers = () => {
+  const sorted = [...cachedAppointments].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  cachedAppointments = sorted;
+  appointmentSubscribers.forEach((cb) => {
+    try {
+      cb(sorted);
+    } catch (e) {
+      console.error('Error in appointment subscriber callback:', e);
+    }
+  });
+};
+
+const notifyClientSubscribers = () => {
+  const sorted = [...cachedClients].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  cachedClients = sorted;
+  clientSubscribers.forEach((cb) => {
+    try {
+      cb(sorted);
+    } catch (e) {
+      console.error('Error in client subscriber callback:', e);
+    }
+  });
+};
+
+// Listen for cross-tab local storage events
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === APPOINTMENTS_STORAGE_KEY) {
+      cachedAppointments = getLocalStorageAppointments();
+      notifyAppointmentSubscribers();
+    }
+    if (e.key === CLIENTS_STORAGE_KEY) {
+      cachedClients = getLocalStorageClients();
+      notifyClientSubscribers();
+    }
+  });
+}
+
 export const getStoredAppointments = (): Appointment[] => {
   return cachedAppointments;
 };
@@ -79,30 +124,51 @@ export const getStoredClients = (): Client[] => {
  * Subscribe to real-time Firestore appointment updates across all devices
  */
 export const subscribeToAppointments = (callback: (apps: Appointment[]) => void): (() => void) => {
+  appointmentSubscribers.add(callback);
+  // Immediately notify caller with existing cache so UI renders synchronously without waiting
+  callback([...cachedAppointments].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)));
+
   const colRef = collection(db, 'appointments');
 
   const unsubscribe = onSnapshot(
     colRef,
     (snapshot) => {
       if (snapshot.empty) {
+        // If Firestore is empty but we have local appointments, sync them to Firestore instead of wiping them!
+        if (cachedAppointments.length > 0) {
+          cachedAppointments.forEach(app => {
+            setDoc(doc(db, 'appointments', app.id), sanitizeForFirestore(app), { merge: true }).catch(() => {});
+          });
+          notifyAppointmentSubscribers();
+          return;
+        }
         cachedAppointments = [];
         try {
           localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify([]));
         } catch (e) {}
-        callback([]);
+        notifyAppointmentSubscribers();
         return;
       }
 
-      const apps: Appointment[] = [];
+      const appsMap = new Map<string, Appointment>();
       snapshot.forEach((docSnap) => {
         const data = docSnap.data() as Appointment;
-        apps.push({
+        const app = {
           ...data,
           id: docSnap.id || data.id
-        });
+        };
+        appsMap.set(app.id, app);
       });
 
-      // Sort by date and time
+      // Keep any locally created appointments that haven't landed in Firestore yet
+      cachedAppointments.forEach(localApp => {
+        if (!appsMap.has(localApp.id)) {
+          appsMap.set(localApp.id, localApp);
+          setDoc(doc(db, 'appointments', localApp.id), sanitizeForFirestore(localApp), { merge: true }).catch(() => {});
+        }
+      });
+
+      const apps = Array.from(appsMap.values());
       apps.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 
       cachedAppointments = apps;
@@ -110,42 +176,64 @@ export const subscribeToAppointments = (callback: (apps: Appointment[]) => void)
         localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(apps));
       } catch (e) {}
 
-      callback(apps);
+      notifyAppointmentSubscribers();
     },
     (error) => {
       console.warn('Firestore appointments subscription fallback to cache:', error);
-      callback(cachedAppointments);
+      notifyAppointmentSubscribers();
     }
   );
 
-  return unsubscribe;
+  return () => {
+    appointmentSubscribers.delete(callback);
+    unsubscribe();
+  };
 };
 
 /**
  * Subscribe to real-time Firestore clients updates across all devices
  */
 export const subscribeToClients = (callback: (clients: Client[]) => void): (() => void) => {
+  clientSubscribers.add(callback);
+  // Immediately notify caller with existing cache
+  callback([...cachedClients].sort((a, b) => (a.name || '').localeCompare(b.name || '')));
+
   const colRef = collection(db, 'clients');
 
   const unsubscribe = onSnapshot(
     colRef,
     (snapshot) => {
       if (snapshot.empty) {
-        // If Firestore is empty, keep cached or empty
+        if (cachedClients.length > 0) {
+          cachedClients.forEach(c => {
+            setDoc(doc(db, 'clients', c.id), sanitizeForFirestore(c), { merge: true }).catch(() => {});
+          });
+          notifyClientSubscribers();
+          return;
+        }
         callback(cachedClients);
         return;
       }
 
-      const clients: Client[] = [];
+      const clientsMap = new Map<string, Client>();
       snapshot.forEach((docSnap) => {
         const data = docSnap.data() as Client;
-        clients.push({
+        const client = {
           ...data,
           id: docSnap.id || data.id
-        });
+        };
+        clientsMap.set(client.id, client);
       });
 
-      // Sort alphabetically by name
+      // Keep local clients
+      cachedClients.forEach(localC => {
+        if (!clientsMap.has(localC.id)) {
+          clientsMap.set(localC.id, localC);
+          setDoc(doc(db, 'clients', localC.id), sanitizeForFirestore(localC), { merge: true }).catch(() => {});
+        }
+      });
+
+      const clients = Array.from(clientsMap.values());
       clients.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
       cachedClients = clients;
@@ -153,15 +241,18 @@ export const subscribeToClients = (callback: (clients: Client[]) => void): (() =
         localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
       } catch (e) {}
 
-      callback(clients);
+      notifyClientSubscribers();
     },
     (error) => {
       console.warn('Firestore clients subscription fallback to cache:', error);
-      callback(cachedClients);
+      notifyClientSubscribers();
     }
   );
 
-  return unsubscribe;
+  return () => {
+    clientSubscribers.delete(callback);
+    unsubscribe();
+  };
 };
 
 /**
@@ -216,6 +307,8 @@ export const saveClient = (
     localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(cachedClients));
   } catch (e) {}
 
+  notifyClientSubscribers();
+
   // Save to Firestore in cloud
   setDoc(doc(db, 'clients', id), sanitizeForFirestore(finalClient), { merge: true }).catch((err) => {
     console.error('Error writing client to Firestore:', err);
@@ -266,6 +359,8 @@ export const deleteClient = (id: string): void => {
     localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(cachedClients));
   } catch (e) {}
 
+  notifyClientSubscribers();
+
   deleteDoc(doc(db, 'clients', id)).catch((err) => {
     console.error('Error deleting client from Firestore:', err);
   });
@@ -284,6 +379,8 @@ export const updateClient = (id: string, updates: Partial<Client>): void => {
     try {
       localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(cachedClients));
     } catch (e) {}
+
+    notifyClientSubscribers();
   }
 
   updateDoc(doc(db, 'clients', id), sanitizeForFirestore(updates)).catch((err) => {
@@ -312,6 +409,9 @@ export const saveAppointment = (appointment: Omit<Appointment, 'id' | 'createdAt
     localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(cachedAppointments));
   } catch (e) {}
 
+  // Broadcast synchronously to all mounted UI components
+  notifyAppointmentSubscribers();
+
   // Save to cloud Firestore for real-time sync across all devices
   setDoc(doc(db, 'appointments', id), sanitizeForFirestore(finalApp), { merge: true }).catch((err) => {
     console.error('Error writing appointment to Firestore:', err);
@@ -338,6 +438,8 @@ export const deleteAppointment = (id: string): void => {
     localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(cachedAppointments));
   } catch (e) {}
 
+  notifyAppointmentSubscribers();
+
   deleteDoc(doc(db, 'appointments', id)).catch((err) => {
     console.error('Error deleting appointment from Firestore:', err);
   });
@@ -358,6 +460,8 @@ export const cancelAppointment = (id: string, reason: string): void => {
     try {
       localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(cachedAppointments));
     } catch (e) {}
+
+    notifyAppointmentSubscribers();
   }
 
   updateDoc(doc(db, 'appointments', id), sanitizeForFirestore({ 
@@ -376,6 +480,8 @@ export const updateAppointmentStatus = (id: string, status: Appointment['status'
     try {
       localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(cachedAppointments));
     } catch (e) {}
+
+    notifyAppointmentSubscribers();
   }
 
   updateDoc(doc(db, 'appointments', id), sanitizeForFirestore({ status })).catch((err) => {
@@ -393,6 +499,8 @@ export const updateAppointmentDetails = (id: string, updates: Partial<Appointmen
     try {
       localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(cachedAppointments));
     } catch (e) {}
+
+    notifyAppointmentSubscribers();
   }
 
   updateDoc(doc(db, 'appointments', id), sanitizeForFirestore(updates)).catch((err) => {

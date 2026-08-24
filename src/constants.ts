@@ -37,7 +37,7 @@ export const STYLISTS: Stylist[] = [
     name: 'Junior', 
     role: 'Master en Tratamientos y Estilo', 
     avatarLetter: 'J', 
-    offDays: [],
+    offDays: [1],
     allowedCategories: ['Alisados y Keratinas', 'Coloración y Tintes', 'Cortes y Peinados', 'Tratamientos Capilares', 'Maquillaje y Masajes', 'Paquetes y Promociones'] 
   },
   { 
@@ -61,7 +61,7 @@ export const STYLISTS: Stylist[] = [
     name: 'Mariela', 
     role: 'Manicurista', 
     avatarLetter: 'M', 
-    offDays: [1],
+    offDays: [2],
     allowedCategories: ['Manicure y Pedicure', 'Depilación y Rostro', 'Maquillaje y Masajes', 'Paquetes y Promociones', 'Cortes y Peinados', 'Tratamientos Capilares'] 
   },
   { 

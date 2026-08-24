@@ -46,6 +46,7 @@ import { ClientBookingWidget } from './components/ClientBookingWidget';
 import { Service, Stylist, Appointment } from './types';
 import { SERVICES, STYLISTS, TIME_SLOTS } from './constants';
 import { SERVICE_CATEGORIES } from './data/servicesData';
+import { searchAndRankServices } from './utils/serviceSearch';
 
 interface GalleryItem {
   id: string;
@@ -132,31 +133,14 @@ export default function App() {
   const [bookingSearch, setBookingSearch] = useState<string>('');
   const [bookingCategory, setBookingCategory] = useState<string>('Todos');
 
-  // Filtered Services for Main Page
+  // Filtered Services for Main Page with smart rank
   const filteredMainServices = useMemo(() => {
-    return SERVICES.filter((s) => {
-      const matchCat = servicesCategory === 'Todos' || s.category === servicesCategory;
-      const query = servicesSearch.toLowerCase().trim();
-      const matchQuery = !query || 
-        s.name.toLowerCase().includes(query) || 
-        (s.code && s.code.toLowerCase().includes(query)) ||
-        (s.description && s.description.toLowerCase().includes(query)) ||
-        (s.category && s.category.toLowerCase().includes(query));
-      return matchCat && matchQuery;
-    });
+    return searchAndRankServices(SERVICES, servicesSearch, servicesCategory);
   }, [servicesSearch, servicesCategory]);
 
-  // Filtered Services for Booking Widget
+  // Filtered Services for Booking Widget with smart rank
   const filteredBookingServices = useMemo(() => {
-    return SERVICES.filter((s) => {
-      const matchCat = bookingCategory === 'Todos' || s.category === bookingCategory;
-      const query = bookingSearch.toLowerCase().trim();
-      const matchQuery = !query || 
-        s.name.toLowerCase().includes(query) || 
-        (s.code && s.code.toLowerCase().includes(query)) ||
-        (s.description && s.description.toLowerCase().includes(query));
-      return matchCat && matchQuery;
-    });
+    return searchAndRankServices(SERVICES, bookingSearch, bookingCategory);
   }, [bookingSearch, bookingCategory]);
 
   // Track active section on scroll

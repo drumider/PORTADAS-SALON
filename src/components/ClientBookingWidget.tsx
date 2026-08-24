@@ -31,6 +31,7 @@ import {
   checkStylistBookingFeasibility,
   getServicePhases
 } from '../utils/timeUtils';
+import { searchAndRankServices } from '../utils/serviceSearch';
 
 interface ClientBookingWidgetProps {
   existingAppointments: Appointment[];
@@ -161,17 +162,9 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
     }
   }, [availableDays, bookingDate]);
 
-  // Filtered Services for Modal Picker
+  // Filtered and smart-ranked Services for Modal Picker
   const modalFilteredServices = useMemo(() => {
-    return SERVICES.filter((s) => {
-      const matchCat = modalCategory === 'Todos' || s.category === modalCategory;
-      const q = modalSearch.toLowerCase().trim();
-      const matchQuery = !q || 
-        s.name.toLowerCase().includes(q) || 
-        (s.code && s.code.toLowerCase().includes(q)) ||
-        (s.description && s.description.toLowerCase().includes(q));
-      return matchCat && matchQuery;
-    });
+    return searchAndRankServices(SERVICES, modalSearch, modalCategory);
   }, [modalSearch, modalCategory]);
 
   // Check if stylist is off on a date

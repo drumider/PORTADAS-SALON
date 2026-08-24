@@ -156,6 +156,21 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
           return st;
         });
 
+        // Ensure all DEFAULT_STYLISTS are updated with latest offDays and allowedCategories
+        parsed = parsed.map(st => {
+          const defMatch = DEFAULT_STYLISTS.find(d => d.id === st.id);
+          if (defMatch) {
+            return {
+              ...st,
+              name: defMatch.name,
+              role: defMatch.role,
+              offDays: defMatch.offDays,
+              allowedCategories: defMatch.allowedCategories || st.allowedCategories
+            };
+          }
+          return st;
+        });
+
         // Ensure all DEFAULT_STYLISTS (including Yorleny and Mariela) are present
         DEFAULT_STYLISTS.forEach(defSt => {
           const exists = parsed.some(s => s.id === defSt.id || s.name.toLowerCase() === defSt.name.toLowerCase());
@@ -406,7 +421,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         );
         const cleanAppStylistId = matchedSt ? matchedSt.id : (rawId === 'jorleny' ? 'yorleny' : (rawId || 'cualquiera'));
         const targetStylistIds = cleanAppStylistId === 'cualquiera'
-          ? ['cualquiera']
+          ? ['cualquiera', ...stylists.map(s => s.id)]
           : [cleanAppStylistId];
 
         targetStylistIds.forEach(stId => {
@@ -421,7 +436,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
       }
     });
     return map;
-  }, [dayAppointments]);
+  }, [dayAppointments, stylists]);
 
   // Approve & Schedule handler for pending appointments
   const handleApproveAppointment = (
@@ -477,10 +492,30 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
 
   // Save handler
   const handleSaveAppointment = (appointmentData: Omit<Appointment, 'id' | 'createdAt'> & { id?: string }) => {
-    saveAppointment(appointmentData);
+    const saved = saveAppointment(appointmentData);
     setIsAppointmentModalOpen(false);
     setEditingAppointment(null);
     setModalInitialSlot(null);
+
+    // Jump agenda view directly to the appointment's date so it's instantly visible
+    if (appointmentData.date) {
+      try {
+        const [y, m, d] = appointmentData.date.split('-').map(Number);
+        if (y && m && d) {
+          setSelectedDate(new Date(y, m - 1, d));
+        }
+      } catch (e) {}
+    }
+
+    if (appointmentData.stylistId && appointmentData.stylistId !== 'cualquiera') {
+      setActiveStylistId(appointmentData.stylistId);
+    }
+
+    setNotificationToast({
+      id: 'toast-save-' + Date.now(),
+      message: `✅ Cita de ${saved.clientName} agendada para el ${saved.date} a las ${formatTimeTo12h(saved.time)}.`,
+      type: 'success'
+    });
   };
 
   // Delete handler
