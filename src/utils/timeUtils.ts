@@ -206,8 +206,8 @@ export function getServicePhases(serviceOrName?: Service | string, durationMinut
 
   const nameLower = (serviceName || service?.name || '').toLowerCase();
 
-  // 1. Tinte / Coloración
-  const isTinte = /tinte|coloración|coloracion|aplicacion de color|baño color/i.test(nameLower);
+  // 1. Tinte / Coloración / Baño Color
+  const isTinte = /tinte|coloración|coloracion|color|baño color|bano color/i.test(nameLower);
   if (isTinte) {
     if (dur <= 45) {
       return [
@@ -221,25 +221,24 @@ export function getServicePhases(serviceOrName?: Service | string, durationMinut
         { name: 'Reposo de Tinte', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre (tinte reposando)' }
       ];
     }
-    if (dur === 75) {
+    if (dur <= 90) {
+      const applyMin = 30;
+      const finishMin = Math.min(30, dur - applyMin - 20);
+      const reposoMin = dur - applyMin - finishMin;
       return [
-        { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista aplicando el tinte' },
-        { name: 'Reposo de Tinte', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre (tinte reposando)' },
-        { name: 'Lavado y Secado', durationMinutes: 15, isStylistBusy: true, description: 'Lavado y secado final' }
+        { name: 'Aplicación de Tinte', durationMinutes: applyMin, isStylistBusy: true, description: 'Estilista aplicando el tinte' },
+        { name: 'Reposo de Tinte', durationMinutes: reposoMin, isStylistBusy: false, description: 'Estilista libre (tinte reposando)' },
+        { name: 'Lavado y Secado', durationMinutes: finishMin, isStylistBusy: true, description: 'Lavado y secado final' }
       ];
     }
-    if (dur === 90) {
-      return [
-        { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista aplicando el tinte' },
-        { name: 'Reposo de Tinte', durationMinutes: 45, isStylistBusy: false, description: 'Estilista libre (tinte reposando)' },
-        { name: 'Lavado y Secado', durationMinutes: 15, isStylistBusy: true, description: 'Lavado y secado final' }
-      ];
-    }
-    // Greater than 90m
+    // Greater than or equal to 100m (includes 120m, 135m, 150m, 180m): 60 min final finish phase
+    const finalFinishMin = 60;
+    const applyMin = dur >= 150 ? 45 : 30;
+    const reposoMin = Math.max(20, dur - applyMin - finalFinishMin);
     return [
-      { name: 'Aplicación de Tinte', durationMinutes: 45, isStylistBusy: true, description: 'Estilista aplicando el tinte' },
-      { name: 'Reposo de Tinte', durationMinutes: 45, isStylistBusy: false, description: 'Estilista libre (tinte reposando)' },
-      { name: 'Lavado y Secado', durationMinutes: dur - 90, isStylistBusy: true, description: 'Lavado y secado final' }
+      { name: 'Aplicación de Color / Tinte', durationMinutes: applyMin, isStylistBusy: true, description: 'Estilista aplicando el producto' },
+      { name: 'Reposo de Color', durationMinutes: reposoMin, isStylistBusy: false, description: 'Estilista libre durante tiempo de reposo' },
+      { name: 'Lavado, Secado y Acabado', durationMinutes: finalFinishMin, isStylistBusy: true, description: '1 hora extra al final: lavado, secado y estilizado' }
     ];
   }
 
@@ -255,20 +254,18 @@ export function getServicePhases(serviceOrName?: Service | string, durationMinut
     if (dur <= 90) {
       return [
         { name: 'Montaje de Luces', durationMinutes: 30, isStylistBusy: true, description: 'Estilista aplicando mechas' },
-        { name: 'Reposo de 1 Hora', durationMinutes: 60, isStylistBusy: false, description: 'Estilista libre durante 1 hora de espera' }
+        { name: 'Reposo / Espera', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre durante reposo' },
+        { name: 'Lavado y Secado', durationMinutes: dur - 60, isStylistBusy: true, description: 'Lavado y secado final' }
       ];
     }
-    if (dur <= 120) {
-      return [
-        { name: 'Aplicación de Highlights', durationMinutes: 60, isStylistBusy: true, description: 'Estilista montando papel y producto' },
-        { name: 'Reposo de 1 Hora', durationMinutes: 60, isStylistBusy: false, description: 'Estilista libre durante 1 hora de espera' }
-      ];
-    }
-    // More than 120m (e.g. 150m = 2.5h)
+    // Greater than or equal to 120m: 60 min extra finishing phase
+    const finalFinishMin = 60;
+    const applyMin = dur >= 150 ? 60 : 30;
+    const reposoMin = Math.max(30, dur - applyMin - finalFinishMin);
     return [
-      { name: 'Aplicación de Highlights', durationMinutes: 60, isStylistBusy: true, description: 'Estilista montando papel y producto' },
-      { name: 'Reposo de 1 Hora', durationMinutes: 60, isStylistBusy: false, description: 'Estilista libre durante 1 hora de espera' },
-      { name: 'Matizado y Lavado', durationMinutes: dur - 120, isStylistBusy: true, description: 'Matiz, lavado y acabado final' }
+      { name: 'Aplicación / Montaje', durationMinutes: applyMin, isStylistBusy: true, description: 'Estilista montando papel y producto' },
+      { name: 'Reposo / Espera', durationMinutes: reposoMin, isStylistBusy: false, description: 'Estilista libre durante tiempo de reposo' },
+      { name: 'Matizado, Lavado y Acabado', durationMinutes: finalFinishMin, isStylistBusy: true, description: '1 hora extra al final: matizado, lavado y secado' }
     ];
   }
 

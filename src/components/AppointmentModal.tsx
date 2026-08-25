@@ -197,6 +197,20 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
     defaultService.id
   ]);
 
+  // Lock body scroll when modal is open to prevent background jumps/movements on mobile
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      const originalTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.touchAction = originalTouchAction;
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -238,19 +252,21 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/65 backdrop-blur-xs overscroll-contain touch-auto"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
         <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 100 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="w-full max-w-lg bg-white border-t sm:border border-[#D8CEB8] shadow-2xl overflow-hidden relative rounded-t-2xl sm:rounded-none max-h-[92vh] sm:max-h-[90vh] flex flex-col"
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.96 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+          className="w-full max-w-lg bg-white border border-[#D8CEB8] shadow-2xl overflow-hidden relative rounded-xl sm:rounded-none max-h-[88vh] sm:max-h-[90vh] flex flex-col my-auto"
         >
-          {/* Mobile Handle Bar */}
-          <div className="w-12 h-1 bg-neutral-300 rounded-full mx-auto mt-2.5 sm:hidden" />
-
           {/* Header */}
-          <div className="bg-[#FAF8F5] border-b border-[#EAE3DC] p-4 sm:p-5 flex items-center justify-between shrink-0">
+          <div className="bg-[#FAF8F5] border-b border-[#EAE3DC] p-3.5 sm:p-5 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 border border-[#B5916A]/40 bg-[#B5916A]/10 flex items-center justify-center text-[#8C6B4D] shrink-0">
                 <Scissors className="w-4 h-4" />
@@ -654,15 +670,15 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         <Minus className="w-3.5 h-3.5" />
                       </button>
 
-                      <div className="flex-1 overflow-x-auto flex gap-1 py-0.5">
+                      <div className="flex-1 overflow-x-auto flex gap-1 py-1 no-scrollbar scroll-smooth">
                         {[30, 45, 60, 75, 90, 120, 150, 180, 240].map(mins => (
                           <button
                             key={mins}
                             type="button"
                             onClick={() => setCustomDurationMinutes(mins)}
-                            className={`px-2 py-1 rounded text-[10px] font-mono font-bold shrink-0 transition-all cursor-pointer ${
+                            className={`px-2.5 py-1.5 rounded text-[11px] font-mono font-bold shrink-0 transition-all cursor-pointer ${
                               effectiveDuration === mins
-                                ? 'bg-[#8C6B4D] text-white border border-[#8C6B4D] shadow-2xs'
+                                ? 'bg-[#8C6B4D] text-white border border-[#8C6B4D] shadow-xs'
                                 : 'bg-white border border-[#E2D9CE] text-neutral-700 hover:border-[#8C6B4D]'
                             }`}
                           >
@@ -839,17 +855,17 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
             </div>
 
             {/* Actions */}
-            <div className="pt-4 border-t border-[#EAE3DC] flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 sticky bottom-0 bg-white py-2">
+            <div className="pt-3 border-t border-[#EAE3DC] flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-2.5 sticky bottom-0 bg-white py-2.5 z-10">
               {isEditing && onDelete ? (
                 confirmDelete ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={() => {
                         onDelete(initialAppointment!.id!);
                         onClose();
                       }}
-                      className="text-xs uppercase tracking-wider text-white bg-red-600 hover:bg-red-700 font-bold flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors animate-pulse w-full sm:w-auto"
+                      className="text-xs uppercase tracking-wider text-white bg-red-600 hover:bg-red-700 font-bold flex items-center justify-center gap-1.5 px-3.5 py-2.5 transition-colors animate-pulse flex-1 sm:flex-none cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>¡Sí, Borrar!</span>
@@ -857,7 +873,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(false)}
-                      className="text-xs text-neutral-500 hover:text-neutral-900 px-2 py-1"
+                      className="text-xs text-neutral-500 hover:text-neutral-900 px-3 py-2 cursor-pointer"
                     >
                       Cancelar
                     </button>
@@ -866,7 +882,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(true)}
-                    className="text-xs uppercase tracking-wider text-red-600 hover:text-red-800 flex items-center justify-center gap-1.5 px-3 py-2.5 border border-red-200 bg-red-50 hover:bg-red-100 transition-colors w-full sm:w-auto"
+                    className="text-xs uppercase tracking-wider text-red-600 hover:text-red-800 flex items-center justify-center gap-1.5 px-3.5 py-2.5 border border-red-200 bg-red-50 hover:bg-red-100 transition-colors w-full sm:w-auto cursor-pointer font-bold"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Eliminar Cita</span>
@@ -878,13 +894,13 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="text-xs uppercase tracking-wider text-neutral-600 hover:text-neutral-900 px-4 py-2.5 font-medium flex-1 sm:flex-none text-center"
+                  className="text-xs uppercase tracking-wider text-neutral-600 hover:text-neutral-900 px-4 py-2.5 font-medium flex-1 sm:flex-none text-center cursor-pointer border border-transparent hover:border-neutral-200"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#2C221C] hover:bg-[#A68358] text-white text-xs uppercase tracking-[0.15em] font-bold px-5 py-3 sm:py-2.5 flex items-center justify-center gap-2 transition-colors shadow-sm flex-1 sm:flex-none"
+                  className="bg-[#2C221C] hover:bg-[#A68358] text-white text-xs uppercase tracking-[0.15em] font-bold px-5 py-3 sm:py-2.5 flex items-center justify-center gap-2 transition-colors shadow-sm flex-1 sm:flex-none cursor-pointer active:scale-98"
                 >
                   <Save className="w-4 h-4" />
                   <span>{isEditing ? 'Guardar Cambios' : 'Agendar Cita'}</span>
