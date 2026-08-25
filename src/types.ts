@@ -65,6 +65,7 @@ export interface Appointment {
   date: string; // YYYY-MM-DD
   time: string; // HH:mm format (e.g. "09:00", "10:30")
   durationMinutes: number;
+  customPhases?: ServicePhase[];
   status: AppointmentStatus;
   notes?: string;
   cancellationReason?: string;

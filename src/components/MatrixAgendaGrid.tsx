@@ -376,14 +376,20 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
     dayAppointments.forEach(app => {
       const normalizedStart24 = normalizeTimeTo24h(app.time);
       const startMin = timeToMinutes(normalizedStart24);
-      const serviceDuration = app.durationMinutes || (SERVICES.find(s => s.id === app.serviceId)?.durationMinutes || 60);
+      const matchedService = SERVICES.find(s => s.id === app.serviceId || s.name.toLowerCase() === (app.serviceName || '').toLowerCase());
+      const catalogDuration = matchedService?.durationMinutes;
+      // If appointment duration is missing or less than the configured multi-phase service duration, use catalogDuration
+      const serviceDuration = (app.durationMinutes && (!catalogDuration || app.durationMinutes >= catalogDuration))
+        ? app.durationMinutes
+        : (catalogDuration || app.durationMinutes || 60);
+
       const endMin = startMin + serviceDuration;
       const end24 = minutesToTime24(endMin);
       const start12 = formatTimeTo12h(normalizedStart24);
       const end12 = formatTimeTo12h(end24);
       const durationText = formatDurationText(serviceDuration);
       const totalSlots = Math.max(1, Math.ceil(serviceDuration / 30));
-      const timeline = getAppointmentPhasesTimeline(app);
+      const timeline = getAppointmentPhasesTimeline({ ...app, durationMinutes: serviceDuration });
 
       let slotIndex = 0;
       for (let t = startMin; t < endMin; t += 30) {
@@ -1083,20 +1089,30 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                             }
 
                             if (entry.isContinuation) {
+                              const isAcabadoPhase = /acabado|secado|lavado|matiz/i.test(entry.phaseName);
                               return (
                                 <div
                                   key={`${app.id}_cont_${entry.slotIndex}`}
                                   onClick={() => handleSlotClick(selectedStylistObj, timeSlot, app)}
-                                  className={`p-2 rounded-md border border-dashed text-left cursor-pointer transition-all ${badge.cardBg} hover:shadow-xs flex items-center justify-between gap-2`}
-                                  title={`Cita en curso: ${app.clientName} (${entry.startSlot12} a ${entry.endSlot12})`}
+                                  className={`p-2 rounded-md border text-left cursor-pointer transition-all hover:shadow-xs flex items-center justify-between gap-2 ${
+                                    isAcabadoPhase
+                                      ? 'bg-amber-50/90 border-amber-300 text-amber-950 ring-1 ring-amber-200'
+                                      : `${badge.cardBg} border-dashed`
+                                  }`}
+                                  title={`${entry.phaseName} (${entry.startSlot12} a ${entry.endSlot12}): ${app.clientName} - ${app.serviceName}. Estilista ocupado.`}
                                 >
                                   <div className="flex items-center gap-2 min-w-0">
-                                    <span className="text-[#8C6B4D] font-mono text-xs font-bold shrink-0">↳ En curso ({entry.phaseName}):</span>
-                                    <span className="font-bold text-xs uppercase font-serif-luxury truncate text-neutral-800">
+                                    <span className={`font-mono text-xs font-bold shrink-0 ${isAcabadoPhase ? 'text-amber-900' : 'text-[#8C6B4D]'}`}>
+                                      {isAcabadoPhase ? `✨ ${entry.phaseName}:` : `↳ En curso (${entry.phaseName}):`}
+                                    </span>
+                                    <span className="font-bold text-xs uppercase font-serif-luxury truncate text-neutral-900">
                                       {app.clientName}
                                     </span>
                                     <span className="text-[10px] text-neutral-500 truncate hidden sm:inline">
                                       · {app.serviceName}
+                                    </span>
+                                    <span className="text-[9px] font-mono font-bold bg-amber-200/90 text-amber-950 px-1.5 py-0.5 rounded border border-amber-300 shrink-0">
+                                      Ocupado
                                     </span>
                                   </div>
                                   <span className="text-[9px] font-mono font-bold bg-[#8C6B4D]/10 text-[#8C6B4D] border border-[#8C6B4D]/25 px-2 py-0.5 rounded shrink-0">
@@ -1527,20 +1543,28 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                                     }
 
                                     if (entry.isContinuation) {
+                                      const isAcabadoPhase = /acabado|secado|lavado|matiz/i.test(entry.phaseName);
                                       return (
                                         <div
                                           key={`${app.id}_cont_${entry.slotIndex}`}
                                           onClick={() => handleSlotClick(stylist, timeSlot, app)}
-                                          className={`p-1 rounded text-left border border-dashed cursor-pointer transition-all opacity-85 hover:opacity-100 ${badge.cardBg}`}
-                                          title={`En progreso (${entry.startSlot12} a ${entry.endSlot12}): ${app.clientName} - ${app.serviceName}`}
+                                          className={`p-1.5 rounded text-left border cursor-pointer transition-all ${
+                                            isAcabadoPhase
+                                              ? 'bg-amber-50/95 border-amber-300 text-amber-950 shadow-2xs hover:bg-amber-100 ring-1 ring-amber-200'
+                                              : `${badge.cardBg} border-dashed opacity-85 hover:opacity-100`
+                                          }`}
+                                          title={`${entry.phaseName} (${entry.startSlot12} a ${entry.endSlot12}): ${app.clientName} - ${app.serviceName}. Estilista ocupado.`}
                                         >
-                                          <div className="flex items-center justify-between gap-1">
-                                            <span className="text-[10px] text-neutral-700 font-mono truncate">
-                                              ↳ {app.clientName}
+                                          <div className="flex items-center justify-between gap-0.5">
+                                            <span className={`text-[9px] font-bold font-mono truncate ${isAcabadoPhase ? 'text-amber-900' : 'text-neutral-700'}`}>
+                                              {isAcabadoPhase ? `✨ ${entry.phaseName}` : `↳ ${entry.phaseName}`}
                                             </span>
-                                            <span className="text-[8px] font-mono text-neutral-500 shrink-0">
-                                              {entry.startSlot24}-{entry.endSlot24}
+                                            <span className={`text-[8px] font-mono font-bold px-1 rounded shrink-0 ${isAcabadoPhase ? 'bg-amber-200 text-amber-950' : 'bg-neutral-200/80 text-neutral-700'}`}>
+                                              Ocupado
                                             </span>
+                                          </div>
+                                          <div className="text-[9px] font-semibold text-neutral-800 truncate mt-0.5 font-serif-luxury">
+                                            ↳ {app.clientName}
                                           </div>
                                         </div>
                                       );

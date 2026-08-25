@@ -602,11 +602,11 @@ export const ALL_SERVICES: Service[] = [
     durationMinutes: 120, 
     category: 'Coloración y Tintes', 
     icon: Paintbrush, 
-    description: 'Tinte sin amoníaco L\'Oréal INOA para cabello corto con reposo y 1 hora final de secado.',
+    description: 'Tinte sin amoníaco L\'Oréal INOA para cabello corto con reposo y 1 hora final de acabado.',
     phases: [
-      { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Aplicación de Tinte INOA', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte INOA' },
       { name: 'Reposo de Tinte', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita corta' },
-      { name: 'Lavado, Secado y Acabado', durationMinutes: 60, isStylistBusy: true, description: '1 hora extra al final: lavado, secado y peinado' }
+      { name: 'Acabado Final', durationMinutes: 60, isStylistBusy: true, description: '1 hora extra al final: acabado final, lavado y secado' }
     ]
   },
   { 
@@ -619,11 +619,11 @@ export const ALL_SERVICES: Service[] = [
     durationMinutes: 135, 
     category: 'Coloración y Tintes', 
     icon: Paintbrush, 
-    description: 'Tinte sin amoníaco INOA para melena larga con reposo y 1 hora final de secado.',
+    description: 'Tinte sin amoníaco INOA para melena larga con reposo y 1 hora final de acabado.',
     phases: [
-      { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Aplicación de Tinte INOA', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte INOA' },
       { name: 'Reposo de Tinte', durationMinutes: 45, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita corta' },
-      { name: 'Lavado, Secado y Acabado', durationMinutes: 60, isStylistBusy: true, description: '1 hora extra al final: lavado, secado y acabado' }
+      { name: 'Acabado Final', durationMinutes: 60, isStylistBusy: true, description: '1 hora extra al final: acabado final, lavado y secado' }
     ]
   },
   { 
@@ -636,11 +636,11 @@ export const ALL_SERVICES: Service[] = [
     durationMinutes: 120, 
     category: 'Coloración y Tintes', 
     icon: Paintbrush, 
-    description: 'Tinte sin amoníaco INOA para largo mediano con reposo y 1 hora final de secado.',
+    description: 'Tinte sin amoníaco INOA para largo mediano con reposo y 1 hora final de acabado.',
     phases: [
-      { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Aplicación de Tinte INOA', durationMinutes: 30, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte INOA' },
       { name: 'Reposo de Tinte', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita corta' },
-      { name: 'Lavado, Secado y Acabado', durationMinutes: 60, isStylistBusy: true, description: '1 hora extra al final: lavado, secado y acabado' }
+      { name: 'Acabado Final', durationMinutes: 60, isStylistBusy: true, description: '1 hora extra al final: acabado final, lavado y secado' }
     ]
   },
   { 
@@ -653,11 +653,11 @@ export const ALL_SERVICES: Service[] = [
     durationMinutes: 150, 
     category: 'Coloración y Tintes', 
     icon: Paintbrush, 
-    description: 'Tinte INOA vegetal/aceite para cabello extra largo con reposo y 1 hora final de secado.',
+    description: 'Tinte INOA vegetal/aceite para cabello extra largo con reposo y 1 hora final de acabado.',
     phases: [
-      { name: 'Aplicación de Tinte', durationMinutes: 45, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte' },
+      { name: 'Aplicación de Tinte INOA', durationMinutes: 45, isStylistBusy: true, description: 'Estilista ocupado aplicando el tinte INOA' },
       { name: 'Reposo de Tinte', durationMinutes: 45, isStylistBusy: false, description: 'Estilista libre (tinte reposando) para cita' },
-      { name: 'Lavado, Secado y Acabado', durationMinutes: 60, isStylistBusy: true, description: '1 hora extra al final: lavado, secado y acabado' }
+      { name: 'Acabado Final', durationMinutes: 60, isStylistBusy: true, description: '1 hora extra al final: acabado final, lavado y secado' }
     ]
   },
   { 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Calendar, Clock, User, Phone, Mail, FileText, CheckCircle, Save, Trash2, Scissors, AlertCircle, UserCheck, Sparkles, Plus, Minus } from 'lucide-react';
-import { Appointment, AppointmentStatus, Client } from '../types';
+import { X, Calendar, Clock, User, Phone, Mail, FileText, CheckCircle, Save, Trash2, Scissors, AlertCircle, UserCheck, Sparkles, Plus, Minus, RotateCcw, Check, Layers } from 'lucide-react';
+import { Appointment, AppointmentStatus, Client, ServicePhase } from '../types';
 import { SERVICES, STYLISTS, TIME_SLOTS } from '../constants';
 import { getStoredClients, subscribeToClients, normalizePhone, getStoredAppointments } from '../utils/storage';
 import { calculateAppointmentRange, formatDurationText, normalizeTimeTo24h, checkStylistBookingFeasibility, getServicePhases } from '../utils/timeUtils';
@@ -60,6 +60,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
   const [selectedOptionId, setSelectedOptionId] = useState<string>('');
   const [serviceSearch, setServiceSearch] = useState('');
   const [customDurationMinutes, setCustomDurationMinutes] = useState<number>(60);
+  const [customPhases, setCustomPhases] = useState<ServicePhase[]>([]);
   const [stylistId, setStylistId] = useState(STYLISTS[0].id);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('10:00');
@@ -125,6 +126,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
       setClientPhone(prefilledClient.phone || '');
       setClientEmail(prefilledClient.email || '');
       setServiceId(defaultService.id);
+      setCustomPhases(getServicePhases(defaultService, defaultService.durationMinutes));
       setStylistId(STYLISTS[0].id);
       setDate(selectedDate || getLocalTodayDate());
       setTime('10:00');
@@ -155,7 +157,19 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
         setSelectedOptionId('');
       }
 
-      setCustomDurationMinutes(initialAppointment.durationMinutes || optDur);
+      // If initialAppointment duration is smaller than service's catalog duration, prioritize catalog optDur
+      const effectiveDuration = (initialAppointment.durationMinutes && initialAppointment.durationMinutes >= optDur)
+        ? initialAppointment.durationMinutes
+        : optDur;
+
+      setCustomDurationMinutes(effectiveDuration);
+
+      // Initialize phases from appointment if available, or calculate defaults
+      if (initialAppointment.customPhases && initialAppointment.customPhases.length > 0) {
+        setCustomPhases(JSON.parse(JSON.stringify(initialAppointment.customPhases)));
+      } else {
+        setCustomPhases(getServicePhases(matchedS, effectiveDuration));
+      }
 
       const rawStylistId = initialAppointment.stylistId || '';
       const cleanStylistId = (rawStylistId === 'jorleny' ? 'yorleny' : rawStylistId) || STYLISTS[0].id;
@@ -173,7 +187,9 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
       setClientEmail('');
       setServiceId(defaultService.id);
       setSelectedOptionId(defaultService.options?.[0]?.id || '');
-      setCustomDurationMinutes(defaultService.options?.[0]?.durationMinutes || defaultService.durationMinutes || 60);
+      const initDur = defaultService.options?.[0]?.durationMinutes || defaultService.durationMinutes || 60;
+      setCustomDurationMinutes(initDur);
+      setCustomPhases(getServicePhases(defaultService, initDur));
       setStylistId(STYLISTS[0].id);
       setDate(selectedDate || getLocalTodayDate());
       setTime('10:00');
@@ -189,6 +205,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
     initialAppointment?.serviceId,
     initialAppointment?.serviceName,
     initialAppointment?.durationMinutes,
+    initialAppointment?.customPhases,
     initialAppointment?.stylistId,
     initialAppointment?.time,
     initialAppointment?.date,
@@ -196,6 +213,74 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
     prefilledClient,
     defaultService.id
   ]);
+
+  // Phase editing handlers
+  const handleUpdatePhaseName = (idx: number, name: string) => {
+    setCustomPhases(prev => {
+      const next = [...prev];
+      if (next[idx]) {
+        next[idx] = { ...next[idx], name };
+      }
+      return next;
+    });
+  };
+
+  const handleUpdatePhaseDuration = (idx: number, mins: number) => {
+    const validMins = Math.max(5, Math.min(240, mins));
+    setCustomPhases(prev => {
+      const next = [...prev];
+      if (next[idx]) {
+        next[idx] = { ...next[idx], durationMinutes: validMins };
+      }
+      const total = next.reduce((acc, p) => acc + p.durationMinutes, 0);
+      if (total > 0) setCustomDurationMinutes(total);
+      return next;
+    });
+  };
+
+  const handleTogglePhaseBusy = (idx: number) => {
+    setCustomPhases(prev => {
+      const next = [...prev];
+      if (next[idx]) {
+        next[idx] = { ...next[idx], isStylistBusy: !next[idx].isStylistBusy };
+      }
+      return next;
+    });
+  };
+
+  const handleDeletePhase = (idx: number) => {
+    setCustomPhases(prev => {
+      const next = prev.filter((_, i) => i !== idx);
+      const total = next.reduce((acc, p) => acc + p.durationMinutes, 0);
+      if (total > 0) {
+        setCustomDurationMinutes(total);
+      }
+      return next;
+    });
+  };
+
+  const handleAddPhase = (name: string = 'Nueva Etapa', mins: number = 30, isBusy: boolean = true) => {
+    const newPhase: ServicePhase = {
+      name,
+      durationMinutes: mins,
+      isStylistBusy: isBusy,
+      description: ''
+    };
+    setCustomPhases(prev => {
+      const next = [...prev, newPhase];
+      const total = next.reduce((acc, p) => acc + p.durationMinutes, 0);
+      if (total > 0) setCustomDurationMinutes(total);
+      return next;
+    });
+  };
+
+  const handleResetPhases = () => {
+    const currentService = SERVICES.find(s => s.id === serviceId) || defaultService;
+    const defPhases = getServicePhases(currentService, currentService.durationMinutes || 60);
+    setCustomPhases(defPhases);
+    const total = defPhases.reduce((acc, p) => acc + p.durationMinutes, 0);
+    setCustomDurationMinutes(total || currentService.durationMinutes || 60);
+  };
 
   // Lock body scroll when modal is open to prevent background jumps/movements on mobile
   useEffect(() => {
@@ -241,6 +326,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
       date,
       time,
       durationMinutes: finalDuration,
+      customPhases: customPhases.length > 0 ? customPhases : undefined,
       status,
       cancellationReason: finalCancelReason,
       cancelledAt: status === 'Cancelada' ? (initialAppointment?.cancelledAt || new Date().toISOString()) : undefined,
@@ -433,10 +519,14 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                           setServiceId(topService.id);
                           if (topService.options && topService.options.length > 0) {
                             setSelectedOptionId(topService.options[0].id);
-                            setCustomDurationMinutes(topService.options[0].durationMinutes || topService.durationMinutes || 60);
+                            const optDur = topService.options[0].durationMinutes || topService.durationMinutes || 60;
+                            setCustomDurationMinutes(optDur);
+                            setCustomPhases(getServicePhases(topService, optDur));
                           } else {
                             setSelectedOptionId('');
-                            setCustomDurationMinutes(topService.durationMinutes || 60);
+                            const dur = topService.durationMinutes || 60;
+                            setCustomDurationMinutes(dur);
+                            setCustomPhases(getServicePhases(topService, dur));
                           }
                         }
                       }
@@ -453,10 +543,14 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                       const newService = SERVICES.find(s => s.id === newId);
                       if (newService?.options && newService.options.length > 0) {
                         setSelectedOptionId(newService.options[0].id);
-                        setCustomDurationMinutes(newService.options[0].durationMinutes || newService.durationMinutes || 60);
+                        const optDur = newService.options[0].durationMinutes || newService.durationMinutes || 60;
+                        setCustomDurationMinutes(optDur);
+                        setCustomPhases(getServicePhases(newService, optDur));
                       } else {
                         setSelectedOptionId('');
-                        setCustomDurationMinutes(newService?.durationMinutes || 60);
+                        const dur = newService?.durationMinutes || 60;
+                        setCustomDurationMinutes(dur);
+                        setCustomPhases(getServicePhases(newService || defaultService, dur));
                       }
                     }}
                     className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-base sm:text-xs px-2.5 py-2 sm:py-2.5 outline-none font-medium rounded-none"
@@ -595,7 +689,6 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 const selectedServiceObj = SERVICES.find(s => s.id === serviceId) || SERVICES[0];
                 const effectiveDuration = customDurationMinutes || selectedServiceObj.durationMinutes || 60;
                 const range = calculateAppointmentRange(time, effectiveDuration);
-                const phases = getServicePhases(selectedServiceObj);
                 const allAppointments = getStoredAppointments();
                 
                 // Filter out the appointment currently being edited so it doesn't collide with itself
@@ -609,6 +702,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   startTime: time,
                   service: selectedServiceObj,
                   durationMinutes: effectiveDuration,
+                  customPhases: customPhases.length > 0 ? customPhases : undefined,
                   existingAppointments: otherAppointments,
                   isStylistOff: (st, d) => {
                     if (!st || !st.offDays || !st.offDays.length || !d) return false;
@@ -622,6 +716,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   setCustomDurationMinutes(prev => Math.max(15, Math.min(480, (prev || 60) + mins)));
                 };
 
+                const totalPhasesDuration = customPhases.reduce((acc, p) => acc + p.durationMinutes, 0);
+
                 return (
                   <div className="space-y-3 pt-1 border-t border-[#EAE3DC] min-w-0">
                     {/* Duration Extender Header and Stepper */}
@@ -629,7 +725,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 text-neutral-900 font-bold text-xs">
                           <Clock className="w-4 h-4 text-[#8C6B4D]" />
-                          <span>Duración de la Cita / Tiempo:</span>
+                          <span>Duración Total de la Cita:</span>
                         </div>
                         <span className="bg-[#8C6B4D] text-white font-mono text-xs font-bold px-2.5 py-0.5 rounded shadow-2xs">
                           {range.durationText} ({effectiveDuration} min)
@@ -639,7 +735,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                       {/* Quick Extender Buttons */}
                       <div>
                         <span className="text-[10px] text-neutral-500 uppercase font-bold tracking-wider block mb-1">
-                          ⚡ Extender tiempo rápido:
+                          ⚡ Ajuste rápido de tiempo total:
                         </span>
                         <div className="grid grid-cols-4 gap-1.5">
                           {[
@@ -674,7 +770,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         </button>
 
                         <div className="flex-1 overflow-x-auto flex gap-1 py-1 no-scrollbar scroll-smooth min-w-0">
-                          {[30, 45, 60, 75, 90, 120, 150, 180, 240].map(mins => (
+                          {[30, 45, 60, 75, 90, 120, 150, 180, 240, 300].map(mins => (
                             <button
                               key={mins}
                               type="button"
@@ -714,40 +810,203 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Phases breakdown chips */}
-                    {phases.length > 1 && (
-                      <div className="p-2.5 bg-amber-50/50 border border-amber-200/70 rounded space-y-1.5 min-w-0">
-                        <div className="flex items-center justify-between text-[11px] text-amber-900 font-bold">
-                          <span className="flex items-center gap-1.5 truncate">
-                            <Sparkles className="w-3.5 h-3.5 text-[#8C6B4D] shrink-0" />
-                            Fases de {selectedServiceObj.name}:
-                          </span>
-                          <span className="text-[10px] font-mono text-neutral-600 shrink-0 ml-1">
-                            {phases.length} etapas
-                          </span>
+                    {/* Interactive & Editable Phases Manager */}
+                    <div className="p-3 bg-[#FAF8F5] border border-[#B5916A]/50 rounded-lg space-y-2.5 min-w-0">
+                      {/* Header */}
+                      <div className="flex items-center justify-between gap-2 border-b border-[#EAE3DC] pb-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-900">
+                            <Sparkles className="w-4 h-4 text-[#8C6B4D] shrink-0" />
+                            <span className="truncate">Fases y Etapas del Servicio</span>
+                          </div>
+                          <p className="text-[10px] text-neutral-500 truncate">
+                            {customPhases.length} etapas definidas · {totalPhasesDuration} min total
+                          </p>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                          {phases.map((p, idx) => (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={handleResetPhases}
+                            className="px-2 py-1 bg-white hover:bg-neutral-100 border border-neutral-300 text-neutral-700 rounded text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Restablecer fases a las predeterminadas"
+                          >
+                            <RotateCcw className="w-3 h-3 text-neutral-500" />
+                            <span>Restablecer</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddPhase('Nueva Etapa', 30, true)}
+                            className="px-2.5 py-1 bg-[#8C6B4D] hover:bg-[#74553a] text-white rounded text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                          >
+                            <Plus className="w-3 h-3" />
+                            <span>+ Etapa</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Phase Items */}
+                      {customPhases.length === 0 ? (
+                        <div className="p-3 bg-white border border-dashed border-neutral-300 rounded text-center text-xs text-neutral-500 space-y-1.5">
+                          <p>No hay fases individuales. El servicio se tomará como un único bloque continuo.</p>
+                          <button
+                            type="button"
+                            onClick={handleResetPhases}
+                            className="text-[#8C6B4D] font-bold hover:underline text-[11px]"
+                          >
+                            Cargar fases sugeridas del catálogo
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {customPhases.map((phase, idx) => (
                             <div
                               key={idx}
-                              className={`p-1.5 rounded border text-[10px] flex items-center justify-between gap-1.5 ${
-                                p.isStylistBusy
-                                  ? 'bg-amber-100/60 border-amber-300 text-amber-950 font-medium'
-                                  : 'bg-emerald-50 border-emerald-300 text-emerald-900 font-medium'
+                              className={`p-2.5 rounded-md border transition-all space-y-2 ${
+                                phase.isStylistBusy
+                                  ? 'bg-amber-50/70 border-amber-300/80 shadow-2xs'
+                                  : 'bg-emerald-50/70 border-emerald-300/80 shadow-2xs'
                               }`}
                             >
-                              <div className="flex items-center gap-1.5 truncate min-w-0">
-                                <span className={`w-2 h-2 rounded-full shrink-0 ${p.isStylistBusy ? 'bg-amber-600' : 'bg-emerald-600'}`} />
-                                <span className="truncate">{p.name}</span>
+                              {/* Top row: Index badge, Name input, and Delete button */}
+                              <div className="flex items-center gap-2">
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-bold shrink-0 ${
+                                  phase.isStylistBusy ? 'bg-amber-600 text-white' : 'bg-emerald-600 text-white'
+                                }`}>
+                                  {idx + 1}
+                                </span>
+                                
+                                <input
+                                  type="text"
+                                  value={phase.name}
+                                  onChange={(e) => handleUpdatePhaseName(idx, e.target.value)}
+                                  placeholder="Nombre de la etapa (ej. Aplicación, Reposo, Acabado)"
+                                  className="flex-1 bg-white border border-[#D8CEB8] focus:border-[#8C6B4D] text-neutral-900 text-xs px-2 py-1 rounded outline-none font-semibold truncate"
+                                />
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeletePhase(idx)}
+                                  className="p-1 rounded text-rose-600 hover:text-rose-800 hover:bg-rose-100 transition-colors shrink-0 cursor-pointer"
+                                  title={`Borrar etapa: ${phase.name}`}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
                               </div>
-                              <span className="font-mono font-bold shrink-0">
-                                {p.durationMinutes}m {p.isStylistBusy ? '(Ocupado)' : '(Libre/Reposo)'}
-                              </span>
+
+                              {/* Bottom row: Duration changer and Busy/Free toggle */}
+                              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-black/5 text-[11px]">
+                                {/* Duration stepper */}
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[10px] font-bold text-neutral-500 uppercase mr-0.5">Tiempo:</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdatePhaseDuration(idx, phase.durationMinutes - 5)}
+                                    disabled={phase.durationMinutes <= 5}
+                                    className="w-5 h-5 rounded bg-white hover:bg-neutral-100 disabled:opacity-30 border border-neutral-300 text-neutral-800 flex items-center justify-center font-bold"
+                                    title="-5 minutos"
+                                  >
+                                    -
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min="5"
+                                    max="240"
+                                    step="5"
+                                    value={phase.durationMinutes}
+                                    onChange={(e) => handleUpdatePhaseDuration(idx, Number(e.target.value))}
+                                    className="w-12 text-center bg-white border border-neutral-300 font-mono font-bold text-xs py-0.5 rounded outline-none"
+                                  />
+                                  <span className="font-mono text-neutral-700 text-[10px]">min</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdatePhaseDuration(idx, phase.durationMinutes + 5)}
+                                    disabled={phase.durationMinutes >= 240}
+                                    className="w-5 h-5 rounded bg-white hover:bg-neutral-100 disabled:opacity-30 border border-neutral-300 text-neutral-800 flex items-center justify-center font-bold"
+                                    title="+5 minutos"
+                                  >
+                                    +
+                                  </button>
+
+                                  {/* Quick duration presets */}
+                                  <div className="hidden sm:flex items-center gap-0.5 ml-1.5">
+                                    {[15, 30, 45, 60].map(dur => (
+                                      <button
+                                        key={dur}
+                                        type="button"
+                                        onClick={() => handleUpdatePhaseDuration(idx, dur)}
+                                        className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold transition-all ${
+                                          phase.durationMinutes === dur
+                                            ? 'bg-[#8C6B4D] text-white'
+                                            : 'bg-white/80 border border-neutral-300 text-neutral-600 hover:border-[#8C6B4D]'
+                                        }`}
+                                      >
+                                        {dur}m
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Busy vs Reposo Toggle */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleTogglePhaseBusy(idx)}
+                                  className={`px-2.5 py-1 rounded border text-[10px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                                    phase.isStylistBusy
+                                      ? 'bg-amber-200/80 border-amber-400 text-amber-950 hover:bg-amber-300'
+                                      : 'bg-emerald-200/80 border-emerald-400 text-emerald-950 hover:bg-emerald-300'
+                                  }`}
+                                  title="Haz clic para cambiar entre Estilista Ocupado o Reposo/Libre"
+                                >
+                                  <span className={`w-2 h-2 rounded-full ${phase.isStylistBusy ? 'bg-amber-700' : 'bg-emerald-700 animate-pulse'}`} />
+                                  <span>{phase.isStylistBusy ? 'Estilista Ocupado' : 'Reposo / Libre (Permite cita)'}</span>
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>
+                      )}
+
+                      {/* Quick Add Presets Bar */}
+                      <div className="pt-2 border-t border-[#EAE3DC]/80 space-y-1">
+                        <span className="text-[10px] uppercase font-bold text-neutral-500 block">
+                          + Agregar etapa predeterminada:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleAddPhase('Reposo de Tinte', 30, false)}
+                            className="px-2 py-1 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 text-emerald-950 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <Plus className="w-2.5 h-2.5 text-emerald-700" />
+                            <span>Reposo (30m Libre)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddPhase('Acabado Final', 60, true)}
+                            className="px-2 py-1 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <Plus className="w-2.5 h-2.5 text-amber-700" />
+                            <span>Acabado Final (60m)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddPhase('Lavado y Secado', 30, true)}
+                            className="px-2 py-1 bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-neutral-800 rounded text-[10px] font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <Plus className="w-2.5 h-2.5 text-neutral-600" />
+                            <span>Lavado y Secado (30m)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddPhase('Matiz en Lavacabezas', 20, true)}
+                            className="px-2 py-1 bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-neutral-800 rounded text-[10px] font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <Plus className="w-2.5 h-2.5 text-neutral-600" />
+                            <span>Matiz (20m)</span>
+                          </button>
+                        </div>
                       </div>
-                    )}
+                    </div>
 
                     {/* Feasibility Alert / Reposo Confirmation */}
                     {!feasibility.allowed ? (

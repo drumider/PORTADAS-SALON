@@ -196,49 +196,54 @@ export function getServicePhases(serviceOrName?: Service | string, durationMinut
     dur = durationMinutes || service.durationMinutes || 60;
   }
 
+  // If service has explicit configured phases in catalog (e.g. Tinte Inoa Corto with 3 phases)
   if (service?.phases && service.phases.length > 0) {
-    // If explicit duration matches, return configured phases
     const totalPhasesDuration = service.phases.reduce((acc, p) => acc + p.durationMinutes, 0);
-    if (totalPhasesDuration === dur) {
+    // If no explicit duration was passed, OR if duration matches, OR if dur is smaller than totalPhasesDuration (e.g. old 60min default), return configured service phases!
+    if (!durationMinutes || totalPhasesDuration === dur || dur <= 60 || dur < totalPhasesDuration) {
       return service.phases;
     }
   }
 
   const nameLower = (serviceName || service?.name || '').toLowerCase();
 
-  // 1. Tinte / Coloración / Baño Color
-  const isTinte = /tinte|coloración|coloracion|color|baño color|bano color/i.test(nameLower);
+  // 1. Tinte / Coloración / Baño Color / INOA
+  const isTinte = /tinte|coloración|coloracion|color|baño color|bano color|inoa/i.test(nameLower);
   if (isTinte) {
-    if (dur <= 45) {
+    const isINOA = /inoa/i.test(nameLower);
+    const applyName = isINOA ? 'Aplicación de Tinte INOA' : 'Aplicación de Tinte';
+    const finishName = 'Acabado Final';
+
+    if (dur <= 45 && !isINOA) {
       return [
-        { name: 'Aplicación de Tinte', durationMinutes: 20, isStylistBusy: true, description: 'Estilista aplicando el tinte' },
+        { name: applyName, durationMinutes: 20, isStylistBusy: true, description: 'Estilista aplicando el tinte' },
         { name: 'Reposo de Tinte', durationMinutes: dur - 20, isStylistBusy: false, description: 'Estilista libre (tinte reposando)' }
       ];
     }
-    if (dur === 60) {
+    if (dur === 60 && !isINOA) {
       return [
-        { name: 'Aplicación de Tinte', durationMinutes: 30, isStylistBusy: true, description: 'Estilista aplicando el tinte' },
+        { name: applyName, durationMinutes: 30, isStylistBusy: true, description: 'Estilista aplicando el tinte' },
         { name: 'Reposo de Tinte', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre (tinte reposando)' }
       ];
     }
-    if (dur <= 90) {
+    if (dur <= 90 && !isINOA) {
       const applyMin = 30;
       const finishMin = Math.min(30, dur - applyMin - 20);
       const reposoMin = dur - applyMin - finishMin;
       return [
-        { name: 'Aplicación de Tinte', durationMinutes: applyMin, isStylistBusy: true, description: 'Estilista aplicando el tinte' },
+        { name: applyName, durationMinutes: applyMin, isStylistBusy: true, description: 'Estilista aplicando el tinte' },
         { name: 'Reposo de Tinte', durationMinutes: reposoMin, isStylistBusy: false, description: 'Estilista libre (tinte reposando)' },
-        { name: 'Lavado y Secado', durationMinutes: finishMin, isStylistBusy: true, description: 'Lavado y secado final' }
+        { name: finishName, durationMinutes: finishMin, isStylistBusy: true, description: 'Lavado y secado final' }
       ];
     }
-    // Greater than or equal to 100m (includes 120m, 135m, 150m, 180m): 60 min final finish phase
+    // Greater than or equal to 100m (includes 120m, 135m, 150m, 180m and all INOA): 60 min final finish phase
     const finalFinishMin = 60;
     const applyMin = dur >= 150 ? 45 : 30;
-    const reposoMin = Math.max(20, dur - applyMin - finalFinishMin);
+    const reposoMin = Math.max(20, Math.max(30, dur - applyMin - finalFinishMin));
     return [
-      { name: 'Aplicación de Color / Tinte', durationMinutes: applyMin, isStylistBusy: true, description: 'Estilista aplicando el producto' },
-      { name: 'Reposo de Color', durationMinutes: reposoMin, isStylistBusy: false, description: 'Estilista libre durante tiempo de reposo' },
-      { name: 'Lavado, Secado y Acabado', durationMinutes: finalFinishMin, isStylistBusy: true, description: '1 hora extra al final: lavado, secado y estilizado' }
+      { name: applyName, durationMinutes: applyMin, isStylistBusy: true, description: 'Estilista aplicando el producto' },
+      { name: 'Reposo de Tinte', durationMinutes: reposoMin, isStylistBusy: false, description: 'Estilista libre durante tiempo de reposo' },
+      { name: finishName, durationMinutes: finalFinishMin, isStylistBusy: true, description: '1 hora extra al final: acabado final, lavado y estilizado' }
     ];
   }
 
@@ -294,11 +299,41 @@ export interface DetailedPhaseTimeline {
 }
 
 /**
- * Returns absolute timeline phases for an appointment (e.g. 10:00 to 10:30 Aplicación [Busy], 10:30 to 11:00 Reposo [Free])
+ * Returns absolute timeline phases for an appointment (e.g. 10:00 to 10:30 Aplicación [Busy], 10:30 to 11:00 Reposo [Free], 11:00 to 12:00 Acabado Final [Busy])
  */
 export function getAppointmentPhasesTimeline(app: Appointment, allServices: Service[] = ALL_SERVICES): DetailedPhaseTimeline[] {
+  // If appointment has custom configured phases, use them directly
+  if (app.customPhases && app.customPhases.length > 0) {
+    const startMin = timeToMinutes(app.time);
+    let currentMin = startMin;
+    return app.customPhases.map(phase => {
+      const pStart = currentMin;
+      const pEnd = currentMin + phase.durationMinutes;
+      currentMin = pEnd;
+
+      return {
+        name: phase.name,
+        isStylistBusy: phase.isStylistBusy,
+        startMin: pStart,
+        endMin: pEnd,
+        startTime24: minutesToTime24(pStart),
+        endTime24: minutesToTime24(pEnd),
+        startTime12: minutesToTime12(pStart),
+        endTime12: minutesToTime12(pEnd),
+        durationMinutes: phase.durationMinutes,
+        description: phase.description
+      };
+    });
+  }
+
   const service = allServices.find(s => s.id === app.serviceId || s.name === app.serviceName);
-  const duration = app.durationMinutes || service?.durationMinutes || 60;
+  const catalogDuration = service?.durationMinutes;
+
+  // If app.durationMinutes is missing or is smaller than the catalog duration for a multi-phase service, prioritize catalogDuration
+  const duration = (app.durationMinutes && (!catalogDuration || app.durationMinutes >= catalogDuration))
+    ? app.durationMinutes
+    : (catalogDuration || app.durationMinutes || 60);
+
   const phases = getServicePhases(service || app.serviceName, duration);
 
   const startMin = timeToMinutes(app.time);
@@ -421,6 +456,7 @@ export function checkStylistBookingFeasibility({
   startTime,
   service,
   durationMinutes,
+  customPhases,
   existingAppointments,
   isStylistOff,
   allStylists,
@@ -431,6 +467,7 @@ export function checkStylistBookingFeasibility({
   startTime: string;
   service: Service;
   durationMinutes?: number;
+  customPhases?: ServicePhase[];
   existingAppointments: Appointment[];
   isStylistOff?: (st: Stylist, dateStr: string) => boolean;
   allStylists?: Stylist[];
@@ -450,7 +487,9 @@ export function checkStylistBookingFeasibility({
   }
 
   // Calculate candidate phases
-  const candidatePhases = getServicePhases(service, totalDuration);
+  const candidatePhases = (customPhases && customPhases.length > 0)
+    ? customPhases
+    : getServicePhases(service, totalDuration);
   let curMin = candidateStartMin;
   const candidatePhaseIntervals = candidatePhases.map(p => {
     const s = curMin;
