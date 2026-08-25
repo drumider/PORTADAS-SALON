@@ -12,6 +12,42 @@ import {
 const APPOINTMENTS_STORAGE_KEY = 'cf_portadas_appointments_v1';
 const CLIENTS_STORAGE_KEY = 'cf_portadas_clients_v1';
 const ADMIN_AUTH_KEY = 'cf_portadas_admin_auth_v1';
+const DELETED_APP_IDS_KEY = 'cf_portadas_deleted_app_ids_v1';
+const DELETED_CLIENT_IDS_KEY = 'cf_portadas_deleted_client_ids_v1';
+
+// Tombstones to prevent deleted documents from being resurrected by snapshots or offline sync
+const getDeletedAppIds = (): Set<string> => {
+  try {
+    const raw = localStorage.getItem(DELETED_APP_IDS_KEY);
+    if (raw) return new Set(JSON.parse(raw));
+  } catch (e) {}
+  return new Set<string>();
+};
+
+const getDeletedClientIds = (): Set<string> => {
+  try {
+    const raw = localStorage.getItem(DELETED_CLIENT_IDS_KEY);
+    if (raw) return new Set(JSON.parse(raw));
+  } catch (e) {}
+  return new Set<string>();
+};
+
+const deletedAppIds = getDeletedAppIds();
+const deletedClientIds = getDeletedClientIds();
+
+const recordDeletedAppId = (id: string) => {
+  deletedAppIds.add(id);
+  try {
+    localStorage.setItem(DELETED_APP_IDS_KEY, JSON.stringify(Array.from(deletedAppIds)));
+  } catch (e) {}
+};
+
+const recordDeletedClientId = (id: string) => {
+  deletedClientIds.add(id);
+  try {
+    localStorage.setItem(DELETED_CLIENT_IDS_KEY, JSON.stringify(Array.from(deletedClientIds)));
+  } catch (e) {}
+};
 
 // Helper to clean objects for Firestore (removes any undefined values)
 export function sanitizeForFirestore<T extends Record<string, any>>(obj: T): T {
@@ -47,7 +83,10 @@ let cachedClients: Client[] = [];
 const getLocalStorageAppointments = (): Appointment[] => {
   try {
     const data = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
-    if (data !== null) return JSON.parse(data);
+    if (data !== null) {
+      const parsed: Appointment[] = JSON.parse(data);
+      return parsed.filter(a => !deletedAppIds.has(a.id));
+    }
   } catch (e) {
     console.error('Error reading appointments from local storage:', e);
   }
@@ -57,7 +96,10 @@ const getLocalStorageAppointments = (): Appointment[] => {
 const getLocalStorageClients = (): Client[] => {
   try {
     const data = localStorage.getItem(CLIENTS_STORAGE_KEY);
-    if (data !== null) return JSON.parse(data);
+    if (data !== null) {
+      const parsed: Client[] = JSON.parse(data);
+      return parsed.filter(c => !deletedClientIds.has(c.id));
+    }
   } catch (e) {
     console.error('Error reading clients from local storage:', e);
   }
@@ -75,7 +117,8 @@ const appointmentSubscribers = new Set<AppointmentCallback>();
 const clientSubscribers = new Set<ClientCallback>();
 
 const notifyAppointmentSubscribers = () => {
-  const sorted = [...cachedAppointments].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  const filtered = cachedAppointments.filter(a => !deletedAppIds.has(a.id));
+  const sorted = [...filtered].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
   cachedAppointments = sorted;
   appointmentSubscribers.forEach((cb) => {
     try {
@@ -87,7 +130,8 @@ const notifyAppointmentSubscribers = () => {
 };
 
 const notifyClientSubscribers = () => {
-  const sorted = [...cachedClients].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  const filtered = cachedClients.filter(c => !deletedClientIds.has(c.id));
+  const sorted = [...filtered].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   cachedClients = sorted;
   clientSubscribers.forEach((cb) => {
     try {
@@ -113,11 +157,11 @@ if (typeof window !== 'undefined') {
 }
 
 export const getStoredAppointments = (): Appointment[] => {
-  return cachedAppointments;
+  return cachedAppointments.filter(a => !deletedAppIds.has(a.id));
 };
 
 export const getStoredClients = (): Client[] => {
-  return cachedClients;
+  return cachedClients.filter(c => !deletedClientIds.has(c.id));
 };
 
 /**
@@ -126,45 +170,23 @@ export const getStoredClients = (): Client[] => {
 export const subscribeToAppointments = (callback: (apps: Appointment[]) => void): (() => void) => {
   appointmentSubscribers.add(callback);
   // Immediately notify caller with existing cache so UI renders synchronously without waiting
-  callback([...cachedAppointments].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)));
+  callback([...cachedAppointments].filter(a => !deletedAppIds.has(a.id)).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)));
 
   const colRef = collection(db, 'appointments');
 
   const unsubscribe = onSnapshot(
     colRef,
     (snapshot) => {
-      if (snapshot.empty) {
-        // If Firestore is empty but we have local appointments, sync them to Firestore instead of wiping them!
-        if (cachedAppointments.length > 0) {
-          cachedAppointments.forEach(app => {
-            setDoc(doc(db, 'appointments', app.id), sanitizeForFirestore(app), { merge: true }).catch(() => {});
-          });
-          notifyAppointmentSubscribers();
-          return;
-        }
-        cachedAppointments = [];
-        try {
-          localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify([]));
-        } catch (e) {}
-        notifyAppointmentSubscribers();
-        return;
-      }
-
       const appsMap = new Map<string, Appointment>();
       snapshot.forEach((docSnap) => {
         const data = docSnap.data() as Appointment;
-        const app = {
-          ...data,
-          id: docSnap.id || data.id
-        };
-        appsMap.set(app.id, app);
-      });
-
-      // Keep any locally created appointments that haven't landed in Firestore yet
-      cachedAppointments.forEach(localApp => {
-        if (!appsMap.has(localApp.id)) {
-          appsMap.set(localApp.id, localApp);
-          setDoc(doc(db, 'appointments', localApp.id), sanitizeForFirestore(localApp), { merge: true }).catch(() => {});
+        const appId = docSnap.id || data.id;
+        if (!deletedAppIds.has(appId)) {
+          const app = {
+            ...data,
+            id: appId
+          };
+          appsMap.set(app.id, app);
         }
       });
 
@@ -196,40 +218,23 @@ export const subscribeToAppointments = (callback: (apps: Appointment[]) => void)
 export const subscribeToClients = (callback: (clients: Client[]) => void): (() => void) => {
   clientSubscribers.add(callback);
   // Immediately notify caller with existing cache
-  callback([...cachedClients].sort((a, b) => (a.name || '').localeCompare(b.name || '')));
+  callback([...cachedClients].filter(c => !deletedClientIds.has(c.id)).sort((a, b) => (a.name || '').localeCompare(b.name || '')));
 
   const colRef = collection(db, 'clients');
 
   const unsubscribe = onSnapshot(
     colRef,
     (snapshot) => {
-      if (snapshot.empty) {
-        if (cachedClients.length > 0) {
-          cachedClients.forEach(c => {
-            setDoc(doc(db, 'clients', c.id), sanitizeForFirestore(c), { merge: true }).catch(() => {});
-          });
-          notifyClientSubscribers();
-          return;
-        }
-        callback(cachedClients);
-        return;
-      }
-
       const clientsMap = new Map<string, Client>();
       snapshot.forEach((docSnap) => {
         const data = docSnap.data() as Client;
-        const client = {
-          ...data,
-          id: docSnap.id || data.id
-        };
-        clientsMap.set(client.id, client);
-      });
-
-      // Keep local clients
-      cachedClients.forEach(localC => {
-        if (!clientsMap.has(localC.id)) {
-          clientsMap.set(localC.id, localC);
-          setDoc(doc(db, 'clients', localC.id), sanitizeForFirestore(localC), { merge: true }).catch(() => {});
+        const clientId = docSnap.id || data.id;
+        if (!deletedClientIds.has(clientId)) {
+          const client = {
+            ...data,
+            id: clientId
+          };
+          clientsMap.set(client.id, client);
         }
       });
 
@@ -291,6 +296,12 @@ export const saveClient = (
       ? clientData.totalAppointments 
       : (existingClient?.totalAppointments || 0)
   };
+
+  // If this client was previously marked deleted, un-tombstone
+  deletedClientIds.delete(id);
+  try {
+    localStorage.setItem(DELETED_CLIENT_IDS_KEY, JSON.stringify(Array.from(deletedClientIds)));
+  } catch (e) {}
 
   // Immediate cache update
   const existingIdx = cachedClients.findIndex(c => c.id === id);
@@ -354,6 +365,8 @@ export const upsertClientFromAppointment = (
  * Delete a client
  */
 export const deleteClient = (id: string): void => {
+  if (!id) return;
+  recordDeletedClientId(id);
   cachedClients = cachedClients.filter(c => c.id !== id);
   try {
     localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(cachedClients));
@@ -398,6 +411,12 @@ export const saveAppointment = (appointment: Omit<Appointment, 'id' | 'createdAt
     createdAt: appointment.id ? (cachedAppointments.find(a => a.id === appointment.id)?.createdAt || now) : now
   } as Appointment;
 
+  // If this appointment was marked deleted, remove from tombstones
+  deletedAppIds.delete(id);
+  try {
+    localStorage.setItem(DELETED_APP_IDS_KEY, JSON.stringify(Array.from(deletedAppIds)));
+  } catch (e) {}
+
   // Immediate cache update
   const existingIdx = cachedAppointments.findIndex(a => a.id === id);
   if (existingIdx !== -1) {
@@ -433,6 +452,8 @@ export const saveAppointment = (appointment: Omit<Appointment, 'id' | 'createdAt
 };
 
 export const deleteAppointment = (id: string): void => {
+  if (!id) return;
+  recordDeletedAppId(id);
   cachedAppointments = cachedAppointments.filter(a => a.id !== id);
   try {
     localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(cachedAppointments));
