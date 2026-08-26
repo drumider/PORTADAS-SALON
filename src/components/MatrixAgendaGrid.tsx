@@ -1068,22 +1068,45 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                               return (
                                 <div
                                   key={`${app.id}_reposo_${entry.slotIndex}`}
-                                  onClick={() => handleSlotClick(selectedStylistObj, timeSlot, app)}
-                                  className="p-2 rounded-md border border-dashed border-emerald-400 bg-emerald-50/70 text-left cursor-pointer transition-all hover:shadow-xs flex items-center justify-between gap-2"
-                                  title={`Tiempo de espera / reposo (${entry.phaseName}): ${app.clientName}. Estilista libre para atender otra cita.`}
+                                  className="p-2.5 rounded-md border border-dashed border-emerald-400 bg-emerald-50/80 text-left transition-all hover:shadow-xs flex items-center justify-between gap-2"
                                 >
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <span className="text-emerald-700 font-mono text-xs font-bold shrink-0">⏳ {entry.phaseName}:</span>
+                                  <div
+                                    onClick={() => handleSlotClick(selectedStylistObj, timeSlot)}
+                                    className="flex-1 flex items-center gap-2 min-w-0 cursor-pointer"
+                                    title="Espacio libre durante reposo - Clic para agendar nueva cita aquí"
+                                  >
+                                    <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                    <span className="text-emerald-800 font-mono text-xs font-bold shrink-0">⏳ {entry.phaseName}:</span>
                                     <span className="font-bold text-xs uppercase font-serif-luxury truncate text-emerald-950">
-                                      {app.clientName}
+                                      Reposo de {app.clientName}
                                     </span>
-                                    <span className="text-[10px] text-emerald-800 font-mono bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-300 shrink-0 font-bold">
+                                    <span className="text-[10px] text-emerald-800 font-mono bg-emerald-200/80 px-1.5 py-0.5 rounded border border-emerald-300 shrink-0 font-bold">
                                       Estilista libre
                                     </span>
                                   </div>
-                                  <span className="text-[9px] font-mono font-bold bg-emerald-200/80 text-emerald-950 border border-emerald-300 px-2 py-0.5 rounded shrink-0">
-                                    {entry.startSlot12} - {entry.endSlot12}
-                                  </span>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSlotClick(selectedStylistObj, timeSlot)}
+                                      className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer shadow-2xs"
+                                      title={`Agendar nueva cita a las ${timeSlot}`}
+                                    >
+                                      <Plus className="w-3 h-3" />
+                                      <span>+ Cita en Reposo</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingAppointment(app);
+                                        setIsAppointmentModalOpen(true);
+                                      }}
+                                      className="p-1 bg-white hover:bg-neutral-100 border border-neutral-300 text-neutral-600 rounded text-[10px] cursor-pointer"
+                                      title={`Ver/Editar cita original de ${app.clientName} (iniciada a las ${app.time})`}
+                                    >
+                                      <Edit3 className="w-3 h-3" />
+                                    </button>
+                                  </div>
                                 </div>
                               );
                             }
@@ -1523,20 +1546,51 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                                       return (
                                         <div
                                           key={`${app.id}_reposo_${entry.slotIndex}`}
-                                          onClick={() => handleSlotClick(stylist, timeSlot, app)}
-                                          className="p-1 rounded text-left border border-dashed border-emerald-400 bg-emerald-50 text-emerald-950 cursor-pointer transition-all hover:shadow-xs"
+                                          className="p-1.5 rounded text-left border border-dashed border-emerald-400 bg-emerald-50 text-emerald-950 transition-all hover:shadow-xs"
                                           title={`Reposo (${entry.phaseName}): ${app.clientName}. Estilista libre para atender otra cita.`}
                                         >
-                                          <div className="flex items-center justify-between gap-1">
-                                            <span className="text-[9px] font-bold text-emerald-800 font-mono truncate">
-                                              ⏳ {entry.phaseName}
-                                            </span>
-                                            <span className="text-[8px] font-mono bg-emerald-200/80 text-emerald-950 font-bold px-1 rounded shrink-0">
-                                              Libre
-                                            </span>
+                                          <div
+                                            onClick={() => handleSlotClick(stylist, timeSlot)}
+                                            className="cursor-pointer"
+                                          >
+                                            <div className="flex items-center justify-between gap-1">
+                                              <span className="text-[9px] font-bold text-emerald-800 font-mono truncate flex items-center gap-1">
+                                                <Sparkles className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
+                                                <span>⏳ {entry.phaseName}</span>
+                                              </span>
+                                              <span className="text-[8px] font-mono bg-emerald-200/90 text-emerald-950 font-bold px-1 rounded shrink-0">
+                                                Libre
+                                              </span>
+                                            </div>
+                                            <div className="text-[9px] text-emerald-700 truncate font-serif-luxury mt-0.5">
+                                              ↳ Reposo de {app.clientName}
+                                            </div>
                                           </div>
-                                          <div className="text-[9px] text-emerald-700 truncate font-serif-luxury">
-                                            ↳ {app.clientName}
+                                          <div className="mt-1 flex items-center justify-between gap-1 pt-1 border-t border-emerald-200">
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleSlotClick(stylist, timeSlot);
+                                              }}
+                                              className="flex-1 py-0.5 px-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-[8px] font-bold uppercase flex items-center justify-center gap-0.5 cursor-pointer shadow-2xs transition-colors"
+                                              title={`Agendar nueva cita a las ${timeSlot}`}
+                                            >
+                                              <Plus className="w-2 h-2" />
+                                              <span>+ Cita</span>
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditingAppointment(app);
+                                                setIsAppointmentModalOpen(true);
+                                              }}
+                                              className="p-0.5 bg-white hover:bg-neutral-100 border border-neutral-300 text-neutral-600 rounded text-[8px] cursor-pointer"
+                                              title={`Ver/Editar cita original de ${app.clientName}`}
+                                            >
+                                              <Edit3 className="w-2.5 h-2.5" />
+                                            </button>
                                           </div>
                                         </div>
                                       );
