@@ -32,6 +32,7 @@ import {
   Square,
   Check,
   CalendarCheck,
+  CalendarDays,
   Grid,
   Columns,
   Sparkles,
@@ -73,6 +74,7 @@ import { AppointmentModal } from './AppointmentModal';
 import { ClientDirectoryModal } from './ClientDirectoryModal';
 import { CancelAppointmentModal } from './CancelAppointmentModal';
 import { ExpandDurationModal } from './ExpandDurationModal';
+import { YearAgendaModal } from './YearAgendaModal';
 
 export interface SlotAppointmentEntry {
   appointment: Appointment;
@@ -206,6 +208,21 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
   const [isExpandModalOpen, setIsExpandModalOpen] = useState(false);
   const [modalInitialSlot, setModalInitialSlot] = useState<{ stylistId: string; time: string } | null>(null);
   const [prefilledClientForBooking, setPrefilledClientForBooking] = useState<Client | null>(null);
+  const [isYearCalendarOpen, setIsYearCalendarOpen] = useState(false);
+
+  // Direct scheduler from Year / Multi-month view
+  const handleScheduleForDateFromYear = (dateStr: string) => {
+    try {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      if (y && m && d) {
+        setSelectedDate(new Date(y, m - 1, d));
+      }
+    } catch (e) {}
+    setEditingAppointment(null);
+    setPrefilledClientForBooking(null);
+    setModalInitialSlot({ stylistId: activeStylistId || stylists[0].id, time: '10:00' });
+    setIsAppointmentModalOpen(true);
+  };
 
   // Client Directory Modal State
   const [isClientDirectoryOpen, setIsClientDirectoryOpen] = useState(false);
@@ -740,12 +757,22 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         
         {/* Left: Brand Badge & Title */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-8 h-8 rounded bg-[#FAF8F5] border border-[#B5916A]/40 flex items-center justify-center text-[#8C6B4D] shadow-xs shrink-0">
-            <CalendarIcon className="w-4 h-4 text-[#8C6B4D]" />
-          </div>
-          <div>
+          <button
+            type="button"
+            onClick={() => setIsYearCalendarOpen(true)}
+            className="w-8 h-8 rounded-lg bg-[#FAF8F5] hover:bg-[#F2ECE5] active:bg-[#EAE3DC] border border-[#B5916A]/60 hover:border-[#8C6B4D] flex items-center justify-center text-[#8C6B4D] shadow-xs shrink-0 cursor-pointer transition-all hover:scale-105 group"
+            title="Ver Agenda del Año Completa (Agendar citas a meses vista)"
+            aria-label="Ver Agenda del Año Completa"
+          >
+            <CalendarIcon className="w-4 h-4 text-[#8C6B4D] group-hover:text-[#6F4E37] transition-colors" />
+          </button>
+          <div
+            onClick={() => setIsYearCalendarOpen(true)}
+            className="cursor-pointer group"
+            title="Clic para abrir Calendario Anual"
+          >
             <div className="flex items-center gap-1.5">
-              <h1 className="text-xs sm:text-sm font-bold text-[#2C221C] tracking-wide uppercase font-serif-luxury leading-tight">
+              <h1 className="text-xs sm:text-sm font-bold text-[#2C221C] group-hover:text-[#8C6B4D] transition-colors tracking-wide uppercase font-serif-luxury leading-tight">
                 Agenda de Citas
               </h1>
               {isToday && (
@@ -754,7 +781,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                 </span>
               )}
             </div>
-            <span className="text-[10px] text-[#8C6B4D] font-mono">
+            <span className="text-[10px] text-[#8C6B4D] font-mono group-hover:underline">
               Salón Escazú · {dayAppointments.length} {dayAppointments.length === 1 ? 'cita' : 'citas'}
             </span>
           </div>
@@ -763,6 +790,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         {/* Center: Clean Date Navigator (< Lun, 17 Ago 2026 >) */}
         <div className="flex items-center gap-1 bg-[#FAF8F5] border border-[#D9CEC2] p-1 rounded-md shadow-xs">
           <button
+            type="button"
             onClick={handlePrevDay}
             className="w-7 h-7 rounded bg-white hover:bg-[#F2ECE5] text-[#2C221C] border border-[#E2D8CC] flex items-center justify-center transition-colors shadow-xs cursor-pointer"
             title="Día anterior"
@@ -772,20 +800,32 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
           </button>
 
           <button
-            onClick={handleSetToday}
-            className="px-2.5 py-1 text-xs font-semibold text-[#2C221C] tracking-wide hover:text-[#8C6B4D] transition-colors cursor-pointer font-serif-luxury"
-            title="Clic para ir a Hoy"
+            type="button"
+            onClick={() => setIsYearCalendarOpen(true)}
+            className="px-2.5 py-1 text-xs font-semibold text-[#2C221C] tracking-wide hover:text-[#8C6B4D] hover:bg-white rounded transition-all cursor-pointer font-serif-luxury flex items-center gap-1.5"
+            title="Clic para ver la agenda del año entera y agendar en meses"
           >
-            {formattedSelectedDate}
+            <CalendarIcon className="w-3 h-3 text-[#8C6B4D]" />
+            <span>{formattedSelectedDate}</span>
           </button>
 
           <button
+            type="button"
             onClick={handleNextDay}
             className="w-7 h-7 rounded bg-white hover:bg-[#F2ECE5] text-[#2C221C] border border-[#E2D8CC] flex items-center justify-center transition-colors shadow-xs cursor-pointer"
             title="Día siguiente"
             aria-label="Día siguiente"
           >
             <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSetToday}
+            className="px-1.5 py-1 text-[10px] font-mono font-bold text-[#8C6B4D] hover:bg-white rounded transition-colors cursor-pointer border-l border-[#E2D8CC] ml-0.5"
+            title="Ir al día de hoy"
+          >
+            Hoy
           </button>
         </div>
 
@@ -830,6 +870,16 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
             >
               <Columns className="w-3 h-3 text-[#8C6B4D]" />
               <span className="hidden sm:inline">Matriz</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsYearCalendarOpen(true)}
+              className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1 cursor-pointer text-[#8C6B4D] hover:bg-white hover:text-[#2C221C]"
+              title="Ver calendario y agenda del año completa (12 meses)"
+            >
+              <CalendarDays className="w-3 h-3 text-[#8C6B4D]" />
+              <span className="hidden md:inline">Año Completo</span>
             </button>
           </div>
 
@@ -2270,6 +2320,23 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
           setIsAppointmentModalOpen(true);
         }}
         appointments={appointments}
+      />
+
+      {/* YEAR-LONG AGENDA & MULTI-MONTH BOOKING MODAL */}
+      <YearAgendaModal
+        isOpen={isYearCalendarOpen}
+        onClose={() => setIsYearCalendarOpen(false)}
+        selectedDate={selectedDate}
+        onSelectDate={(newDate) => {
+          setSelectedDate(newDate);
+        }}
+        onScheduleNewForDate={handleScheduleForDateFromYear}
+        appointments={appointments}
+        stylists={stylists}
+        onOpenAppointment={(app) => {
+          setEditingAppointment(app);
+          setIsAppointmentModalOpen(true);
+        }}
       />
 
       {/* 5. BOTTOM COMMAND DOCK (Identical to original desktop layout) */}
