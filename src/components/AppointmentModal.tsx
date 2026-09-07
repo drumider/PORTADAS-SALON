@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Calendar, Clock, User, Phone, Mail, FileText, CheckCircle, Save, Trash2, Scissors, AlertCircle, UserCheck, Sparkles, Plus, Minus, RotateCcw, Check, Layers, Edit3 } from 'lucide-react';
 import { Appointment, AppointmentStatus, Client, ServicePhase } from '../types';
 import { SERVICES, STYLISTS, TIME_SLOTS } from '../constants';
-import { getStoredClients, subscribeToClients, normalizePhone, getStoredAppointments } from '../utils/storage';
+import { getStoredClients, subscribeToClients, normalizePhone, getStoredAppointments, getStylistAvailabilityOnDate } from '../utils/storage';
 import { calculateAppointmentRange, formatDurationText, normalizeTimeTo24h, checkStylistBookingFeasibility, getServicePhases } from '../utils/timeUtils';
 import { searchAndRankServices } from '../utils/serviceSearch';
 
@@ -681,11 +681,19 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     onChange={(e) => setStylistId(e.target.value)}
                     className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-base sm:text-xs px-3 py-2 sm:py-2.5 outline-none font-medium rounded-none"
                   >
-                    {STYLISTS.map(st => (
-                      <option key={st.id} value={st.id}>
-                        {st.name} ({st.role})
-                      </option>
-                    ))}
+                    {STYLISTS.map(st => {
+                      const avail = getStylistAvailabilityOnDate(st, date);
+                      const tag = avail.isOff 
+                        ? ` [${avail.badgeLabel || 'Libre'}]` 
+                        : avail.isException 
+                        ? ` [${avail.badgeLabel || 'Labora hoy'}]` 
+                        : '';
+                      return (
+                        <option key={st.id} value={st.id}>
+                          {st.name} ({st.role}){tag}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
@@ -753,9 +761,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   customPhases: customPhases.length > 0 ? customPhases : undefined,
                   existingAppointments: otherAppointments,
                   isStylistOff: (st, d) => {
-                    if (!st || !st.offDays || !st.offDays.length || !d) return false;
-                    const [y, m, day] = d.split('-').map(Number);
-                    return st.offDays.includes(new Date(y, m - 1, day).getDay());
+                    const avail = getStylistAvailabilityOnDate(st, d);
+                    return avail.isOff;
                   },
                   allStylists: STYLISTS
                 });

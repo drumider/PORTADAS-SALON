@@ -1,4 +1,4 @@
-import { Stylist } from './types';
+import { Stylist, StylistScheduleException } from './types';
 import { ALL_SERVICES } from './data/servicesData';
 
 export const SERVICES = ALL_SERVICES;
@@ -95,4 +95,27 @@ export const TIME_SLOTS = [
   '05:30 PM',
   '06:00 PM',
   '06:30 PM'
+];
+
+export const DEFAULT_SCHEDULE_EXCEPTIONS: StylistScheduleException[] = [
+  {
+    id: 'exc-yorleny-2026-09-07',
+    stylistId: 'yorleny',
+    stylistName: 'Yorleny',
+    date: '2026-09-07',
+    type: 'off',
+    reason: 'Cita médica (Cambio por Miércoles 9 de Septiembre)',
+    replacesDate: '2026-09-09',
+    createdAt: '2026-09-07T10:00:00Z'
+  },
+  {
+    id: 'exc-yorleny-2026-09-09',
+    stylistId: 'yorleny',
+    stylistName: 'Yorleny',
+    date: '2026-09-09',
+    type: 'working',
+    reason: 'Labora en sustitución del Lunes 7 (Cita médica)',
+    replacesDate: '2026-09-07',
+    createdAt: '2026-09-07T10:00:00Z'
+  }
 ];

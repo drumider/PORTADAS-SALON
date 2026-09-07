@@ -1,5 +1,6 @@
 import { Appointment, Service, ServicePhase, Stylist } from '../types';
 import { ALL_SERVICES } from '../data/servicesData';
+import { getStylistAvailabilityOnDate } from './storage';
 
 /**
  * Time utility functions for CF Portadas Salon
@@ -510,10 +511,11 @@ export function checkStylistBookingFeasibility({
     const stylistObj = allStylists ? allStylists.find(s => s.id === stylistId || s.name.toLowerCase() === stylistId.toLowerCase()) : undefined;
 
     // Check if stylist is off
-    if (stylistObj && isStylistOff && isStylistOff(stylistObj, dateStr)) {
+    const avail = getStylistAvailabilityOnDate(stylistObj || stylistId, dateStr, undefined, allStylists);
+    if (avail.isOff || (isStylistOff && isStylistOff(stylistObj, dateStr))) {
       return {
         allowed: false,
-        reason: `${stylistObj.name} no labora en la fecha seleccionada.`
+        reason: avail.reason || `${stylistObj?.name || 'El profesional'} no labora en la fecha seleccionada.`
       };
     }
 
@@ -565,6 +567,8 @@ export function checkStylistBookingFeasibility({
   if (allStylists) {
     const eligibleStylists = allStylists.filter(st => {
       if (st.id === 'cualquiera') return false;
+      const avail = getStylistAvailabilityOnDate(st, dateStr, undefined, allStylists);
+      if (avail.isOff) return false;
       if (isStylistOff && isStylistOff(st, dateStr)) return false;
       if (st.allowedCategories && service.category && !st.allowedCategories.includes(service.category)) {
         return false;

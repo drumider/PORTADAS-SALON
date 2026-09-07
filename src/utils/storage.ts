@@ -1,5 +1,6 @@
-import { Appointment, Client } from '../types';
+import { Appointment, Client, StylistScheduleException, Stylist } from '../types';
 import { db } from '../lib/firebase';
+import { DEFAULT_SCHEDULE_EXCEPTIONS, STYLISTS } from '../constants';
 import {
   collection,
   doc,
@@ -11,9 +12,11 @@ import {
 
 const APPOINTMENTS_STORAGE_KEY = 'cf_portadas_appointments_v1';
 const CLIENTS_STORAGE_KEY = 'cf_portadas_clients_v1';
+const SCHEDULE_EXCEPTIONS_STORAGE_KEY = 'cf_portadas_schedule_exceptions_v1';
 const ADMIN_AUTH_KEY = 'cf_portadas_admin_auth_v1';
 const DELETED_APP_IDS_KEY = 'cf_portadas_deleted_app_ids_v1';
 const DELETED_CLIENT_IDS_KEY = 'cf_portadas_deleted_client_ids_v1';
+const DELETED_EXC_IDS_KEY = 'cf_portadas_deleted_exc_ids_v1';
 
 // Tombstones to prevent deleted documents from being resurrected by snapshots or offline sync
 const getDeletedAppIds = (): Set<string> => {
@@ -32,8 +35,17 @@ const getDeletedClientIds = (): Set<string> => {
   return new Set<string>();
 };
 
+const getDeletedExcIds = (): Set<string> => {
+  try {
+    const raw = localStorage.getItem(DELETED_EXC_IDS_KEY);
+    if (raw) return new Set(JSON.parse(raw));
+  } catch (e) {}
+  return new Set<string>();
+};
+
 const deletedAppIds = getDeletedAppIds();
 const deletedClientIds = getDeletedClientIds();
+const deletedExcIds = getDeletedExcIds();
 
 const recordDeletedAppId = (id: string) => {
   deletedAppIds.add(id);
@@ -46,6 +58,13 @@ const recordDeletedClientId = (id: string) => {
   deletedClientIds.add(id);
   try {
     localStorage.setItem(DELETED_CLIENT_IDS_KEY, JSON.stringify(Array.from(deletedClientIds)));
+  } catch (e) {}
+};
+
+const recordDeletedExcId = (id: string) => {
+  deletedExcIds.add(id);
+  try {
+    localStorage.setItem(DELETED_EXC_IDS_KEY, JSON.stringify(Array.from(deletedExcIds)));
   } catch (e) {}
 };
 
@@ -106,15 +125,38 @@ const getLocalStorageClients = (): Client[] => {
   return [];
 };
 
+const getLocalStorageScheduleExceptions = (): StylistScheduleException[] => {
+  try {
+    const data = localStorage.getItem(SCHEDULE_EXCEPTIONS_STORAGE_KEY);
+    if (data !== null) {
+      const parsed: StylistScheduleException[] = JSON.parse(data);
+      const filtered = parsed.filter(e => !deletedExcIds.has(e.id));
+      // Ensure defaults exist if not deleted
+      DEFAULT_SCHEDULE_EXCEPTIONS.forEach(defExc => {
+        if (!deletedExcIds.has(defExc.id) && !filtered.some(e => e.id === defExc.id || (e.stylistId === defExc.stylistId && e.date === defExc.date))) {
+          filtered.push(defExc);
+        }
+      });
+      return filtered;
+    }
+  } catch (e) {
+    console.error('Error reading schedule exceptions from local storage:', e);
+  }
+  return [...DEFAULT_SCHEDULE_EXCEPTIONS];
+};
+
 cachedAppointments = getLocalStorageAppointments();
 cachedClients = getLocalStorageClients();
+let cachedScheduleExceptions: StylistScheduleException[] = getLocalStorageScheduleExceptions();
 
 // Active subscribers for instant in-app reactivity
 type AppointmentCallback = (apps: Appointment[]) => void;
 type ClientCallback = (clients: Client[]) => void;
+type ScheduleExceptionCallback = (exceptions: StylistScheduleException[]) => void;
 
 const appointmentSubscribers = new Set<AppointmentCallback>();
 const clientSubscribers = new Set<ClientCallback>();
+const scheduleExceptionSubscribers = new Set<ScheduleExceptionCallback>();
 
 const notifyAppointmentSubscribers = () => {
   const filtered = cachedAppointments.filter(a => !deletedAppIds.has(a.id));
@@ -142,6 +184,19 @@ const notifyClientSubscribers = () => {
   });
 };
 
+const notifyScheduleExceptionSubscribers = () => {
+  const filtered = cachedScheduleExceptions.filter(e => !deletedExcIds.has(e.id));
+  filtered.sort((a, b) => a.date.localeCompare(b.date));
+  cachedScheduleExceptions = filtered;
+  scheduleExceptionSubscribers.forEach((cb) => {
+    try {
+      cb(filtered);
+    } catch (e) {
+      console.error('Error in schedule exception subscriber callback:', e);
+    }
+  });
+};
+
 // Listen for cross-tab local storage events
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
@@ -153,6 +208,15 @@ if (typeof window !== 'undefined') {
       cachedClients = getLocalStorageClients();
       notifyClientSubscribers();
     }
+    if (e.key === SCHEDULE_EXCEPTIONS_STORAGE_KEY) {
+      cachedScheduleExceptions = getLocalStorageScheduleExceptions();
+      notifyScheduleExceptionSubscribers();
+    }
+  });
+
+  // Seed default schedule exceptions into Firestore to ensure multi-device sync
+  DEFAULT_SCHEDULE_EXCEPTIONS.forEach(exc => {
+    setDoc(doc(db, 'schedule_exceptions', exc.id), sanitizeForFirestore(exc), { merge: true }).catch(() => {});
   });
 }
 
@@ -540,5 +604,205 @@ export const setAdminAuthenticated = (isAuth: boolean) => {
 
 export const isAdminAuthenticated = (): boolean => {
   return localStorage.getItem(ADMIN_AUTH_KEY) === 'true';
+};
+
+/**
+ * Subscribe to real-time Firestore schedule exceptions
+ */
+export const subscribeToScheduleExceptions = (callback: (exceptions: StylistScheduleException[]) => void): (() => void) => {
+  scheduleExceptionSubscribers.add(callback);
+  callback([...cachedScheduleExceptions].filter(e => !deletedExcIds.has(e.id)).sort((a, b) => a.date.localeCompare(b.date)));
+
+  const colRef = collection(db, 'schedule_exceptions');
+  const unsubscribe = onSnapshot(
+    colRef,
+    (snapshot) => {
+      const excMap = new Map<string, StylistScheduleException>();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as StylistScheduleException;
+        const excId = docSnap.id || data.id;
+        if (!deletedExcIds.has(excId)) {
+          excMap.set(excId, { ...data, id: excId });
+        }
+      });
+
+      // Ensure defaults (such as Yorleny's medical appointment swap) exist if not explicitly deleted
+      DEFAULT_SCHEDULE_EXCEPTIONS.forEach(defExc => {
+        if (!deletedExcIds.has(defExc.id) && !excMap.has(defExc.id)) {
+          excMap.set(defExc.id, defExc);
+        }
+      });
+
+      const list = Array.from(excMap.values());
+      list.sort((a, b) => a.date.localeCompare(b.date));
+      cachedScheduleExceptions = list;
+      try {
+        localStorage.setItem(SCHEDULE_EXCEPTIONS_STORAGE_KEY, JSON.stringify(list));
+      } catch (e) {}
+
+      notifyScheduleExceptionSubscribers();
+    },
+    (error) => {
+      console.warn('Firestore schedule_exceptions subscription fallback to cache:', error);
+      notifyScheduleExceptionSubscribers();
+    }
+  );
+
+  return () => {
+    scheduleExceptionSubscribers.delete(callback);
+    unsubscribe();
+  };
+};
+
+export const getStoredScheduleExceptions = (): StylistScheduleException[] => {
+  return cachedScheduleExceptions.filter(e => !deletedExcIds.has(e.id));
+};
+
+export const saveScheduleException = (
+  exception: Omit<StylistScheduleException, 'id' | 'createdAt'> & { id?: string }
+): StylistScheduleException => {
+  const now = new Date().toISOString();
+  const id = exception.id || 'exc-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+  const finalExc: StylistScheduleException = {
+    ...exception,
+    id,
+    createdAt: exception.id ? (cachedScheduleExceptions.find(e => e.id === exception.id)?.createdAt || now) : now
+  };
+
+  deletedExcIds.delete(id);
+  try {
+    localStorage.setItem(DELETED_EXC_IDS_KEY, JSON.stringify(Array.from(deletedExcIds)));
+  } catch (e) {}
+
+  const idx = cachedScheduleExceptions.findIndex(e => e.id === id || (e.stylistId === exception.stylistId && e.date === exception.date));
+  if (idx !== -1) {
+    cachedScheduleExceptions[idx] = finalExc;
+  } else {
+    cachedScheduleExceptions.push(finalExc);
+  }
+
+  try {
+    localStorage.setItem(SCHEDULE_EXCEPTIONS_STORAGE_KEY, JSON.stringify(cachedScheduleExceptions));
+  } catch (e) {}
+
+  notifyScheduleExceptionSubscribers();
+
+  setDoc(doc(db, 'schedule_exceptions', id), sanitizeForFirestore(finalExc), { merge: true }).catch((err) => {
+    console.error('Error writing schedule exception to Firestore:', err);
+  });
+
+  return finalExc;
+};
+
+export const deleteScheduleException = (id: string): void => {
+  if (!id) return;
+  recordDeletedExcId(id);
+  cachedScheduleExceptions = cachedScheduleExceptions.filter(e => e.id !== id);
+  try {
+    localStorage.setItem(SCHEDULE_EXCEPTIONS_STORAGE_KEY, JSON.stringify(cachedScheduleExceptions));
+  } catch (e) {}
+
+  notifyScheduleExceptionSubscribers();
+
+  deleteDoc(doc(db, 'schedule_exceptions', id)).catch((err) => {
+    console.error('Error deleting schedule exception from Firestore:', err);
+  });
+};
+
+export interface StylistAvailabilityResult {
+  isOff: boolean;
+  reason?: string;
+  isException: boolean;
+  exceptionType?: 'off' | 'working';
+  replacesDate?: string;
+  badgeLabel?: string;
+  badgeColor?: 'rose' | 'emerald' | 'amber';
+}
+
+/**
+ * Universal helper to calculate if a stylist is off or working on a given date,
+ * incorporating both weekly base off-days and temporary schedule exceptions.
+ */
+export const getStylistAvailabilityOnDate = (
+  stylistInput: Stylist | string | null | undefined,
+  dateInput: Date | string,
+  customExceptions?: StylistScheduleException[],
+  stylistsList?: Stylist[]
+): StylistAvailabilityResult => {
+  if (!stylistInput) return { isOff: false, isException: false };
+
+  const stylistId = typeof stylistInput === 'string' ? stylistInput : stylistInput.id;
+  if (!stylistId || stylistId === 'cualquiera') {
+    return { isOff: false, isException: false };
+  }
+
+  // Format date to YYYY-MM-DD
+  let dateStr = '';
+  let dayOfWeek = 0;
+  if (typeof dateInput === 'string') {
+    if (dateInput.includes('T')) {
+      dateStr = dateInput.split('T')[0];
+    } else {
+      dateStr = dateInput.substring(0, 10);
+    }
+    const [y, m, d] = dateStr.split('-').map(Number);
+    dayOfWeek = new Date(y, m - 1, d).getDay();
+  } else {
+    const y = dateInput.getFullYear();
+    const m = String(dateInput.getMonth() + 1).padStart(2, '0');
+    const d = String(dateInput.getDate()).padStart(2, '0');
+    dateStr = `${y}-${m}-${d}`;
+    dayOfWeek = dateInput.getDay();
+  }
+
+  const exceptions = Array.isArray(customExceptions)
+    ? customExceptions
+    : (Array.isArray(cachedScheduleExceptions) ? cachedScheduleExceptions : DEFAULT_SCHEDULE_EXCEPTIONS);
+
+  // Find exception for this stylist on this date
+  const exc = exceptions.find(e => 
+    !deletedExcIds.has(e.id) &&
+    (e.stylistId.toLowerCase() === stylistId.toLowerCase() || e.stylistName?.toLowerCase() === stylistId.toLowerCase()) && 
+    e.date === dateStr
+  );
+
+  if (exc) {
+    if (exc.type === 'off') {
+      const isMed = (exc.reason || '').toLowerCase().includes('cita m');
+      return {
+        isOff: true,
+        reason: exc.reason || 'Día libre por cambio temporal',
+        isException: true,
+        exceptionType: 'off',
+        replacesDate: exc.replacesDate,
+        badgeLabel: isMed ? 'Cita médica' : 'Libre (Cambio)',
+        badgeColor: 'rose'
+      };
+    } else {
+      return {
+        isOff: false,
+        reason: exc.reason || 'Labora hoy por cambio de horario',
+        isException: true,
+        exceptionType: 'working',
+        replacesDate: exc.replacesDate,
+        badgeLabel: 'Labora hoy (Cambio)',
+        badgeColor: 'emerald'
+      };
+    }
+  }
+
+  // Fallback to regular weekly schedule
+  const stylistObj = typeof stylistInput === 'object' 
+    ? stylistInput 
+    : (stylistsList || STYLISTS).find(s => s.id.toLowerCase() === stylistId.toLowerCase() || s.name.toLowerCase() === stylistId.toLowerCase());
+
+  const regularOff = stylistObj?.offDays?.includes(dayOfWeek) ?? false;
+  return {
+    isOff: regularOff,
+    reason: regularOff ? 'Día de descanso regular' : undefined,
+    isException: false,
+    badgeLabel: regularOff ? 'Libre' : undefined,
+    badgeColor: regularOff ? 'rose' : undefined
+  };
 };
 

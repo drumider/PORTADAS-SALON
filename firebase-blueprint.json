@@ -29,6 +29,18 @@
         "lastVisit": { "type": "string", "required": false },
         "totalAppointments": { "type": "number", "required": false }
       }
+    },
+    "ScheduleException": {
+      "collectionName": "schedule_exceptions",
+      "fields": {
+        "stylistId": { "type": "string", "required": true },
+        "stylistName": { "type": "string", "required": true },
+        "date": { "type": "string", "required": true },
+        "type": { "type": "string", "required": true },
+        "reason": { "type": "string", "required": true },
+        "replacesDate": { "type": "string", "required": false },
+        "createdAt": { "type": "string", "required": true }
+      }
     }
   }
 }

@@ -32,6 +32,7 @@ import {
   getServicePhases
 } from '../utils/timeUtils';
 import { searchAndRankServices } from '../utils/serviceSearch';
+import { getStylistAvailabilityOnDate } from '../utils/storage';
 
 interface ClientBookingWidgetProps {
   existingAppointments: Appointment[];
@@ -169,12 +170,10 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
 
   // Check if stylist is off on a date
   const isStylistOff = (stylist: Stylist | null, dateStr: string) => {
-    if (!stylist || !stylist.offDays || !stylist.offDays.length || !dateStr) return false;
+    if (!stylist || !dateStr) return false;
     if (stylist.id === 'cualquiera') return false;
-    const [y, m, d] = dateStr.split('-').map(Number);
-    if (!y || !m || !d) return false;
-    const dayOfWeek = new Date(y, m - 1, d).getDay();
-    return stylist.offDays.includes(dayOfWeek);
+    const avail = getStylistAvailabilityOnDate(stylist, dateStr);
+    return avail.isOff;
   };
 
   // Check if a time slot is available for booking considering active stylist busy phases vs reposo free gaps
@@ -650,6 +649,9 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
 
             <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none snap-x -mx-1 px-1">
               {availableDays.map((day) => {
+                const avail = selectedStylist && selectedStylist.id !== 'cualquiera'
+                  ? getStylistAvailabilityOnDate(selectedStylist, day.rawValue)
+                  : { isOff: false, isException: false, reason: '' };
                 const isOff = isStylistOff(selectedStylist, day.rawValue);
                 const isSelected = bookingDate === day.rawValue;
 
@@ -662,12 +664,15 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
                       if (isOff) return;
                       setBookingDate(day.rawValue);
                     }}
+                    title={avail.reason || (isOff ? 'Día de descanso' : undefined)}
                     className={`py-2 px-2.5 min-w-[58px] rounded border text-center transition-all flex flex-col items-center shrink-0 snap-start ${
                       isOff
                         ? 'opacity-25 bg-black/40 border-white/5 text-gray-600 cursor-not-allowed'
                         : isSelected
                           ? 'bg-gold-champagne border-gold-champagne text-dark-bg font-bold shadow-md ring-1 ring-gold-champagne'
-                          : 'bg-[#1a1a1e] border-white/10 hover:border-gold-champagne/40 text-gray-300 active:bg-white/10'
+                          : avail.isException
+                            ? 'bg-emerald-950/30 border-emerald-500/40 text-emerald-300 hover:border-emerald-400'
+                            : 'bg-[#1a1a1e] border-white/10 hover:border-gold-champagne/40 text-gray-300 active:bg-white/10'
                     }`}
                   >
                     <span className={`text-[9px] font-mono uppercase tracking-wider ${isSelected ? 'text-dark-bg font-bold' : 'text-gray-400'}`}>
@@ -679,10 +684,35 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
                     <span className={`text-[8px] font-mono uppercase ${isSelected ? 'text-dark-bg/80' : day.isToday ? 'text-emerald-400 font-semibold' : 'text-gray-500'}`}>
                       {day.isToday ? 'HOY' : day.monthName}
                     </span>
+                    {avail.isException && !isOff && (
+                      <span className="text-[7px] font-mono text-emerald-400 uppercase font-bold mt-0.5">
+                        Labora
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
+
+            {selectedStylist && selectedStylist.id !== 'cualquiera' && (() => {
+              const avail = getStylistAvailabilityOnDate(selectedStylist, bookingDate);
+              if (avail.isException) {
+                return (
+                  <div className={`text-[10px] font-mono p-1.5 rounded border flex items-center gap-1 mt-1 ${
+                    avail.isOff
+                      ? 'bg-rose-950/30 border-rose-500/40 text-rose-300'
+                      : 'bg-emerald-950/30 border-emerald-500/40 text-emerald-300'
+                  }`}>
+                    <Sparkles className="w-3 h-3 shrink-0" />
+                    <span>
+                      <strong>{selectedStylist.name}:</strong> {avail.reason}
+                      {avail.replacesDate && ` (Compensa con el día ${avail.replacesDate})`}
+                    </span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           {/* 4. HORA (30-min Compact Grid) */}

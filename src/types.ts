@@ -30,6 +30,17 @@ export interface Service {
   optionLabel?: string;
 }
 
+export interface StylistScheduleException {
+  id: string;
+  stylistId: string;
+  stylistName: string;
+  date: string; // "YYYY-MM-DD"
+  type: 'off' | 'working';
+  reason: string;
+  replacesDate?: string; // Optional related swap date, e.g. "2026-09-09"
+  createdAt?: string;
+}
+
 export interface Stylist {
   id: string;
   name: string;
@@ -38,6 +49,7 @@ export interface Stylist {
   offDays?: number[]; // JS getDay() values: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
   offDaysText?: string;
   allowedCategories?: string[]; // Allowed service categories for this specialist
+  scheduleExceptions?: StylistScheduleException[];
 }
 
 export type AppointmentStatus = 'Confirmada' | 'Pendiente' | 'Completada' | 'Cancelada';

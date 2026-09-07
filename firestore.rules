@@ -7,5 +7,8 @@ service cloud.firestore {
     match /clients/{clientId} {
       allow read, create, update, delete: if true;
     }
+    match /schedule_exceptions/{exceptionId} {
+      allow read, create, update, delete: if true;
+    }
   }
 }

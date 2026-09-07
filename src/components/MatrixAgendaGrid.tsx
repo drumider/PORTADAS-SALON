@@ -44,9 +44,11 @@ import {
   CalendarPlus,
   CheckCheck,
   Users,
-  UserPlus
+  UserPlus,
+  Stethoscope,
+  CalendarRange
 } from 'lucide-react';
-import { Appointment, AppointmentStatus, Stylist, Client } from '../types';
+import { Appointment, AppointmentStatus, Stylist, Client, StylistScheduleException } from '../types';
 import { STYLISTS as DEFAULT_STYLISTS, SERVICES } from '../constants';
 import { 
   getStoredAppointments, 
@@ -57,7 +59,10 @@ import {
   cancelAppointment,
   subscribeToAppointments,
   getStoredClients,
-  subscribeToClients
+  subscribeToClients,
+  getStoredScheduleExceptions,
+  subscribeToScheduleExceptions,
+  getStylistAvailabilityOnDate
 } from '../utils/storage';
 import { 
   normalizeTimeTo24h, 
@@ -75,6 +80,7 @@ import { ClientDirectoryModal } from './ClientDirectoryModal';
 import { CancelAppointmentModal } from './CancelAppointmentModal';
 import { ExpandDurationModal } from './ExpandDurationModal';
 import { YearAgendaModal } from './YearAgendaModal';
+import { ScheduleExceptionsModal } from './ScheduleExceptionsModal';
 
 export interface SlotAppointmentEntry {
   appointment: Appointment;
@@ -235,6 +241,17 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
     return () => unsub();
   }, []);
 
+  // Schedule Exceptions (Medical appointments, swaps, temp changes)
+  const [scheduleExceptions, setScheduleExceptions] = useState<StylistScheduleException[]>(() => getStoredScheduleExceptions());
+  const [isScheduleExceptionsModalOpen, setIsScheduleExceptionsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const unsub = subscribeToScheduleExceptions((excs) => {
+      setScheduleExceptions(excs);
+    });
+    return () => unsub();
+  }, []);
+
   // Bottom action bar modals
   const [activeBottomModal, setActiveBottomModal] = useState<
     'help' | 'list' | 'pending' | 'add_stylist' | null
@@ -361,6 +378,10 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
     const d = String(selectedDate.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   }, [selectedDate]);
+
+  const activeDateExceptions = useMemo(() => {
+    return scheduleExceptions.filter(e => e.date === selectedDateStr);
+  }, [scheduleExceptions, selectedDateStr]);
 
   // Navigate Date
   const handlePrevDay = () => {
@@ -897,6 +918,22 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
 
           {/* Quick Tools Trigger */}
           <button
+            type="button"
+            onClick={() => setIsScheduleExceptionsModalOpen(true)}
+            className="px-2.5 py-1 bg-white hover:bg-[#FAF8F5] border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#2C221C] text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            title="Gestión de cambios de turno, citas médicas y horarios temporales"
+            id="admin-topbar-horarios-btn"
+          >
+            <Clock className="w-3.5 h-3.5 text-[#8C6B4D]" />
+            <span className="hidden sm:inline">Cambios Horario</span>
+            {scheduleExceptions.length > 0 && (
+              <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full">
+                {scheduleExceptions.length}
+              </span>
+            )}
+          </button>
+
+          <button
             onClick={() => setIsClientDirectoryOpen(true)}
             className="px-2.5 py-1 bg-white hover:bg-[#FAF8F5] border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#2C221C] text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             title="Directorio de Clientes Registrados"
@@ -970,6 +1007,45 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         </div>
       )}
 
+      {/* ACTIVE SCHEDULE EXCEPTIONS BANNER (Medical Appointments / Swaps) */}
+      {activeDateExceptions.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-50 via-orange-50/80 to-amber-50 border-b border-amber-300 px-3 sm:px-5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-full bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-xs ring-2 ring-amber-200">
+              <Stethoscope className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0 text-xs text-amber-950">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-serif-luxury font-bold uppercase tracking-wide text-amber-900">
+                  Horario Especial Activo en Esta Fecha
+                </span>
+                <span className="bg-amber-600 text-white text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full uppercase">
+                  {activeDateExceptions.length} Cambio{activeDateExceptions.length > 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="text-[11px] text-amber-900/90 mt-0.5 truncate">
+                {activeDateExceptions.map((exc, idx) => (
+                  <span key={exc.id}>
+                    {idx > 0 && ' · '}
+                    <strong>{exc.stylistName}</strong>: {exc.type === 'off' ? 'No asiste (Ausencia médica / libre)' : 'Labora en sustitución'}
+                    {exc.reason && ` - "${exc.reason}"`}
+                    {exc.replacesDate && ` ⇄ Compensa con el ${exc.replacesDate}`}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsScheduleExceptionsModalOpen(true)}
+            className="px-2.5 py-1 bg-white hover:bg-amber-100 border border-amber-400 text-amber-950 rounded text-xs font-mono font-bold transition-colors shrink-0 self-start sm:self-auto cursor-pointer shadow-2xs"
+          >
+            Ver Detalles del Cambio
+          </button>
+        </div>
+      )}
+
       {/* 2. STYLIST SELECTOR TABS (Visible in mobile or when single_stylist mode is active) */}
       {(viewMode === 'single_stylist' || viewMode === 'timeline') && (
         <div className="bg-[#FAF8F5] border-b border-[#E2D8CC] px-3 sm:px-5 py-2 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none">
@@ -980,8 +1056,8 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
 
             {stylists.map((st) => {
               const isSelected = activeStylistId === st.id;
-              const dayOfWeek = selectedDate.getDay();
-              const isOff = st.offDays?.includes(dayOfWeek);
+              const avail = getStylistAvailabilityOnDate(st, selectedDate, scheduleExceptions, stylists);
+              const isOff = avail.isOff;
               
               // Count stylist appointments for this day
               const stAppointmentsCount = dayAppointments.filter(
@@ -995,6 +1071,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                   onClick={() => {
                     setActiveStylistId(st.id);
                   }}
+                  title={avail.reason || (isOff ? 'Día de descanso' : undefined)}
                   className={`px-3 py-1.5 rounded-md text-xs font-serif-luxury uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                     isSelected
                       ? 'bg-[#2C221C] text-white font-bold shadow-xs'
@@ -1009,8 +1086,16 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                   <span>{st.name.split(' ')[0]}</span>
                   
                   {isOff ? (
-                    <span className="text-[8px] bg-rose-100 text-rose-800 border border-rose-200 px-1 py-0.2 rounded font-mono font-bold">
-                      Libre
+                    <span className={`text-[8px] px-1 py-0.2 rounded font-mono font-bold border ${
+                      avail.isException
+                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                        : 'bg-rose-100 text-rose-800 border-rose-200'
+                    }`}>
+                      {avail.badgeLabel || 'Libre'}
+                    </span>
+                  ) : avail.isException ? (
+                    <span className="text-[8px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-1 py-0.2 rounded font-mono font-bold">
+                      {avail.badgeLabel || 'Labora'}
                     </span>
                   ) : stAppointmentsCount > 0 ? (
                     <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold ${
@@ -1041,7 +1126,10 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         {/* ========================================================= */}
         {/* VIEW A: SINGLE STYLIST (Spacious & Ergonomic for Mobile)  */}
         {/* ========================================================= */}
-        {viewMode === 'single_stylist' && (
+        {viewMode === 'single_stylist' && (() => {
+          const selectedStylistAvail = getStylistAvailabilityOnDate(selectedStylistObj, selectedDate, scheduleExceptions, stylists);
+
+          return (
           <div className="max-w-3xl mx-auto space-y-3">
             
             {/* Stylist Header Summary Card */}
@@ -1051,18 +1139,28 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                   {selectedStylistObj.avatarLetter}
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-serif-luxury text-sm sm:text-base font-bold text-neutral-900 uppercase">
                       {selectedStylistObj.name}
                     </h3>
-                    {selectedStylistObj.offDays?.includes(selectedDate.getDay()) && (
-                      <span className="text-[9px] bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded font-mono font-bold uppercase">
-                        Día de Descanso
+                    {selectedStylistAvail.isOff && (
+                      <span className={`text-[9px] border px-1.5 py-0.5 rounded font-mono font-bold uppercase ${
+                        selectedStylistAvail.isException
+                          ? 'bg-amber-100 text-amber-900 border-amber-300'
+                          : 'bg-rose-100 text-rose-800 border-rose-300'
+                      }`}>
+                        {selectedStylistAvail.badgeLabel || 'Día de Descanso'}
+                      </span>
+                    )}
+                    {!selectedStylistAvail.isOff && selectedStylistAvail.isException && (
+                      <span className="text-[9px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-1.5 py-0.5 rounded font-mono font-bold uppercase">
+                        ✓ {selectedStylistAvail.badgeLabel || 'Labora hoy (Cambio)'}
                       </span>
                     )}
                   </div>
                   <p className="text-[10px] text-[#8C6B4D] font-mono uppercase tracking-wider">
                     {selectedStylistObj.role}
+                    {selectedStylistAvail.isException && ` · ${selectedStylistAvail.reason}`}
                   </p>
                 </div>
               </div>
@@ -1084,7 +1182,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                 const [slotH, slotM] = timeSlot.split(':').map(Number);
                 const now = new Date();
                 const isCurrentHourSlot = isToday && now.getHours() === slotH && Math.abs(now.getMinutes() - slotM) < 15;
-                const isOff = selectedStylistObj.offDays?.includes(selectedDate.getDay());
+                const isOff = selectedStylistAvail.isOff;
 
                 return (
                   <div
@@ -1346,9 +1444,13 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                       ) : isOff ? (
                         <div 
                           onClick={() => handleSlotClick(selectedStylistObj, timeSlot)}
-                          className="py-2 px-3 border border-dashed border-neutral-300 rounded bg-[#FAF8F5] text-neutral-400 text-xs font-mono flex items-center justify-between cursor-pointer hover:border-[#8C6B4D] hover:text-neutral-700 transition-colors"
+                          className={`py-2 px-3 border border-dashed rounded text-xs font-mono flex items-center justify-between cursor-pointer transition-colors ${
+                            selectedStylistAvail.isException
+                              ? 'border-amber-300 bg-amber-50/70 text-amber-900 hover:border-amber-500'
+                              : 'border-neutral-300 bg-[#FAF8F5] text-neutral-400 hover:border-[#8C6B4D] hover:text-neutral-700'
+                          }`}
                         >
-                          <span>Día de descanso programado</span>
+                          <span>{selectedStylistAvail.reason || 'Día de descanso programado'}</span>
                           <span className="text-[10px] text-[#8C6B4D] font-bold uppercase">+ Forzar cita</span>
                         </div>
                       ) : (
@@ -1372,7 +1474,8 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
               })}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ========================================================= */}
         {/* VIEW B: TIMELINE / CHRONOLOGICAL SCHEDULE FOR THE DAY     */}
@@ -1525,24 +1628,33 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                     </th>
 
                     {stylists.map((stylist) => {
-                      const dayOfWeek = selectedDate.getDay();
-                      const isOff = stylist.offDays?.includes(dayOfWeek);
+                      const avail = getStylistAvailabilityOnDate(stylist, selectedDate, scheduleExceptions, stylists);
+                      const isOff = avail.isOff;
 
                       return (
                         <th
                           key={stylist.id}
                           className="px-3 py-2.5 border-r-2 border-[#8C7A68] text-center min-w-[190px] max-w-[240px] bg-[#FAF8F5] last:border-r-0"
+                          title={avail.reason || undefined}
                         >
                           <div className="flex flex-col items-center justify-center">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap justify-center">
                               <span className="text-xs font-bold text-[#1C1612] uppercase font-serif-luxury truncate">
                                 {stylist.name}
                               </span>
-                              {isOff && (
-                                <span className="text-[8px] bg-rose-100 text-rose-800 border border-rose-300 px-1 py-0.2 rounded uppercase font-mono font-bold">
-                                  Libre
+                              {isOff ? (
+                                <span className={`text-[8px] border px-1 py-0.2 rounded uppercase font-mono font-bold ${
+                                  avail.isException
+                                    ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                    : 'bg-rose-100 text-rose-800 border-rose-300'
+                                }`}>
+                                  {avail.badgeLabel || 'Libre'}
                                 </span>
-                              )}
+                              ) : avail.isException ? (
+                                <span className="text-[8px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-1 py-0.2 rounded uppercase font-mono font-bold">
+                                  {avail.badgeLabel || 'Labora'}
+                                </span>
+                              ) : null}
                             </div>
                             <span className="text-[9px] text-[#5C4A38] font-mono font-semibold tracking-wider uppercase truncate mt-0.5">
                               {stylist.role}
@@ -1578,8 +1690,8 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                           const cleanTime = timeSlot;
                           const appKey = `${stylist.id}_${cleanTime}`;
                           const slotAppointments = appointmentMatrix.get(appKey) || [];
-                          const dayOfWeek = selectedDate.getDay();
-                          const isOff = stylist.offDays?.includes(dayOfWeek);
+                          const avail = getStylistAvailabilityOnDate(stylist, selectedDate, scheduleExceptions, stylists);
+                          const isOff = avail.isOff;
 
                           return (
                             <td
@@ -1717,9 +1829,16 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                               ) : isOff ? (
                                 <div 
                                   onClick={() => handleSlotClick(stylist, timeSlot)}
-                                  className="h-7 rounded border border-dashed border-[#DDD5CC] bg-[#EFEAE2]/60 flex items-center justify-center cursor-pointer opacity-60 hover:opacity-100"
+                                  className={`h-7 rounded border border-dashed flex items-center justify-center cursor-pointer transition-all ${
+                                    avail.isException
+                                      ? 'border-amber-300 bg-amber-50/70 text-amber-900 hover:bg-amber-100 font-bold'
+                                      : 'border-[#DDD5CC] bg-[#EFEAE2]/60 text-neutral-400 opacity-60 hover:opacity-100'
+                                  }`}
+                                  title={avail.reason ? `${avail.reason} - Clic para forzar cita` : 'Libre - Clic para agendar'}
                                 >
-                                  <span className="text-[9px] text-neutral-400 font-mono">Libre</span>
+                                  <span className="text-[9px] font-mono">
+                                    {avail.isException ? (avail.badgeLabel || 'Libre') : 'Libre'}
+                                  </span>
                                 </div>
                               ) : (
                                 <button
@@ -2339,6 +2458,15 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         }}
       />
 
+      {/* SCHEDULE EXCEPTIONS / SHIFT SWAPS / MEDICAL APPOINTMENTS MODAL */}
+      <ScheduleExceptionsModal
+        isOpen={isScheduleExceptionsModalOpen}
+        onClose={() => setIsScheduleExceptionsModalOpen(false)}
+        stylists={stylists}
+        exceptions={scheduleExceptions}
+        selectedDate={selectedDateStr}
+      />
+
       {/* 5. BOTTOM COMMAND DOCK (Identical to original desktop layout) */}
       <footer className="bg-white border-t border-[#E2D8CC] px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 shadow-xs">
         {/* Left: Clock & App Stats */}
@@ -2359,6 +2487,20 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
 
         {/* Right: Quick Action Buttons */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsScheduleExceptionsModalOpen(true)}
+            className="px-2.5 py-1 text-[#2C221C] hover:text-[#8C6B4D] hover:bg-[#FAF8F5] border border-[#D9CEC2] rounded transition-colors flex items-center gap-1.5 font-mono text-xs cursor-pointer shadow-2xs font-semibold"
+            title="Administrar cambios de horario y citas médicas de estilistas"
+          >
+            <Clock className="w-3.5 h-3.5 text-[#8C6B4D]" />
+            <span>Horarios Especiales</span>
+            {scheduleExceptions.length > 0 && (
+              <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full">
+                {scheduleExceptions.length}
+              </span>
+            )}
+          </button>
+
           <button
             onClick={() => setIsClientDirectoryOpen(true)}
             className="px-2.5 py-1 text-[#2C221C] hover:text-[#8C6B4D] hover:bg-[#FAF8F5] border border-[#D9CEC2] rounded transition-colors flex items-center gap-1.5 font-mono text-xs cursor-pointer shadow-2xs font-semibold"
