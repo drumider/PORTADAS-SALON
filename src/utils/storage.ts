@@ -709,6 +709,69 @@ export const deleteScheduleException = (id: string): void => {
   });
 };
 
+export interface SaveScheduleSwapParams {
+  stylistId: string;
+  stylistName: string;
+  closeDate: string; // YYYY-MM-DD
+  openDate: string;  // YYYY-MM-DD
+  reason: string;
+}
+
+export const saveScheduleSwap = ({
+  stylistId,
+  stylistName,
+  closeDate,
+  openDate,
+  reason
+}: SaveScheduleSwapParams): { closedExc: StylistScheduleException; openExc: StylistScheduleException } => {
+  const cleanReason = reason.trim() || 'Permuta de turno';
+
+  // 1. Exception for closed date
+  const closedExc = saveScheduleException({
+    stylistId,
+    stylistName,
+    date: closeDate,
+    type: 'off',
+    reason: `${cleanReason} (Cerrado por permuta con ${openDate})`,
+    replacesDate: openDate
+  });
+
+  // 2. Exception for open date
+  const openExc = saveScheduleException({
+    stylistId,
+    stylistName,
+    date: openDate,
+    type: 'working',
+    reason: `${cleanReason} (Labora en compensación del ${closeDate})`,
+    replacesDate: closeDate
+  });
+
+  return { closedExc, openExc };
+};
+
+export const deleteScheduleExceptionPair = (id: string): void => {
+  const current = cachedScheduleExceptions.find(e => e.id === id);
+  if (!current) {
+    deleteScheduleException(id);
+    return;
+  }
+
+  // If this exception has a linked swap date, find the matching partner
+  if (current.replacesDate) {
+    const partner = cachedScheduleExceptions.find(
+      e => e.id !== id &&
+      (e.stylistId.toLowerCase() === current.stylistId.toLowerCase()) &&
+      e.date === current.replacesDate &&
+      e.replacesDate === current.date
+    );
+    if (partner) {
+      deleteScheduleException(partner.id);
+    }
+  }
+
+  deleteScheduleException(id);
+};
+
 export interface StylistAvailabilityResult {
   isOff: boolean;
   reason?: string;

@@ -46,7 +46,10 @@ import {
   Users,
   UserPlus,
   Stethoscope,
-  CalendarRange
+  CalendarRange,
+  ArrowLeftRight,
+  Sun,
+  Ban
 } from 'lucide-react';
 import { Appointment, AppointmentStatus, Stylist, Client, StylistScheduleException } from '../types';
 import { STYLISTS as DEFAULT_STYLISTS, SERVICES } from '../constants';
@@ -274,6 +277,14 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
   // Schedule Exceptions (Medical appointments, swaps, temp changes)
   const [scheduleExceptions, setScheduleExceptions] = useState<StylistScheduleException[]>(() => getStoredScheduleExceptions());
   const [isScheduleExceptionsModalOpen, setIsScheduleExceptionsModalOpen] = useState(false);
+  const [scheduleExceptionsModalStylistId, setScheduleExceptionsModalStylistId] = useState<string | undefined>(undefined);
+  const [scheduleExceptionsModalMode, setScheduleExceptionsModalMode] = useState<'swap' | 'close' | 'open'>('swap');
+
+  const handleOpenScheduleSwap = (stylistId?: string, mode: 'swap' | 'close' | 'open' = 'swap') => {
+    setScheduleExceptionsModalStylistId(stylistId);
+    setScheduleExceptionsModalMode(mode);
+    setIsScheduleExceptionsModalOpen(true);
+  };
 
   useEffect(() => {
     const unsub = subscribeToScheduleExceptions((excs) => {
@@ -1037,16 +1048,16 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
             </button>
           )}
 
-          {/* Quick Tools Trigger */}
+          {/* Quick Tools Trigger: Permutas y Cierre de Días */}
           <button
             type="button"
-            onClick={() => setIsScheduleExceptionsModalOpen(true)}
+            onClick={() => handleOpenScheduleSwap(selectedStylistObj?.id, 'swap')}
             className="px-2.5 py-1 bg-white hover:bg-[#FAF8F5] border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#2C221C] text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
-            title="Gestión de cambios de turno, citas médicas y horarios temporales"
+            title="Gestión de permutas, cierre de días y apertura de días libres"
             id="admin-topbar-horarios-btn"
           >
-            <Clock className="w-3.5 h-3.5 text-[#8C6B4D]" />
-            <span className="hidden sm:inline">Cambios Horario</span>
+            <ArrowLeftRight className="w-3.5 h-3.5 text-[#8C6B4D]" />
+            <span className="hidden sm:inline">Permutas / Cerrar Días</span>
             {scheduleExceptions.length > 0 && (
               <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full">
                 {scheduleExceptions.length}
@@ -1283,6 +1294,33 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                     {selectedStylistObj.role}
                     {selectedStylistAvail.isException && ` · ${selectedStylistAvail.reason}`}
                   </p>
+
+                  {/* Quick Action Button for Stylist Schedule Adjustments */}
+                  {selectedStylistObj.id !== 'cualquiera' && (
+                    <div className="flex items-center gap-2 mt-2">
+                      {selectedStylistAvail.isOff ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenScheduleSwap(selectedStylistObj.id, 'open')}
+                          className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+                          title={`Abrir ${selectedStylistObj.name} para que atienda citas en esta fecha`}
+                        >
+                          <Sun className="w-3 h-3" />
+                          <span>Abrir este día para citas</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenScheduleSwap(selectedStylistObj.id, 'swap')}
+                          className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+                          title={`Cerrar este día para ${selectedStylistObj.name} y abrir el día libre de la otra semana`}
+                        >
+                          <ArrowLeftRight className="w-3 h-3 text-amber-700" />
+                          <span>Cerrar día y abrir la otra semana</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1806,6 +1844,38 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                             <span className="text-[9px] text-[#5C4A38] font-mono font-semibold tracking-wider uppercase truncate mt-0.5">
                               {stylist.role}
                             </span>
+                            {/* Quick Day Adjustment Pill */}
+                            {stylist.id !== 'cualquiera' && (
+                              <div className="mt-1">
+                                {isOff ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenScheduleSwap(stylist.id, 'open');
+                                    }}
+                                    className="px-1.5 py-0.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 rounded text-[8px] font-mono font-bold uppercase tracking-wider flex items-center gap-0.5 transition-colors cursor-pointer"
+                                    title={`Abrir día para ${stylist.name}`}
+                                  >
+                                    <Sun className="w-2.5 h-2.5" />
+                                    <span>Abrir Día</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenScheduleSwap(stylist.id, 'swap');
+                                    }}
+                                    className="px-1.5 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded text-[8px] font-mono font-bold uppercase tracking-wider flex items-center gap-0.5 transition-colors cursor-pointer"
+                                    title={`Cerrar día para ${stylist.name} y abrir el día libre de la otra semana`}
+                                  >
+                                    <ArrowLeftRight className="w-2.5 h-2.5 text-amber-700" />
+                                    <span>Cerrar / Permutar</span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </th>
                       );
@@ -2031,17 +2101,31 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                                 </div>
                               ) : isOff ? (
                                 <div 
-                                  onClick={() => handleSlotClick(stylist, timeSlot)}
-                                  className={`h-7 rounded border border-dashed flex items-center justify-center cursor-pointer transition-all ${
+                                  className={`h-7 rounded border border-dashed flex items-center justify-between px-1.5 transition-all ${
                                     avail.isException
-                                      ? 'border-amber-300 bg-amber-50/70 text-amber-900 hover:bg-amber-100 font-bold'
-                                      : 'border-[#DDD5CC] bg-[#EFEAE2]/60 text-neutral-400 opacity-60 hover:opacity-100'
+                                      ? 'border-amber-300 bg-amber-50/70 text-amber-900 font-bold'
+                                      : 'border-[#DDD5CC] bg-[#EFEAE2]/60 text-neutral-500'
                                   }`}
-                                  title={avail.reason ? `${avail.reason} - Clic para forzar cita` : 'Libre - Clic para agendar'}
+                                  title={avail.reason ? `${avail.reason} - Clic para opciones` : 'Libre - Clic para opciones'}
                                 >
-                                  <span className="text-[9px] font-mono">
+                                  <span 
+                                    onClick={() => handleSlotClick(stylist, timeSlot)}
+                                    className="text-[9px] font-mono cursor-pointer hover:underline truncate"
+                                    title="Clic para agendar cita"
+                                  >
                                     {avail.isException ? (avail.badgeLabel || 'Libre') : 'Libre'}
                                   </span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenScheduleSwap(stylist.id, 'open');
+                                    }}
+                                    className="text-[8px] font-mono font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-1 py-0.2 rounded transition-colors cursor-pointer shrink-0 ml-1"
+                                    title={`Abrir este día para ${stylist.name}`}
+                                  >
+                                    Abrir
+                                  </button>
                                 </div>
                               ) : (
                                 <button
@@ -2666,10 +2750,15 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
       {/* SCHEDULE EXCEPTIONS / SHIFT SWAPS / MEDICAL APPOINTMENTS MODAL */}
       <ScheduleExceptionsModal
         isOpen={isScheduleExceptionsModalOpen}
-        onClose={() => setIsScheduleExceptionsModalOpen(false)}
+        onClose={() => {
+          setIsScheduleExceptionsModalOpen(false);
+          setScheduleExceptionsModalStylistId(undefined);
+        }}
         stylists={stylists}
         exceptions={scheduleExceptions}
         selectedDate={selectedDateStr}
+        initialStylistId={scheduleExceptionsModalStylistId}
+        initialMode={scheduleExceptionsModalMode}
       />
 
       {/* 5. BOTTOM COMMAND DOCK (Identical to original desktop layout) */}
