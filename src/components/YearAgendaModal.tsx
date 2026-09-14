@@ -223,6 +223,21 @@ export const YearAgendaModal: React.FC<YearAgendaModalProps> = ({
     onClose();
   };
 
+  // Quick schedule directly into future months
+  const handleScheduleInMonths = (monthsToAdd: number) => {
+    const target = new Date();
+    target.setMonth(target.getMonth() + monthsToAdd);
+    if (target.getDay() === 0) target.setDate(target.getDate() + 1);
+    const y = target.getFullYear();
+    const m = String(target.getMonth() + 1).padStart(2, '0');
+    const d = String(target.getDate()).padStart(2, '0');
+    const targetDateStr = `${y}-${m}-${d}`;
+    setCurrentYear(y);
+    onSelectDate(target);
+    onScheduleNewForDate(targetDateStr);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -416,6 +431,34 @@ export const YearAgendaModal: React.FC<YearAgendaModalProps> = ({
                 <option value="Completada">Completadas</option>
                 <option value="Cancelada">Canceladas</option>
               </select>
+            </div>
+          </div>
+
+          {/* Quick Schedule in Months Bar */}
+          <div className="bg-[#F4ECE1] border-b border-[#E2D8CC] px-4 sm:px-6 py-1.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 text-[#8C6B4D] font-bold text-[11px] uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-[#8C6B4D]" />
+              <span>Agendar cita en unos meses:</span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[
+                { label: '+1 Mes', months: 1 },
+                { label: '+2 Meses', months: 2 },
+                { label: '+3 Meses', months: 3 },
+                { label: '+4 Meses', months: 4 },
+                { label: '+6 Meses', months: 6 },
+                { label: '+1 Año', months: 12 }
+              ].map(item => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => handleScheduleInMonths(item.months)}
+                  className="px-2.5 py-1 bg-white hover:bg-[#8C6B4D] hover:text-white border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#2C221C] text-[11px] font-mono font-bold rounded shadow-2xs transition-all cursor-pointer flex items-center gap-1"
+                  title={`Abrir formulario de cita para agendar dentro de ${item.months} meses`}
+                >
+                  <span>{item.label}</span>
+                </button>
+              ))}
             </div>
           </div>
 

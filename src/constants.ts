@@ -75,6 +75,10 @@ export const STYLISTS: Stylist[] = [
 ];
 
 export const TIME_SLOTS = [
+  '07:00 AM',
+  '07:30 AM',
+  '08:00 AM',
+  '08:30 AM',
   '09:00 AM',
   '09:30 AM',
   '10:00 AM',
@@ -94,7 +98,12 @@ export const TIME_SLOTS = [
   '05:00 PM',
   '05:30 PM',
   '06:00 PM',
-  '06:30 PM'
+  '06:30 PM',
+  '07:00 PM',
+  '07:30 PM',
+  '08:00 PM',
+  '08:30 PM',
+  '09:00 PM'
 ];
 
 export const DEFAULT_SCHEDULE_EXCEPTIONS: StylistScheduleException[] = [

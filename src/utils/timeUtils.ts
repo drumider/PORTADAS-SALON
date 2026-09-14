@@ -139,12 +139,12 @@ export function isSlotCoveredByAppointment(slotTime: string, appStartTime: strin
  * Standard business hours time slots for booking (30-min increments)
  */
 export const STANDARD_TIME_SLOTS_24H: string[] = [
-  '07:30', '08:00', '08:30', '09:00', '09:30',
-  '10:00', '10:30', '11:00', '11:30', '12:00',
-  '12:30', '13:00', '13:30', '14:00', '14:30',
-  '15:00', '15:30', '16:00', '16:30', '17:00',
-  '17:30', '18:00', '18:30', '19:00', '19:30',
-  '20:00', '20:30', '21:00'
+  '06:00', '06:30', '07:00', '07:30', '08:00', '08:30',
+  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+  '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+  '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+  '18:00', '18:30', '19:00', '19:30', '20:00', '20:30',
+  '21:00', '21:30', '22:00'
 ];
 
 /**
@@ -275,7 +275,68 @@ export function getServicePhases(serviceOrName?: Service | string, durationMinut
     ];
   }
 
-  // 3. Default (All other services)
+  // 3. Keratinas / Alisados / Botox Capilar / Cirugías / Nanoplastia / Taninoplastia
+  const isKeratinaOrAlisado = /keratina|queratina|alisad|botox|nanoplastia|taninoplastia|cirugia capilar|cirugía capilar|kerathermique/i.test(nameLower);
+  if (isKeratinaOrAlisado) {
+    if (dur <= 60) {
+      // Localized or very short (e.g. Keratina Pava or express)
+      return [
+        { name: 'Aplicación de Producto', durationMinutes: 30, isStylistBusy: true, description: 'Estilista aplicando producto' },
+        { name: 'Secado y Sellado', durationMinutes: Math.max(15, dur - 30), isStylistBusy: true, description: 'Secado y sellado' }
+      ];
+    }
+    if (dur <= 90) {
+      // Short / Hombre / Mujer Muy Corto (90m)
+      return [
+        { name: 'Lavado y Aplicación', durationMinutes: 30, isStylistBusy: true, description: 'Lavado y aplicación de keratina/botox' },
+        { name: 'Reposo / Actuación', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre (producto actuando)' },
+        { name: 'Secado y Sellado Térmico', durationMinutes: dur - 60, isStylistBusy: true, description: 'Planchado y sellado final' }
+      ];
+    }
+    if (dur <= 120) {
+      // 120m (e.g. Botox Mediano)
+      return [
+        { name: 'Lavado y Aplicación', durationMinutes: 40, isStylistBusy: true, description: 'Lavado y aplicación profunda' },
+        { name: 'Reposo / Pose del Producto', durationMinutes: 40, isStylistBusy: false, description: 'Estilista libre (tiempo de pose/reposo)' },
+        { name: 'Secado, Planchado y Sellado', durationMinutes: 40, isStylistBusy: true, description: 'Cauterizado térmico y estilizado' }
+      ];
+    }
+    if (dur <= 150) {
+      // 150m (2h 30m, e.g. Keratina Corto, Kerathermique)
+      return [
+        { name: 'Lavado y Aplicación de Keratina', durationMinutes: 45, isStylistBusy: true, description: 'Lavado técnico y aplicación minuciosa' },
+        { name: 'Reposo de Keratina / Pose', durationMinutes: 45, isStylistBusy: false, description: 'Estilista libre (tiempo de pose/reposo)' },
+        { name: 'Secado, Planchado y Sellado Térmico', durationMinutes: 60, isStylistBusy: true, description: 'Planchado mecha a mecha y sellado' }
+      ];
+    }
+    if (dur <= 180) {
+      // 180m (3h, e.g. Botox Largo)
+      return [
+        { name: 'Lavado y Aplicación', durationMinutes: 45, isStylistBusy: true, description: 'Lavado y aplicación' },
+        { name: 'Reposo / Pose del Producto', durationMinutes: 45, isStylistBusy: false, description: 'Estilista libre durante reposo' },
+        { name: 'Secado, Planchado y Sellado Térmico', durationMinutes: 90, isStylistBusy: true, description: 'Sellado térmico y planchado minucioso' }
+      ];
+    }
+    if (dur <= 210) {
+      // 210m (3h 30m, e.g. Keratina Mediano, Botox Muy Largo)
+      return [
+        { name: 'Lavado y Aplicación de Keratina', durationMinutes: 60, isStylistBusy: true, description: 'Lavado y aplicación mecha a mecha' },
+        { name: 'Reposo de Keratina / Pose', durationMinutes: 60, isStylistBusy: false, description: 'Estilista libre (tiempo de pose/reposo)' },
+        { name: 'Secado, Planchado y Sellado Térmico', durationMinutes: 90, isStylistBusy: true, description: 'Sellado térmico y acabado' }
+      ];
+    }
+    // 240m (4h, e.g. Keratina Largo) or more (4h 30m, e.g. Keratina Muy Largo)
+    const applyMin = 60;
+    const reposoMin = 60;
+    const finishMin = Math.max(60, dur - applyMin - reposoMin);
+    return [
+      { name: 'Lavado y Aplicación de Keratina', durationMinutes: applyMin, isStylistBusy: true, description: 'Lavado y aplicación de keratina' },
+      { name: 'Reposo de Keratina / Pose', durationMinutes: reposoMin, isStylistBusy: false, description: 'Estilista libre durante tiempo de pose (permite agendar otra cita)' },
+      { name: 'Secado, Planchado y Sellado Térmico', durationMinutes: finishMin, isStylistBusy: true, description: 'Planchado mecha a mecha y sellado térmico' }
+    ];
+  }
+
+  // 4. Default (All other services)
   return [
     {
       name: service?.name || 'Servicio directo',
@@ -396,6 +457,10 @@ export interface SlotFeasibilityResult {
   reposoHostAppointment?: Appointment;
   availableStylistId?: string;
   phasesTimeline?: DetailedPhaseTimeline[];
+  isSpecialOvertime?: boolean;
+  overtimeLabel?: string;
+  isSimultaneousAdmin?: boolean;
+  overlapWarning?: string;
 }
 
 /**
@@ -461,7 +526,8 @@ export function checkStylistBookingFeasibility({
   existingAppointments,
   isStylistOff,
   allStylists,
-  excludeAppointmentId
+  excludeAppointmentId,
+  isAdmin = false
 }: {
   stylistId: string;
   dateStr: string;
@@ -473,17 +539,22 @@ export function checkStylistBookingFeasibility({
   isStylistOff?: (st: Stylist, dateStr: string) => boolean;
   allStylists?: Stylist[];
   excludeAppointmentId?: string;
+  isAdmin?: boolean;
 }): SlotFeasibilityResult {
   const candidateStartMin = timeToMinutes(startTime);
   const totalDuration = durationMinutes || service.durationMinutes || 60;
   const candidateEndMin = candidateStartMin + totalDuration;
 
-  // Check salon business closing time (latest slot ends at 19:30 or 20:00)
-  const salonClosingMin = 19 * 60 + 30; // 07:30 PM
-  if (candidateEndMin > 20 * 60) {
+  const isSpecialOvertime = candidateStartMin < 9 * 60 || candidateEndMin > 19 * 60;
+  const overtimeLabel = candidateStartMin < 9 * 60
+    ? 'Horario Temprano (antes de las 9:00 AM)'
+    : 'Horario Nocturno (después de las 7:00 PM)';
+
+  // For regular clients, check maximum operating hour (after 22:00); for administrators in system, allow any overtime
+  if (!isAdmin && candidateEndMin > 21 * 60 + 30) {
     return {
       allowed: false,
-      reason: `La duración del servicio (${formatDurationText(totalDuration)}) supera la hora de cierre del salón.`
+      reason: `La duración del servicio (${formatDurationText(totalDuration)}) supera el límite de operación del salón.`
     };
   }
 
@@ -536,6 +607,19 @@ export function checkStylistBookingFeasibility({
           // If intervals overlap
           if (doIntervalsOverlap(candBusy.startMin, candBusy.endMin, exBusy.startMin, exBusy.endMin)) {
             const displayName = stylistObj?.name || 'El especialista';
+            if (isAdmin) {
+              return {
+                allowed: true,
+                isSimultaneousAdmin: true,
+                overlapWarning: `${displayName} ya tiene agendado a ${existingApp.clientName} (${existingApp.serviceName} - ${exBusy.phaseName}) de ${minutesToTime12(exBusy.startMin)} a ${minutesToTime12(exBusy.endMin)}. Cita simultánea / paralela autorizada en modo Administrador.`,
+                conflictingAppointment: existingApp,
+                isDuringReposo,
+                reposoHostAppointment,
+                availableStylistId: stylistId,
+                isSpecialOvertime,
+                overtimeLabel
+              };
+            }
             return {
               allowed: false,
               reason: `${displayName} ya tiene una cita con ${existingApp.clientName} (${existingApp.serviceName} - ${exBusy.phaseName}) de ${minutesToTime12(exBusy.startMin)} a ${minutesToTime12(exBusy.endMin)}.`,
@@ -559,7 +643,9 @@ export function checkStylistBookingFeasibility({
       allowed: true,
       isDuringReposo,
       reposoHostAppointment,
-      availableStylistId: stylistId
+      availableStylistId: stylistId,
+      isSpecialOvertime,
+      overtimeLabel
     };
   }
 
@@ -586,14 +672,17 @@ export function checkStylistBookingFeasibility({
         existingAppointments,
         isStylistOff,
         allStylists,
-        excludeAppointmentId
+        excludeAppointmentId,
+        isAdmin
       });
       if (res.allowed) {
         return {
           allowed: true,
           isDuringReposo: res.isDuringReposo,
           reposoHostAppointment: res.reposoHostAppointment,
-          availableStylistId: st.id
+          availableStylistId: st.id,
+          isSpecialOvertime,
+          overtimeLabel
         };
       }
     }
@@ -604,5 +693,5 @@ export function checkStylistBookingFeasibility({
     };
   }
 
-  return { allowed: true };
+  return { allowed: true, isSpecialOvertime, overtimeLabel };
 }

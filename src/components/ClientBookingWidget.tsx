@@ -16,7 +16,8 @@ import {
   Sparkles,
   AlertCircle,
   ChevronDown,
-  Hand
+  Hand,
+  CalendarRange
 } from 'lucide-react';
 import { Service, Stylist, Appointment } from '../types';
 import { SERVICES, STYLISTS, SERVICE_CATEGORIES, TIME_SLOTS } from '../constants';
@@ -407,7 +408,7 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
               <div>
                 <span className="text-[9px] text-gray-400 uppercase block font-mono">Fecha y Hora</span>
                 <strong className="text-gold-champagne font-mono font-bold block">
-                  {confirmedAppointment.formattedDate} · {confirmedAppointment.time}
+                  {confirmedAppointment.formattedDate} · {confirmedAppointment.displayTime || formatTimeTo12h(confirmedAppointment.time)}
                 </strong>
               </div>
               <div className="text-right">
@@ -643,7 +644,7 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
                 3. Día:
               </label>
               <span className="text-[9px] text-gray-400 font-mono">
-                {availableDays.find(d => d.rawValue === bookingDate)?.formatted}
+                {availableDays.find(d => d.rawValue === bookingDate)?.formatted || bookingDate}
               </span>
             </div>
 
@@ -692,6 +693,58 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
                   </button>
                 );
               })}
+            </div>
+
+            {/* Quick Future Months Jumper */}
+            <div className="flex flex-wrap items-center justify-between gap-1 pt-0.5">
+              <div className="flex items-center gap-1 text-[9px] text-gray-400 font-mono">
+                <CalendarRange className="w-3 h-3 text-gold-champagne/80" />
+                <span>En unos meses:</span>
+              </div>
+              <div className="flex items-center gap-1 flex-wrap">
+                {[
+                  { label: '+1 mes', months: 1 },
+                  { label: '+2 meses', months: 2 },
+                  { label: '+3 meses', months: 3 }
+                ].map(item => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => {
+                      const base = bookingDate ? new Date(`${bookingDate}T12:00:00`) : new Date();
+                      const target = new Date(base);
+                      target.setMonth(target.getMonth() + item.months);
+                      if (target.getDay() === 0) target.setDate(target.getDate() + 1);
+                      const y = target.getFullYear();
+                      const m = String(target.getMonth() + 1).padStart(2, '0');
+                      const d = String(target.getDate()).padStart(2, '0');
+                      setBookingDate(`${y}-${m}-${d}`);
+                    }}
+                    className="px-1.5 py-0.5 bg-white/5 hover:bg-gold-champagne/20 border border-white/10 hover:border-gold-champagne text-gray-300 hover:text-gold-champagne text-[9px] font-mono rounded transition-colors cursor-pointer"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+                <label className="px-1.5 py-0.5 bg-white/5 hover:bg-gold-champagne/20 border border-white/10 hover:border-gold-champagne text-gold-champagne text-[9px] font-mono rounded cursor-pointer transition-colors relative flex items-center gap-0.5">
+                  <span>Otro mes 📅</span>
+                  <input
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    value={bookingDate}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const chosen = new Date(`${e.target.value}T12:00:00`);
+                        if (chosen.getDay() === 0) {
+                          setBookingError('El salón está cerrado los domingos. Por favor elija de lunes a sábado.');
+                          return;
+                        }
+                        setBookingDate(e.target.value);
+                      }
+                    }}
+                    className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                  />
+                </label>
+              </div>
             </div>
 
             {selectedStylist && selectedStylist.id !== 'cualquiera' && (() => {
@@ -747,6 +800,8 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
                 const availability = checkSlotAvailability(time, bookingDate, selectedStylist?.id || '', selectedService?.durationMinutes);
                 const isOccupied = !availability.available;
                 const isSelected = bookingTime === time;
+                const isEarly = time.includes('AM') && (time.startsWith('06:') || time.startsWith('07:') || time.startsWith('08:'));
+                const isLate = time.includes('PM') && (time.startsWith('07:') || time.startsWith('08:') || time.startsWith('09:'));
 
                 return (
                   <button
@@ -754,19 +809,26 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
                     type="button"
                     disabled={isOccupied}
                     onClick={() => setBookingTime(time)}
-                    title={isOccupied ? availability.reason || 'Horario no disponible' : `Reservar a las ${time}`}
-                    className={`py-2 px-1 rounded border text-center text-xs font-mono transition-all flex flex-col items-center justify-center min-h-[38px] relative ${
+                    title={isOccupied ? availability.reason || 'Horario no disponible' : `${isEarly ? 'Horario temprano' : isLate ? 'Horario extendido noche' : 'Horario habitual'}: ${time}`}
+                    className={`py-1.5 px-1 rounded border text-center text-xs font-mono transition-all flex flex-col items-center justify-center min-h-[38px] relative ${
                       isOccupied
                         ? 'opacity-35 bg-red-950/20 border-red-900/30 text-red-400 line-through cursor-not-allowed text-[10px]'
                         : isSelected
                           ? 'bg-gold-champagne border-gold-champagne text-dark-bg font-bold shadow-md ring-1 ring-gold-champagne'
-                          : 'bg-[#1a1a1e] border-white/10 hover:border-gold-champagne/50 text-gray-200 active:bg-white/10'
+                          : isEarly || isLate
+                            ? 'bg-[#221f1a] border-[#8C6B4D]/40 text-amber-200 hover:border-gold-champagne active:bg-white/10'
+                            : 'bg-[#1a1a1e] border-white/10 hover:border-gold-champagne/50 text-gray-200 active:bg-white/10'
                     }`}
                   >
                     <span>{time}</span>
                     {availability.isDuringReposo && !isOccupied && (
                       <span className={`text-[7px] font-sans font-bold uppercase tracking-tight ${isSelected ? 'text-dark-bg' : 'text-emerald-400'}`}>
                         ✨ Reposo
+                      </span>
+                    )}
+                    {(isEarly || isLate) && !isOccupied && !availability.isDuringReposo && (
+                      <span className={`text-[7px] font-sans font-medium uppercase tracking-tight ${isSelected ? 'text-dark-bg/80' : 'text-amber-400/90'}`}>
+                        {isEarly ? '🌅 Pre-9am' : '🌙 Post-7pm'}
                       </span>
                     )}
                   </button>

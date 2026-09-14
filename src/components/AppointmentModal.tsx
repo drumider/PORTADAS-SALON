@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Calendar, Clock, User, Phone, Mail, FileText, CheckCircle, Save, Trash2, Scissors, AlertCircle, UserCheck, Sparkles, Plus, Minus, RotateCcw, Check, Layers, Edit3 } from 'lucide-react';
+import { X, Calendar, Clock, User, Phone, Mail, FileText, CheckCircle, Save, Trash2, Scissors, AlertCircle, UserCheck, Sparkles, Plus, Minus, RotateCcw, Check, Layers, Edit3, CalendarRange, CheckCircle2 } from 'lucide-react';
 import { Appointment, AppointmentStatus, Client, ServicePhase } from '../types';
 import { SERVICES, STYLISTS, TIME_SLOTS } from '../constants';
 import { getStoredClients, subscribeToClients, normalizePhone, getStoredAppointments, getStylistAvailabilityOnDate } from '../utils/storage';
-import { calculateAppointmentRange, formatDurationText, normalizeTimeTo24h, checkStylistBookingFeasibility, getServicePhases } from '../utils/timeUtils';
+import { calculateAppointmentRange, formatDurationText, normalizeTimeTo24h, checkStylistBookingFeasibility, getServicePhases, formatTimeTo12h, STANDARD_TIME_SLOTS_24H } from '../utils/timeUtils';
 import { searchAndRankServices } from '../utils/serviceSearch';
 
 interface AppointmentModalProps {
@@ -15,6 +15,7 @@ interface AppointmentModalProps {
   initialAppointment?: Partial<Appointment> | null;
   selectedDate?: string;
   prefilledClient?: Client | null;
+  clickedSlotTime?: string;
 }
 
 export const AppointmentModal: React.FC<AppointmentModalProps> = ({
@@ -24,7 +25,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
   onDelete,
   initialAppointment,
   selectedDate,
-  prefilledClient
+  prefilledClient,
+  clickedSlotTime
 }) => {
   const defaultService = useMemo(() => {
     return SERVICES.find(s => s.name === 'Blower Corto') || SERVICES.find(s => s.id === '03') || SERVICES[0];
@@ -74,6 +76,67 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
   const [registeredClients, setRegisteredClients] = useState<Client[]>(getStoredClients());
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);
 
+  // Handlers for switching to/from Create As New
+  const handleSwitchToCreateAsNew = () => {
+    setIsCreateAsNew(true);
+    setClientName('');
+    setClientPhone('');
+    setClientEmail('');
+    setNotes('');
+    setShowClientSuggestions(false);
+    
+    // If clickedSlotTime was passed and is valid, use it for the new appointment!
+    if (clickedSlotTime) {
+      setTime(clickedSlotTime);
+    }
+
+    // Set standard default service for the new appointment
+    const def = SERVICES.find(s => s.name === 'Corte de Cabello') || SERVICES.find(s => s.name === 'Blower Corto') || defaultService;
+    setServiceId(def.id);
+    setSelectedOptionId(def.options?.[0]?.id || '');
+    const defDur = def.options?.[0]?.durationMinutes || def.durationMinutes || 45;
+    setCustomDurationMinutes(defDur);
+    setCustomPhases(getServicePhases(def, defDur));
+  };
+
+  const handleSwitchBackToModify = () => {
+    setIsCreateAsNew(false);
+    if (initialAppointment) {
+      setClientName(initialAppointment.clientName || '');
+      setClientPhone(initialAppointment.clientPhone || '');
+      setClientEmail(initialAppointment.clientEmail || '');
+      setTime(initialAppointment.time || '10:00');
+      const matchedS = resolveService(initialAppointment.serviceId, initialAppointment.serviceName);
+      setServiceId(matchedS.id);
+      let optDur = matchedS.durationMinutes || 60;
+      if (matchedS.options && matchedS.options.length > 0) {
+        const foundOpt = matchedS.options.find(o => 
+          initialAppointment.serviceName?.toLowerCase().includes(o.name.toLowerCase())
+        );
+        setSelectedOptionId(foundOpt ? foundOpt.id : matchedS.options[0].id);
+        if (foundOpt?.durationMinutes) optDur = foundOpt.durationMinutes;
+      }
+      const effDur = (initialAppointment.durationMinutes && initialAppointment.durationMinutes >= optDur)
+        ? initialAppointment.durationMinutes
+        : optDur;
+      setCustomDurationMinutes(effDur);
+      if (initialAppointment.customPhases && initialAppointment.customPhases.length > 0) {
+        setCustomPhases(JSON.parse(JSON.stringify(initialAppointment.customPhases)));
+      } else {
+        setCustomPhases(getServicePhases(matchedS, effDur));
+      }
+      setNotes(initialAppointment.notes || '');
+    }
+  };
+
+  const handleReuseClientData = () => {
+    if (initialAppointment) {
+      setClientName(initialAppointment.clientName || '');
+      setClientPhone(initialAppointment.clientPhone || '');
+      setClientEmail(initialAppointment.clientEmail || '');
+    }
+  };
+
   // Subscribe to clients list
   useEffect(() => {
     const unsub = subscribeToClients((clients) => {
@@ -116,6 +179,34 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
     if (client.notes && !notes) setNotes(client.notes);
     setShowClientSuggestions(false);
   };
+
+  const handleShiftMonths = (monthsToAdd: number) => {
+    const base = date ? new Date(`${date}T12:00:00`) : new Date();
+    const target = new Date(base);
+    target.setMonth(target.getMonth() + monthsToAdd);
+    // If Sunday (day 0), salon is closed, shift to Monday (day 1)
+    if (target.getDay() === 0) {
+      target.setDate(target.getDate() + 1);
+    }
+    const y = target.getFullYear();
+    const m = String(target.getMonth() + 1).padStart(2, '0');
+    const d = String(target.getDate()).padStart(2, '0');
+    setDate(`${y}-${m}-${d}`);
+  };
+
+  const futureMonthsNote = useMemo(() => {
+    if (!date) return null;
+    const now = new Date();
+    const chosen = new Date(`${date}T12:00:00`);
+    const diffMs = chosen.getTime() - now.getTime();
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays >= 25) {
+      const approxMonths = Math.round(diffDays / 30);
+      const formatted = chosen.toLocaleDateString('es-CR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+      return `Cita en ${approxMonths} ${approxMonths === 1 ? 'mes' : 'meses'} (${formatted})`;
+    }
+    return null;
+  }, [date]);
 
   // Initialize or reset form only when the modal opens or the specific appointment/slot changes
   useEffect(() => {
@@ -394,36 +485,81 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         <span className="truncate">Modificando cita existente de: {initialAppointment.clientName}</span>
                       </div>
                       <p className="text-[11px] text-amber-800 truncate">
-                        {initialAppointment.serviceName} a las {initialAppointment.time} ({initialAppointment.date})
+                        {initialAppointment.serviceName} a las {formatTimeTo12h(initialAppointment.time || '')} ({initialAppointment.date})
+                        {clickedSlotTime && clickedSlotTime !== initialAppointment.time && (
+                          <span className="ml-1 text-amber-950 font-semibold font-mono">· Clic en espacio de las {formatTimeTo12h(clickedSlotTime)}</span>
+                        )}
                       </p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setIsCreateAsNew(true)}
-                      className="px-2.5 py-1 bg-white hover:bg-amber-100 border border-amber-400 text-amber-950 text-[10px] font-bold rounded uppercase tracking-wider shrink-0 cursor-pointer shadow-2xs transition-colors self-start sm:self-auto"
-                      title="No sobreescribir la cita de 2:00 PM: agendar como una cita totalmente nueva"
+                      onClick={handleSwitchToCreateAsNew}
+                      className="px-2.5 py-1.5 bg-white hover:bg-amber-100 border border-amber-400 text-amber-950 text-[10px] font-bold rounded uppercase tracking-wider shrink-0 cursor-pointer shadow-2xs transition-colors self-start sm:self-auto flex items-center gap-1"
+                      title="No modificar esta cita: agendar una cita totalmente nueva para otro cliente"
                     >
-                      + Agendar como Cita Nueva
+                      <Plus className="w-3 h-3 text-amber-800" />
+                      <span>+ Agendar como Cita Nueva</span>
                     </button>
                   </div>
                 ) : (
-                  <div className="p-2.5 bg-emerald-50 border border-emerald-300 rounded text-xs text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 font-bold text-emerald-900">
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>Modo: Cita Nueva Separada</span>
+                  <div className="p-3 bg-emerald-50 border border-emerald-300 rounded text-xs text-emerald-950 space-y-2 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 font-bold text-emerald-900">
+                          <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>Modo: Agendando Cita Nueva Separada</span>
+                        </div>
+                        <p className="text-[11px] text-emerald-700">
+                          La cita original de <strong>{initialAppointment.clientName}</strong> ({formatTimeTo12h(initialAppointment.time || '')}) NO será alterada ni reemplazada.
+                        </p>
                       </div>
-                      <p className="text-[11px] text-emerald-700 truncate">
-                        La cita original de {initialAppointment.clientName} ({initialAppointment.time}) NO será reemplazada.
-                      </p>
+                      <button
+                        type="button"
+                        onClick={handleSwitchBackToModify}
+                        className="px-2.5 py-1 bg-white hover:bg-emerald-100 border border-emerald-300 text-emerald-900 text-[10px] font-bold rounded uppercase tracking-wider shrink-0 cursor-pointer shadow-2xs transition-colors self-start sm:self-auto"
+                      >
+                        Volver a Modificar Cita Original
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setIsCreateAsNew(false)}
-                      className="px-2.5 py-1 bg-white hover:bg-emerald-100 border border-emerald-300 text-emerald-900 text-[10px] font-bold rounded uppercase tracking-wider shrink-0 cursor-pointer shadow-2xs transition-colors self-start sm:self-auto"
-                    >
-                      Volver a Modificar
-                    </button>
+
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-emerald-200 text-[11px]">
+                      <span className="text-emerald-800 font-medium">Hora para la nueva cita:</span>
+                      {clickedSlotTime && (
+                        <button
+                          type="button"
+                          onClick={() => setTime(clickedSlotTime)}
+                          className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] transition-all cursor-pointer ${
+                            time === clickedSlotTime
+                              ? 'bg-emerald-700 text-white shadow-2xs'
+                              : 'bg-white text-emerald-900 border border-emerald-300 hover:bg-emerald-100'
+                          }`}
+                        >
+                          Espacio clickeado ({formatTimeTo12h(clickedSlotTime)})
+                        </button>
+                      )}
+                      {initialAppointment.time && initialAppointment.time !== clickedSlotTime && (
+                        <button
+                          type="button"
+                          onClick={() => setTime(initialAppointment.time || '10:00')}
+                          className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] transition-all cursor-pointer ${
+                            time === initialAppointment.time
+                              ? 'bg-emerald-700 text-white shadow-2xs'
+                              : 'bg-white text-emerald-900 border border-emerald-300 hover:bg-emerald-100'
+                          }`}
+                        >
+                          Hora original ({formatTimeTo12h(initialAppointment.time)})
+                        </button>
+                      )}
+                      {!clientName && (
+                        <button
+                          type="button"
+                          onClick={handleReuseClientData}
+                          className="ml-auto text-[10px] text-emerald-800 hover:text-emerald-950 underline cursor-pointer font-medium"
+                        >
+                          Reutilizar datos de {initialAppointment.clientName}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )
               )}
@@ -699,44 +835,106 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
               </div>
 
               {/* Date & Time */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="min-w-0">
-                  <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold mb-1">
-                    Fecha *
-                  </label>
-                  <div className="relative">
-                    <Calendar className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="date"
-                      required
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-base sm:text-xs pl-9 pr-3 py-2 sm:py-2.5 outline-none font-mono rounded-none"
-                    />
+              <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold">
+                        Fecha *
+                      </label>
+                      {futureMonthsNote && (
+                        <span className="text-[10px] text-emerald-700 font-mono font-bold truncate">
+                          {futureMonthsNote}
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <Calendar className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="date"
+                        required
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-base sm:text-xs pl-9 pr-3 py-2 sm:py-2.5 outline-none font-mono rounded-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold mb-1">
+                      Hora de Inicio *
+                    </label>
+                    <div className="relative">
+                      <Clock className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <select
+                        value={normalizeTimeTo24h(time)}
+                        onChange={(e) => setTime(e.target.value)}
+                        className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-base sm:text-xs pl-9 pr-3 py-2 sm:py-2.5 outline-none font-mono rounded-none"
+                      >
+                        {(() => {
+                          const normCurrent = normalizeTimeTo24h(time);
+                          const slots = [...STANDARD_TIME_SLOTS_24H];
+                          if (normCurrent && !slots.includes(normCurrent)) {
+                            slots.push(normCurrent);
+                            slots.sort();
+                          }
+                          return slots.map(t24 => {
+                            const [h] = t24.split(':').map(Number);
+                            let tag = '';
+                            if (h < 9) tag = ' · 🌅 Temprano (<9 AM)';
+                            else if (h >= 19) tag = ' · 🌙 Nocturno (≥7 PM)';
+                            return (
+                              <option key={t24} value={t24}>
+                                {formatTimeTo12h(t24)}{tag}
+                              </option>
+                            );
+                          });
+                        })()}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
-                <div className="min-w-0">
-                  <label className="block text-[10px] uppercase tracking-wider text-[#8C6B4D] font-bold mb-1">
-                    Hora de Inicio *
-                  </label>
-                  <div className="relative">
-                    <Clock className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <select
-                      value={time}
-                      onChange={(e) => setTime(e.target.value)}
-                      className="w-full bg-[#FAF8F5] border border-[#E2D9CE] focus:border-[#B5916A] text-neutral-900 text-base sm:text-xs pl-9 pr-3 py-2 sm:py-2.5 outline-none font-mono rounded-none"
-                    >
-                      {TIME_SLOTS.map(t => {
-                        const val24 = t.replace(' AM', '').replace(' PM', '');
-                        return (
-                          <option key={t} value={val24}>
-                            {t} ({val24})
-                          </option>
-                        );
-                      })}
-                    </select>
+                {/* Quick Option to Schedule in a few months */}
+                <div className="bg-[#FAF8F5] border border-[#E2D9CE] p-2 rounded-md flex flex-wrap items-center gap-1.5">
+                  <div className="flex items-center gap-1 text-[#8C6B4D] text-[10px] font-bold uppercase tracking-wider shrink-0 mr-1">
+                    <CalendarRange className="w-3.5 h-3.5" />
+                    <span>Agendar en unos meses:</span>
                   </div>
+                  {[
+                    { label: '+1 mes', months: 1 },
+                    { label: '+2 meses', months: 2 },
+                    { label: '+3 meses', months: 3 },
+                    { label: '+4 meses', months: 4 },
+                    { label: '+6 meses', months: 6 }
+                  ].map(item => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => handleShiftMonths(item.months)}
+                      className="px-2 py-0.5 bg-white hover:bg-[#8C6B4D] hover:text-white border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#2C221C] text-[10px] font-mono font-bold rounded shadow-2xs transition-colors cursor-pointer"
+                      title={`Avanzar ${item.months} meses adelante conservando día hábil`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const base = date ? new Date(`${date}T12:00:00`) : new Date();
+                      const target = new Date(base);
+                      target.setFullYear(target.getFullYear() + 1);
+                      if (target.getDay() === 0) target.setDate(target.getDate() + 1);
+                      const y = target.getFullYear();
+                      const m = String(target.getMonth() + 1).padStart(2, '0');
+                      const d = String(target.getDate()).padStart(2, '0');
+                      setDate(`${y}-${m}-${d}`);
+                    }}
+                    className="px-2 py-0.5 bg-white hover:bg-[#8C6B4D] hover:text-white border border-[#D9CEC2] hover:border-[#8C6B4D] text-[#2C221C] text-[10px] font-mono font-bold rounded shadow-2xs transition-colors cursor-pointer ml-auto"
+                    title="Agendar para dentro de 1 año"
+                  >
+                    +1 año
+                  </button>
                 </div>
               </div>
 
@@ -764,7 +962,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     const avail = getStylistAvailabilityOnDate(st, d);
                     return avail.isOff;
                   },
-                  allStylists: STYLISTS
+                  allStylists: STYLISTS,
+                  isAdmin: true
                 });
 
                 const handleAddMinutes = (mins: number) => {
@@ -1063,7 +1262,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Feasibility Alert / Reposo Confirmation */}
+                    {/* Feasibility Alert / Reposo Confirmation / Overtime Confirmation */}
                     {!feasibility.allowed ? (
                       <div className="p-2.5 bg-rose-50 border border-rose-300 rounded text-xs text-rose-900 flex items-start gap-2">
                         <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
@@ -1072,17 +1271,43 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                           <p className="text-[11px] text-rose-800">{feasibility.reason}</p>
                         </div>
                       </div>
-                    ) : feasibility.isDuringReposo ? (
-                      <div className="p-2.5 bg-emerald-50 border border-emerald-300 rounded text-xs text-emerald-900 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold">✨ Agendamiento en Espacio de Reposo:</p>
-                          <p className="text-[11px] text-emerald-800">
-                            El estilista tiene tiempo libre de reposo durante este horario. La cita encaja perfectamente.
-                          </p>
-                        </div>
-                      </div>
-                    ) : null}
+                    ) : (
+                      <>
+                        {feasibility.isSimultaneousAdmin && (
+                          <div className="p-2.5 bg-amber-50 border border-amber-300 rounded text-xs text-amber-950 flex items-start gap-2">
+                            <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold">⚠️ Cita Simultánea / Superpuesta Autorizada (Administrador):</p>
+                              <p className="text-[11px] text-amber-800">
+                                {feasibility.overlapWarning || 'El estilista ya tiene otra cita en este horario. Como administrador, puedes agendar múltiples clientes simultáneamente o durante el servicio.'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {feasibility.isSpecialOvertime && (
+                          <div className="p-2.5 bg-amber-50 border border-amber-300 rounded text-xs text-amber-950 flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold">✨ {feasibility.overtimeLabel || 'Horario Especial'}:</p>
+                              <p className="text-[11px] text-amber-800">
+                                Cita agendada fuera de la jornada habitual (antes de las 9:00 AM o después de las 7:00 PM). Habilitada en el sistema administrativo.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {feasibility.isDuringReposo && (
+                          <div className="p-2.5 bg-emerald-50 border border-emerald-300 rounded text-xs text-emerald-900 flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold">✨ Agendamiento en Espacio de Reposo:</p>
+                              <p className="text-[11px] text-emerald-800">
+                                El estilista tiene tiempo libre de reposo durante este horario. La cita encaja perfectamente.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 );
               })()}
@@ -1222,7 +1447,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   className="bg-[#2C221C] hover:bg-[#A68358] text-white text-xs uppercase tracking-[0.12em] font-bold px-4 py-2.5 flex items-center justify-center gap-1.5 transition-colors shadow-sm flex-1 sm:flex-none cursor-pointer active:scale-98"
                 >
                   <Save className="w-4 h-4" />
-                  <span>{isEditing ? 'Guardar Cambios' : 'Agendar Cita'}</span>
+                  <span>{isEditing ? 'Guardar Cambios' : (isCreateAsNew ? 'Agendar Cita Nueva' : 'Agendar Cita')}</span>
                 </button>
               </div>
             </div>
