@@ -750,6 +750,7 @@ export const saveScheduleSwap = ({
 };
 
 export const deleteScheduleExceptionPair = (id: string): void => {
+  if (!id) return;
   const current = cachedScheduleExceptions.find(e => e.id === id);
   if (!current) {
     deleteScheduleException(id);
@@ -759,8 +760,9 @@ export const deleteScheduleExceptionPair = (id: string): void => {
   // If this exception has a linked swap date, find the matching partner
   if (current.replacesDate) {
     const partner = cachedScheduleExceptions.find(
-      e => e.id !== id &&
-      (e.stylistId.toLowerCase() === current.stylistId.toLowerCase()) &&
+      e => e && e.id !== id &&
+      e.stylistId && current.stylistId &&
+      e.stylistId.toLowerCase() === current.stylistId.toLowerCase() &&
       e.date === current.replacesDate &&
       e.replacesDate === current.date
     );
@@ -808,9 +810,11 @@ export const getStylistAvailabilityOnDate = (
     } else {
       dateStr = dateInput.substring(0, 10);
     }
-    const [y, m, d] = dateStr.split('-').map(Number);
-    dayOfWeek = new Date(y, m - 1, d).getDay();
-  } else {
+    const parts = dateStr.split('-').map(Number);
+    if (parts.length >= 3 && !parts.some(isNaN)) {
+      dayOfWeek = new Date(parts[0], parts[1] - 1, parts[2]).getDay();
+    }
+  } else if (dateInput instanceof Date && !isNaN(dateInput.getTime())) {
     const y = dateInput.getFullYear();
     const m = String(dateInput.getMonth() + 1).padStart(2, '0');
     const d = String(dateInput.getDate()).padStart(2, '0');
@@ -823,9 +827,11 @@ export const getStylistAvailabilityOnDate = (
     : (Array.isArray(cachedScheduleExceptions) ? cachedScheduleExceptions : DEFAULT_SCHEDULE_EXCEPTIONS);
 
   // Find exception for this stylist on this date
+  const cleanStylistId = stylistId.toLowerCase();
   const exc = exceptions.find(e => 
-    !deletedExcIds.has(e.id) &&
-    (e.stylistId.toLowerCase() === stylistId.toLowerCase() || e.stylistName?.toLowerCase() === stylistId.toLowerCase()) && 
+    e && !deletedExcIds.has(e.id) &&
+    ((e.stylistId && e.stylistId.toLowerCase() === cleanStylistId) || 
+     (e.stylistName && e.stylistName.toLowerCase() === cleanStylistId)) && 
     e.date === dateStr
   );
 
@@ -857,9 +863,9 @@ export const getStylistAvailabilityOnDate = (
   // Fallback to regular weekly schedule
   const stylistObj = typeof stylistInput === 'object' 
     ? stylistInput 
-    : (stylistsList || STYLISTS).find(s => s.id.toLowerCase() === stylistId.toLowerCase() || s.name.toLowerCase() === stylistId.toLowerCase());
+    : (stylistsList || STYLISTS).find(s => s && s.id && (s.id.toLowerCase() === cleanStylistId || (s.name && s.name.toLowerCase() === cleanStylistId)));
 
-  const regularOff = stylistObj?.offDays?.includes(dayOfWeek) ?? false;
+  const regularOff = Array.isArray(stylistObj?.offDays) ? stylistObj.offDays.includes(dayOfWeek) : false;
   return {
     isOff: regularOff,
     reason: regularOff ? 'Día de descanso regular' : undefined,
