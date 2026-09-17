@@ -33,7 +33,7 @@ import {
   getServicePhases
 } from '../utils/timeUtils';
 import { searchAndRankServices } from '../utils/serviceSearch';
-import { getStylistAvailabilityOnDate } from '../utils/storage';
+import { getStylistAvailabilityOnDate, recordWebBookingAnalytics } from '../utils/storage';
 
 interface ClientBookingWidgetProps {
   existingAppointments: Appointment[];
@@ -300,6 +300,12 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
       if (result && result.success) {
         const appointmentId = result.id;
         
+        // Save analytics for web bookings (persists even if admin deletes the agenda event later)
+        recordWebBookingAnalytics({
+          ...newApp,
+          id: appointmentId
+        });
+
         const waMsg = `¡Hola CF Portadas Escazú! ✨✂️\n\nAcabo de agendar una cita en su sistema:\n\n` +
           `🔖 *Código de Cita:* ${appointmentId}\n` +
           `👤 *Cliente:* ${clientName.trim()}\n` +

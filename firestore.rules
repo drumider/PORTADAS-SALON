@@ -10,5 +10,8 @@ service cloud.firestore {
     match /schedule_exceptions/{exceptionId} {
       allow read, create, update, delete: if true;
     }
+    match /analytics_web_bookings/{analyticsId} {
+      allow read, create, update, delete: if true;
+    }
   }
 }

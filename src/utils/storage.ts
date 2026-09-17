@@ -875,3 +875,37 @@ export const getStylistAvailabilityOnDate = (
   };
 };
 
+
+export const recordWebBookingAnalytics = async (appointment: any) => {
+  try {
+    const now = new Date().toISOString();
+    const id = 'web-app-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+    const data = {
+      ...appointment,
+      id,
+      recordedAt: now
+    };
+    await setDoc(doc(db, 'analytics_web_bookings', id), sanitizeForFirestore(data));
+  } catch (err) {
+    console.error('Error recording web booking analytics:', err);
+  }
+};
+
+export const subscribeToWebBookingAnalytics = (callback: (apps: any[]) => void) => {
+  const colRef = collection(db, 'analytics_web_bookings');
+  const unsubscribe = onSnapshot(
+    colRef,
+    (snapshot) => {
+      const apps: any[] = [];
+      snapshot.forEach((docSnap) => {
+        apps.push(docSnap.data());
+      });
+      callback(apps);
+    },
+    (error) => {
+      console.error('Error fetching analytics:', error);
+      callback([]);
+    }
+  );
+  return unsubscribe;
+};

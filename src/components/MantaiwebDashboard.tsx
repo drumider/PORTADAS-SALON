@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Lock, BarChart3, Users, Calendar, TrendingUp } from 'lucide-react';
-import { getStoredAppointments } from '../utils/storage';
+import { getStoredAppointments, subscribeToWebBookingAnalytics } from '../utils/storage';
 import { Appointment } from '../types';
 
 interface MantaiwebDashboardProps {
@@ -12,16 +12,31 @@ export const MantaiwebDashboard: React.FC<MantaiwebDashboardProps> = ({ isOpen, 
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState('');
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
 
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
     if (isAuthenticated) {
-      // Load analytics data
-      const data = getStoredAppointments();
-      // Only include appointments booked via the web widget
-      const webAppointments = data.filter(a => a.source === 'web');
-      setAppointments(webAppointments);
+      // First, get any active non-deleted web appointments from standard cache
+      const currentData = getStoredAppointments();
+      const currentWebApps = currentData.filter(a => a.source === 'web');
+      
+      // We will merge standard web apps (just in case they were made before the analytics logger)
+      // with the permanently logged ones.
+      
+      unsubscribe = subscribeToWebBookingAnalytics((analyticsData) => {
+        // Merge analytics data with any existing web appointments that might have missed the logger
+        const mergedMap = new Map<string, any>();
+        currentWebApps.forEach(app => mergedMap.set(app.id, app));
+        analyticsData.forEach(app => mergedMap.set(app.id, app));
+        
+        setAppointments(Array.from(mergedMap.values()));
+      });
     }
+    
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [isAuthenticated, isOpen]);
 
   useEffect(() => {
