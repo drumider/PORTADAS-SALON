@@ -83,6 +83,7 @@ export interface Appointment {
   cancellationReason?: string;
   cancelledAt?: string;
   createdAt: string;
+  source?: 'web' | 'admin';
 }
 
 export interface GalleryItem {

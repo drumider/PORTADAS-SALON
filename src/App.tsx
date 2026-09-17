@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getImageUrl } from './utils/imageUtils';
 import { 
   Scissors, 
@@ -43,6 +43,7 @@ import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ProductsSection } from './components/ProductsSection';
 import { ClientBookingWidget } from './components/ClientBookingWidget';
+import { MantaiwebDashboard } from './components/MantaiwebDashboard';
 import { Service, Stylist, Appointment } from './types';
 import { SERVICES, STYLISTS, TIME_SLOTS } from './constants';
 import { SERVICE_CATEGORIES } from './data/servicesData';
@@ -124,6 +125,8 @@ export default function App() {
   // Admin Panel & Secret Login States
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState<boolean>(false);
   const [isAdminViewActive, setIsAdminViewActive] = useState<boolean>(false);
+  const [isMantaiwebDashboardOpen, setIsMantaiwebDashboardOpen] = useState<boolean>(false);
+  const mantaiClickTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Search, Category Filters & Expand Bar for Services
   const [isServicesExpanded, setIsServicesExpanded] = useState<boolean>(false);
@@ -1007,10 +1010,33 @@ export default function App() {
             <span className="text-[8px] tracking-[0.2em] text-white/20 font-mono mt-2 uppercase">
               PREMIUM LUXURY BRANDING COSTA RICA
             </span>
+            <span 
+              className="text-[8px] tracking-[0.2em] text-white/5 hover:text-white/20 transition-colors font-mono mt-1 uppercase cursor-pointer select-none"
+              onClick={() => {
+                if (mantaiClickTimeout.current) {
+                  clearTimeout(mantaiClickTimeout.current);
+                  mantaiClickTimeout.current = null;
+                  setIsMantaiwebDashboardOpen(true);
+                } else {
+                  mantaiClickTimeout.current = setTimeout(() => {
+                    window.open('https://mantaiweb.com', '_blank');
+                    mantaiClickTimeout.current = null;
+                  }, 250);
+                }
+              }}
+              title=""
+            >
+              CREADO POR MANTAIWEB.COM
+            </span>
           </div>
 
         </div>
       </footer>
+
+      <MantaiwebDashboard 
+        isOpen={isMantaiwebDashboardOpen} 
+        onClose={() => setIsMantaiwebDashboardOpen(false)} 
+      />
 
       {/* LIGHTBOX / IMAGE MODAL VIEWER */}
       <AnimatePresence>

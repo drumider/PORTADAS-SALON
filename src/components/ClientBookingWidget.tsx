@@ -291,7 +291,8 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
         time: normalizedTime24,
         durationMinutes: effectiveDurationMinutes,
         status: 'Pendiente',
-        notes: customNote.trim()
+        notes: customNote.trim(),
+        source: 'web'
       };
 
       const result = await onSaveAppointment(newApp);

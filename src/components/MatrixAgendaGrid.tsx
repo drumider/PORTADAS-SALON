@@ -592,7 +592,11 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
 
   // Save handler
   const handleSaveAppointment = (appointmentData: Omit<Appointment, 'id' | 'createdAt'> & { id?: string }) => {
-    const saved = saveAppointment(appointmentData);
+    const dataToSave = {
+      ...appointmentData,
+      source: appointmentData.source || 'admin'
+    } as any;
+    const saved = saveAppointment(dataToSave);
     setIsAppointmentModalOpen(false);
     setEditingAppointment(null);
     setModalInitialSlot(null);
