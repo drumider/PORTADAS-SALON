@@ -313,6 +313,27 @@ export const ClientBookingWidget: React.FC<ClientBookingWidgetProps> = ({
 
         const waUrl = `https://wa.me/50689607575?text=${encodeURIComponent(waMsg)}`;
 
+        // Silent email notification
+        try {
+          fetch('/api/notify-booking', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              appointmentDetails: {
+                clientName: clientName.trim(),
+                clientPhone: clientPhone.trim(),
+                service: effectiveServiceName,
+                stylistName: selectedStylist.name,
+                date: formattedDate,
+                time: `${bookingRange.startTime12} - ${bookingRange.endTime12}`,
+                id: appointmentId
+              }
+            })
+          }).catch(err => console.error("Error triggering notification:", err));
+        } catch (e) {
+          console.error("Failed to notify", e);
+        }
+
         setConfirmedAppointment({
           id: appointmentId,
           ...newApp,
