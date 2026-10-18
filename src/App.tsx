@@ -313,8 +313,8 @@ export default function App() {
                 ))}
 
                 <div className="pt-2 flex items-center justify-between text-[11px] text-gray-light/60">
-                  <a href="tel:2219090" className="hover:text-gold-champagne flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-gold-champagne" /> 2219-0909
+                  <a href="tel:22019090" className="hover:text-gold-champagne flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-gold-champagne" /> 2201-9090
                   </a>
                   <a 
                     href="https://wa.me/50689607575?text=Hola%20CF%20Portadas,%20quisiera%20consultar%20por%20una%20cita."
@@ -861,11 +861,11 @@ export default function App() {
               {/* Quick Mobile Call Actions */}
               <div className="grid grid-cols-2 gap-2">
                 <a
-                  href="tel:2219090"
+                  href="tel:22019090"
                   className="flex items-center justify-center gap-1.5 p-2.5 bg-dark-bg/90 border border-warm-border hover:border-gold-champagne/60 text-white hover:text-gold-champagne text-xs font-mono rounded-sm transition-colors"
                 >
                   <Phone className="w-3.5 h-3.5 text-gold-champagne shrink-0" />
-                  <span>2219 0909</span>
+                  <span>2201 9090</span>
                 </a>
                 <a
                   href="tel:22883535"
