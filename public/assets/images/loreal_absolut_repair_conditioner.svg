@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a251e"/>
+      <stop offset="100%" stop-color="#120f0c"/>
+    </radialGradient>
+    <linearGradient id="tube" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#edd2a4"/>
+      <stop offset="35%" stop-color="#fce8c7"/>
+      <stop offset="65%" stop-color="#e3c28d"/>
+      <stop offset="100%" stop-color="#c4a16c"/>
+    </linearGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#111111"/>
+      <stop offset="50%" stop-color="#333333"/>
+      <stop offset="100%" stop-color="#111111"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="530" rx="120" ry="20" fill="#000000" opacity="0.6"/>
+  <rect x="250" y="470" width="100" height="40" rx="4" fill="url(#cap)" stroke="#555555" stroke-width="1"/>
+  <path d="M220 110 L380 110 L350 470 L250 470 Z" fill="url(#tube)"/>
+  <rect x="215" y="100" width="170" height="15" fill="#d1b07f" rx="1"/>
+  <!-- Label on Tube -->
+  <rect x="235" y="200" width="130" height="230" fill="#ffffff" rx="2"/>
+  <text x="300" y="225" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="13" fill="#111111" text-anchor="middle">L'ORÉAL</text>
+  <text x="300" y="237" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7.5" fill="#111111" text-anchor="middle" letter-spacing="1">PROFESSIONNEL</text>
+  <text x="300" y="246" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6" fill="#666666" text-anchor="middle">PARIS</text>
+  <text x="300" y="280" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="20" fill="#111111" text-anchor="middle">Absolut</text>
+  <text x="300" y="300" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="20" fill="#111111" text-anchor="middle">Repair</text>
+  <text x="300" y="320" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7.5" fill="#776644" text-anchor="middle" letter-spacing="1">PROTEIN + OMEGA-9</text>
+  <text x="300" y="340" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="6.5" fill="#111111" text-anchor="middle">PROFESSIONAL CONDITIONER</text>
+  <text x="300" y="352" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6" fill="#555555" text-anchor="middle">Instant resurfacing for dry hair</text>
+  <text x="300" y="400" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="10" fill="#111111" text-anchor="middle" letter-spacing="1">SERIE EXPERT</text>
+  <text x="300" y="415" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#666666" text-anchor="middle">200 ml</text>
+</svg>

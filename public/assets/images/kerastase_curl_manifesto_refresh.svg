@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a2722"/>
+      <stop offset="100%" stop-color="#12100d"/>
+    </radialGradient>
+    <linearGradient id="bottle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f2dfc9"/>
+      <stop offset="35%" stop-color="#faeee1"/>
+      <stop offset="65%" stop-color="#ebd5bb"/>
+      <stop offset="100%" stop-color="#d9be9e"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="530" rx="110" ry="20" fill="#000000" opacity="0.6"/>
+  <!-- Bottle Base -->
+  <rect x="235" y="190" width="130" height="320" rx="18" fill="url(#bottle)"/>
+  <!-- Spray Trigger Head -->
+  <rect x="260" y="120" width="80" height="70" rx="4" fill="#faeee1" stroke="#d9be9e" stroke-width="1"/>
+  <path d="M300 120 L300 70 Q300 55 330 55 L350 70 Q320 85 320 120 Z" fill="#ebd5bb"/>
+  <!-- Kerastase Branding -->
+  <text x="300" y="240" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="20" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="255" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="8" fill="#111111" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <!-- K Logo with bar -->
+  <line x1="240" y1="285" x2="360" y2="285" stroke="#a38363" stroke-width="6"/>
+  <path d="M285 270 L285 300 M285 285 L315 270 M285 285 L315 300" stroke="#ffffff" stroke-width="10" stroke-linecap="square"/>
+  <!-- CURL MANIFESTO -->
+  <text x="300" y="320" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="13" fill="#222222" text-anchor="middle" letter-spacing="2">CURL MANIFESTO</text>
+  <text x="300" y="350" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="11" fill="#111111" text-anchor="middle">REFRESH ABSOLU</text>
+  <text x="300" y="365" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7" fill="#8c6d4d" text-anchor="middle">MIEL DE MANUKA + CÉRAMIDE</text>
+  <text x="300" y="385" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#444444" text-anchor="middle">Spray deuxième jour raviveur de boucles</text>
+  <text x="300" y="396" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#444444" text-anchor="middle">Second day curl refreshing spray</text>
+  <text x="300" y="440" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="7.5" fill="#222222" text-anchor="middle">SANS RINÇAGE - LEAVE-IN</text>
+  <text x="300" y="480" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#666666" text-anchor="middle">190 ml 6.4 fl.oz.</text>
+</svg>

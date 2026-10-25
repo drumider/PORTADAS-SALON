@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2b2d35"/>
+      <stop offset="100%" stop-color="#0f1015"/>
+    </radialGradient>
+    <linearGradient id="white_box" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f0f2f5"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="480" rx="140" ry="20" fill="#000000" opacity="0.6"/>
+  <!-- White Box -->
+  <rect x="160" y="160" width="280" height="280" rx="12" fill="url(#white_box)" stroke="#dddddd" stroke-width="2"/>
+  <text x="300" y="220" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="20" fill="#111111" text-anchor="middle" letter-spacing="2">KÉRASTASE</text>
+  <text x="300" y="238" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="8" fill="#333333" text-anchor="middle" letter-spacing="3">PARIS</text>
+  <!-- Teal K Logo -->
+  <path d="M 285 260 L 285 320 M 285 290 L 315 260 M 285 290 L 315 320" stroke="#2ac1bc" stroke-width="10" stroke-linecap="square"/>
+  <text x="300" y="350" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="12" fill="#2ac1bc" text-anchor="middle" letter-spacing="3">SYMBIOSE</text>
+  <text x="300" y="372" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="10" fill="#111111" text-anchor="middle" letter-spacing="1">MASQUE REVITALISANT ESSENTIEL</text>
+  <text x="300" y="388" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#444444" text-anchor="middle">ACIDE SALICYLIQUE + SQUALANE</text>
+  <text x="300" y="402" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#666666" text-anchor="middle">Intense revitalizing mask</text>
+  <text x="300" y="425" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#888888" text-anchor="middle">200 ml 6.8 fl.oz.</text>
+</svg>

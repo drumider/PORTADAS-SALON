@@ -208,7 +208,30 @@ export function getServicePhases(serviceOrName?: Service | string, durationMinut
 
   const nameLower = (serviceName || service?.name || '').toLowerCase();
 
-  // 1. Tinte / Coloración / Baño Color / INOA
+  // 1. Keratinas / Alisados / Botox Capilar / Cirugías / Nanoplastia / Taninoplastia
+  // CITA CORRIDA: Se quita por completo el tiempo de reposo para que la cita quede 100% corrida y continua.
+  const isKeratinaOrAlisado = /keratina|queratina|alisad|botox|nanoplastia|taninoplastia|cirugia capilar|cirugía capilar|kerathermique/i.test(nameLower);
+  if (isKeratinaOrAlisado) {
+    return [
+      {
+        name: service?.name || 'Tratamiento Corrido',
+        durationMinutes: dur,
+        isStylistBusy: true,
+        description: 'Cita corrida: Estilista dedicado al 100% durante todo el servicio (sin tiempo de reposo)'
+      }
+    ];
+  }
+
+  // If service has explicit configured phases in catalog (e.g. Tinte Inoa Corto with 3 phases)
+  if (service?.phases && service.phases.length > 0) {
+    const totalPhasesDuration = service.phases.reduce((acc, p) => acc + p.durationMinutes, 0);
+    // If no explicit duration was passed, OR if duration matches, OR if dur is smaller than totalPhasesDuration (e.g. old 60min default), return configured service phases!
+    if (!durationMinutes || totalPhasesDuration === dur || dur <= 60 || dur < totalPhasesDuration) {
+      return service.phases;
+    }
+  }
+
+  // 2. Tinte / Coloración / Baño Color / INOA
   const isTinte = /tinte|coloración|coloracion|color|baño color|bano color|inoa/i.test(nameLower);
   if (isTinte) {
     const isINOA = /inoa/i.test(nameLower);
@@ -248,7 +271,7 @@ export function getServicePhases(serviceOrName?: Service | string, durationMinut
     ];
   }
 
-  // 2. Highlights / Mechas / Decoloración / Color Light / Quick Light / Low Light / Balayage
+  // 3. Highlights / Mechas / Decoloración / Color Light / Quick Light / Low Light / Balayage
   const isHighlights = /highlight|mecha|color light|quick light|low light|decolora|balayage/i.test(nameLower);
   if (isHighlights) {
     if (dur <= 60) {
@@ -272,67 +295,6 @@ export function getServicePhases(serviceOrName?: Service | string, durationMinut
       { name: 'Aplicación / Montaje', durationMinutes: applyMin, isStylistBusy: true, description: 'Estilista montando papel y producto' },
       { name: 'Reposo / Espera', durationMinutes: reposoMin, isStylistBusy: false, description: 'Estilista libre durante tiempo de reposo' },
       { name: 'Matizado, Lavado y Acabado', durationMinutes: finalFinishMin, isStylistBusy: true, description: '1 hora extra al final: matizado, lavado y secado' }
-    ];
-  }
-
-  // 3. Keratinas / Alisados / Botox Capilar / Cirugías / Nanoplastia / Taninoplastia
-  const isKeratinaOrAlisado = /keratina|queratina|alisad|botox|nanoplastia|taninoplastia|cirugia capilar|cirugía capilar|kerathermique/i.test(nameLower);
-  if (isKeratinaOrAlisado) {
-    if (dur <= 60) {
-      // Localized or very short (e.g. Keratina Pava or express)
-      return [
-        { name: 'Aplicación de Producto', durationMinutes: 30, isStylistBusy: true, description: 'Estilista aplicando producto' },
-        { name: 'Secado y Sellado', durationMinutes: Math.max(15, dur - 30), isStylistBusy: true, description: 'Secado y sellado' }
-      ];
-    }
-    if (dur <= 90) {
-      // Short / Hombre / Mujer Muy Corto (90m)
-      return [
-        { name: 'Lavado y Aplicación', durationMinutes: 30, isStylistBusy: true, description: 'Lavado y aplicación de keratina/botox' },
-        { name: 'Reposo / Actuación', durationMinutes: 30, isStylistBusy: false, description: 'Estilista libre (producto actuando)' },
-        { name: 'Secado y Sellado Térmico', durationMinutes: dur - 60, isStylistBusy: true, description: 'Planchado y sellado final' }
-      ];
-    }
-    if (dur <= 120) {
-      // 120m (e.g. Botox Mediano)
-      return [
-        { name: 'Lavado y Aplicación', durationMinutes: 40, isStylistBusy: true, description: 'Lavado y aplicación profunda' },
-        { name: 'Reposo / Pose del Producto', durationMinutes: 40, isStylistBusy: false, description: 'Estilista libre (tiempo de pose/reposo)' },
-        { name: 'Secado, Planchado y Sellado', durationMinutes: 40, isStylistBusy: true, description: 'Cauterizado térmico y estilizado' }
-      ];
-    }
-    if (dur <= 150) {
-      // 150m (2h 30m, e.g. Keratina Corto, Kerathermique)
-      return [
-        { name: 'Lavado y Aplicación de Keratina', durationMinutes: 45, isStylistBusy: true, description: 'Lavado técnico y aplicación minuciosa' },
-        { name: 'Reposo de Keratina / Pose', durationMinutes: 45, isStylistBusy: false, description: 'Estilista libre (tiempo de pose/reposo)' },
-        { name: 'Secado, Planchado y Sellado Térmico', durationMinutes: 60, isStylistBusy: true, description: 'Planchado mecha a mecha y sellado' }
-      ];
-    }
-    if (dur <= 180) {
-      // 180m (3h, e.g. Botox Largo)
-      return [
-        { name: 'Lavado y Aplicación', durationMinutes: 45, isStylistBusy: true, description: 'Lavado y aplicación' },
-        { name: 'Reposo / Pose del Producto', durationMinutes: 45, isStylistBusy: false, description: 'Estilista libre durante reposo' },
-        { name: 'Secado, Planchado y Sellado Térmico', durationMinutes: 90, isStylistBusy: true, description: 'Sellado térmico y planchado minucioso' }
-      ];
-    }
-    if (dur <= 210) {
-      // 210m (3h 30m, e.g. Keratina Mediano, Botox Muy Largo)
-      return [
-        { name: 'Lavado y Aplicación de Keratina', durationMinutes: 60, isStylistBusy: true, description: 'Lavado y aplicación mecha a mecha' },
-        { name: 'Reposo de Keratina / Pose', durationMinutes: 60, isStylistBusy: false, description: 'Estilista libre (tiempo de pose/reposo)' },
-        { name: 'Secado, Planchado y Sellado Térmico', durationMinutes: 90, isStylistBusy: true, description: 'Sellado térmico y acabado' }
-      ];
-    }
-    // 240m (4h, e.g. Keratina Largo) or more (4h 30m, e.g. Keratina Muy Largo)
-    const applyMin = 60;
-    const reposoMin = 60;
-    const finishMin = Math.max(60, dur - applyMin - reposoMin);
-    return [
-      { name: 'Lavado y Aplicación de Keratina', durationMinutes: applyMin, isStylistBusy: true, description: 'Lavado y aplicación de keratina' },
-      { name: 'Reposo de Keratina / Pose', durationMinutes: reposoMin, isStylistBusy: false, description: 'Estilista libre durante tiempo de pose (permite agendar otra cita)' },
-      { name: 'Secado, Planchado y Sellado Térmico', durationMinutes: finishMin, isStylistBusy: true, description: 'Planchado mecha a mecha y sellado térmico' }
     ];
   }
 
@@ -364,11 +326,25 @@ export interface DetailedPhaseTimeline {
  * Returns absolute timeline phases for an appointment (e.g. 10:00 to 10:30 Aplicación [Busy], 10:30 to 11:00 Reposo [Free], 11:00 to 12:00 Acabado Final [Busy])
  */
 export function getAppointmentPhasesTimeline(app: Appointment, allServices: Service[] = ALL_SERVICES): DetailedPhaseTimeline[] {
-  // If appointment has custom configured phases, use them directly
+  const service = allServices.find(s => s.id === app.serviceId || s.name === app.serviceName);
+  const serviceNameLower = (app.serviceName || service?.name || '').toLowerCase();
+  const isKeratinaOrBotox = /keratina|queratina|alisad|botox|nanoplastia|taninoplastia|cirugia capilar|cirugía capilar|kerathermique/i.test(serviceNameLower);
+
+  // If appointment has custom configured phases, check if it's keratina/botox:
   if (app.customPhases && app.customPhases.length > 0) {
+    let effectivePhases = app.customPhases;
+    if (isKeratinaOrBotox) {
+      // Quitar tiempo de reposo y que la cita quede corrida:
+      effectivePhases = app.customPhases.map(p => ({
+        ...p,
+        isStylistBusy: true,
+        name: p.name.replace(/reposo/i, 'Proceso Continuo')
+      }));
+    }
+
     const startMin = timeToMinutes(app.time);
     let currentMin = startMin;
-    return app.customPhases.map(phase => {
+    return effectivePhases.map(phase => {
       const pStart = currentMin;
       const pEnd = currentMin + phase.durationMinutes;
       currentMin = pEnd;
@@ -388,7 +364,6 @@ export function getAppointmentPhasesTimeline(app: Appointment, allServices: Serv
     });
   }
 
-  const service = allServices.find(s => s.id === app.serviceId || s.name === app.serviceName);
   const catalogDuration = service?.durationMinutes;
 
   // If app.durationMinutes is missing or is smaller than the catalog duration for a multi-phase service, prioritize catalogDuration

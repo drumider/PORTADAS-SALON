@@ -15,12 +15,12 @@ export interface Product {
 
 export const PRODUCT_BRANDS = [
   { id: 'TODOS', name: 'Todas las Marcas' },
+  { id: 'Kérastase', name: 'Kérastase Paris' },
   { id: 'BIOTOP Professional', name: 'BIOTOP Professional' },
   { id: 'Moroccanoil', name: 'Moroccanoil' },
   { id: 'Nashi Argan', name: 'Nashi Argan' },
   { id: "L'Oréal Professionnel", name: "L'Oréal Professionnel" },
   { id: 'K18', name: 'K18 Biomimetic Hairscience' },
-  { id: 'Kérastase', name: 'Kérastase Paris' },
   { id: 'Rescue Plex', name: 'Rescue Plex' },
 ];
 
@@ -752,7 +752,7 @@ export const PRODUCTS: Product[] = [
     price: '₡32,000',
     priceNumber: 32000,
     description: 'Champú fortalecedor y densificador para cabello fino o débil. Fortalece la fibra capilar desde la raíz aportando mayor cuerpo, grosor y resistencia. Libre de SLES, SLS, fosfatos y parabenos.',
-    image: getImageUrl('nashi_mass_shampoo.svg'),
+    image: getImageUrl('nashi_shampoo_3d_1792945598750.jpg'),
     tag: 'Champú Densificador'
   },
   {
@@ -764,7 +764,7 @@ export const PRODUCTS: Product[] = [
     price: '₡28,000',
     priceNumber: 28000,
     description: 'Mascarilla acondicionadora regeneradora y nutritiva para cabello opaco, seco y dañado. Reconstruye la fibra capilar aportando flexibilidad, suavidad y brillo intenso. Libre de fosfatos, parabenos, PPG y colorantes.',
-    image: getImageUrl('nashi_filler_conditioner.svg'),
+    image: getImageUrl('nashi_shampoo_3d_1792945598750.jpg'),
     tag: 'Acondicionador Restaurador'
   },
   {
@@ -776,7 +776,7 @@ export const PRODUCTS: Product[] = [
     price: '₡23,000',
     priceNumber: 23000,
     description: 'Champú regenerador para cabello opaco, seco y castigado. Limpia con delicadeza e inicia el tratamiento de relleno y reconstrucción celular. Libre de fosfatos, parabenos, PPG y colorantes.',
-    image: getImageUrl('nashi_filler_shampoo.svg'),
+    image: getImageUrl('nashi_shampoo_3d_1792945598750.jpg'),
     tag: 'Champú Restaurador'
   },
   {
@@ -788,7 +788,7 @@ export const PRODUCTS: Product[] = [
     price: '₡25,000',
     priceNumber: 25000,
     description: 'Acondicionador potenciador de brillo con ácido hialurónico para cabello rubio, con mechas o canoso. Neutraliza reflejos amarillos y aporta hidratación sedosa. Libre de parabenos y siliconas.',
-    image: getImageUrl('nashi_blondy_joy_conditioner.svg'),
+    image: getImageUrl('nashi_shampoo_3d_1792945598750.jpg'),
     tag: 'Acondicionador Violeta Rubios'
   },
   {
@@ -800,7 +800,7 @@ export const PRODUCTS: Product[] = [
     price: '₡31,500',
     priceNumber: 31500,
     description: 'Tratamiento de belleza e hidratación intensiva tras la exposición al sol, sal marina o cloro. Formulado con UV Factor para reparar y desenredar dejando el cabello suave y radiante.',
-    image: getImageUrl('nashi_after_sun_mask.svg'),
+    image: getImageUrl('nashi_argan_oil_3d_1792945493462.jpg'),
     tag: 'Mascarilla Reparadora After Sun'
   },
   {
@@ -812,7 +812,7 @@ export const PRODUCTS: Product[] = [
     price: '₡19,500',
     priceNumber: 19500,
     description: 'Champú hidratante protector solar con filtro UV. Elimina residuos de sal marina, cloro y arena mientras restaura la hidratación natural y suave del cabello.',
-    image: getImageUrl('nashi_shampoo_after_sun.svg'),
+    image: getImageUrl('nashi_shampoo_3d_1792945598750.jpg'),
     tag: 'Champú Hidratante After Sun'
   },
   {
@@ -824,7 +824,7 @@ export const PRODUCTS: Product[] = [
     price: '₡21,500',
     priceNumber: 21500,
     description: 'Acondicionador nutritivo con aroma floral exclusivo Bloom. Desentraña instantáneamente, aporta suavidad sedosa y deja una fragancia primaveral duradera.',
-    image: getImageUrl('nashi_conditioner_bloom.svg'),
+    image: getImageUrl('nashi_shampoo_3d_1792945598750.jpg'),
     tag: 'Acondicionador Fragancia Bloom'
   },
   {
@@ -836,7 +836,7 @@ export const PRODUCTS: Product[] = [
     price: '₡27,000',
     priceNumber: 27000,
     description: 'Tratamiento desenredante e hidratante en spray sin enjuague con fragancia floral Bloom. Elimina el encrespamiento, protege contra el calor y aporta brillo instantáneo.',
-    image: getImageUrl('nashi_instant_bloom.svg'),
+    image: getImageUrl('nashi_argan_oil_3d_1792945493462.jpg'),
     tag: 'Spray Desenredante Bloom'
   },
   {
@@ -848,7 +848,7 @@ export const PRODUCTS: Product[] = [
     price: '₡38,000',
     priceNumber: 38000,
     description: 'Aceite de tratamiento de belleza supremo para todo tipo de cabello. Nutre, repara y aporta un brillo sublime reduciendo el tiempo de secado a la mitad.',
-    image: getImageUrl('nashi_oil_box.svg'),
+    image: getImageUrl('nashi_argan_oil_3d_1792945493462.jpg'),
     tag: 'Aceite de Tratamiento 100ml'
   },
   {
@@ -860,7 +860,7 @@ export const PRODUCTS: Product[] = [
     price: '₡19,000',
     priceNumber: 19000,
     description: 'Formato de viaje del legendario elixir de aceite de argán. Aporta nutrición, manejabilidad y ligereza en cualquier lugar.',
-    image: getImageUrl('nashi_oil_box.svg'),
+    image: getImageUrl('nashi_argan_oil_3d_1792945493462.jpg'),
     tag: 'Aceite de Tratamiento 30ml'
   },
   {
@@ -872,7 +872,7 @@ export const PRODUCTS: Product[] = [
     price: '₡29,000',
     priceNumber: 29000,
     description: 'Mascarilla de hidratación profunda y reestructuración intensiva. Penetra en la fibra dañada devuelta la elasticidad, cuerpo y suavidad de seda.',
-    image: getImageUrl('nashi_deep_infusion_tube.svg'),
+    image: getImageUrl('nashi_argan_oil_3d_1792945493462.jpg'),
     tag: 'Mascarilla Hidratación Profunda'
   },
   {
@@ -884,7 +884,7 @@ export const PRODUCTS: Product[] = [
     price: '₡19,000',
     priceNumber: 19000,
     description: 'Acondicionador hidratante diario para todo tipo de cabello. Desenreda con máxima ligereza, previene puntas abiertas y disciplina sin apelmazar.',
-    image: getImageUrl('nashi_conditioner_classic.svg'),
+    image: getImageUrl('nashi_shampoo_3d_1792945598750.jpg'),
     tag: 'Acondicionador Clásico'
   },
   {
@@ -896,7 +896,7 @@ export const PRODUCTS: Product[] = [
     price: '₡19,000',
     priceNumber: 19000,
     description: 'Champú nutritivo de uso frecuente enriquecido con aceite de argán orgánico y de linaza. Restablece la hidratación natural dejando el cabello brillante y manejable.',
-    image: getImageUrl('nashi_shampoo_classic.svg'),
+    image: getImageUrl('nashi_shampoo_3d_1792945598750.jpg'),
     tag: 'Champú Clásico 200ml'
   },
   {
@@ -908,7 +908,7 @@ export const PRODUCTS: Product[] = [
     price: '₡43,000',
     priceNumber: 43000,
     description: 'Tratamiento profundo intensivo profesional en tarro. Nutre la estructura capilar profundamente sin recargar, dejando el cabello sedoso, elástico y luminoso.',
-    image: getImageUrl('nashi_deep_infusion_jar.svg'),
+    image: getImageUrl('nashi_argan_oil_3d_1792945493462.jpg'),
     tag: 'Tratamiento Profundo 250ml'
   },
   {
@@ -920,7 +920,7 @@ export const PRODUCTS: Product[] = [
     price: '₡24,000',
     priceNumber: 24000,
     description: 'Acondicionador energizante para fortalezer cabellos frágiles y quebradizos. Estimula la vitalidad y resistencia del cabello desde la raíz.',
-    image: getImageUrl('nashi_conditioner_energizing.svg'),
+    image: getImageUrl('nashi_shampoo_3d_1792945598750.jpg'),
     tag: 'Acondicionador Energizante'
   },
   {
@@ -932,7 +932,7 @@ export const PRODUCTS: Product[] = [
     price: '₡39,000',
     priceNumber: 39000,
     description: 'Formato salón de 500 ml del acondicionador icónico Nashi Argan. Ideal para cuidado prolongado, suavidad extrema y brillo duradero.',
-    image: getImageUrl('nashi_conditioner_500.svg'),
+    image: getImageUrl('nashi_shampoo_3d_1792945598750.jpg'),
     tag: 'Acondicionador 500ml'
   },
   {
@@ -944,7 +944,7 @@ export const PRODUCTS: Product[] = [
     price: '₡42,000',
     priceNumber: 42000,
     description: 'Formato profesional de 500 ml del champú nutritivo Nashi Argan. Aporta limpieza suave, nutrición intensa y sedosidad en cada lavado.',
-    image: getImageUrl('nashi_shampoo_500.svg'),
+    image: getImageUrl('nashi_shampoo_3d_1792945598750.jpg'),
     tag: 'Champú 500ml'
   },
   {
@@ -956,7 +956,7 @@ export const PRODUCTS: Product[] = [
     price: '₡30,000',
     priceNumber: 30000,
     description: 'Mascarilla profesional fijadora de color enriquecida con resveratrol. Mantiene el color radiante y protege la fibra capilar.',
-    image: getImageUrl('loreal_vitamino_color_mask.svg'),
+    image: getImageUrl('loreal_vitamino_color_3d_1792945563360.jpg'),
     tag: 'Mascarilla Protectora Color'
   },
   {
@@ -968,7 +968,7 @@ export const PRODUCTS: Product[] = [
     price: '₡25,000',
     priceNumber: 25000,
     description: 'Champú profesional fijador de color con resveratrol. Limpia suavemente fijando los pigmentos para un brillo y color duraderos.',
-    image: getImageUrl('loreal_vitamino_color_shampoo.svg'),
+    image: getImageUrl('loreal_vitamino_color_3d_1792945563360.jpg'),
     tag: 'Champú Protector Color'
   },
   {
@@ -980,7 +980,7 @@ export const PRODUCTS: Product[] = [
     price: '₡45,000',
     priceNumber: 45000,
     description: 'Mascarilla reestructurante instantánea con proteína de trigo y omega-9 para cabello muy seco y dañado. Formato grande 500 ml.',
-    image: getImageUrl('loreal_absolut_repair_mask_500.svg'),
+    image: getImageUrl('loreal_absolut_repair_3d_1792945508026.jpg'),
     tag: 'Mascarilla Reconstructora 500ml'
   },
   {
@@ -992,7 +992,7 @@ export const PRODUCTS: Product[] = [
     price: '₡25,000',
     priceNumber: 25000,
     description: 'Acondicionador profesional reestructurante para cabello seco y dañado. Aporta reparación instantánea, suavidad y ligereza.',
-    image: getImageUrl('loreal_absolut_repair_conditioner.svg'),
+    image: getImageUrl('loreal_absolut_repair_3d_1792945508026.jpg'),
     tag: 'Acondicionador Reconstructor'
   },
   {
@@ -1004,7 +1004,7 @@ export const PRODUCTS: Product[] = [
     price: '₡25,000',
     priceNumber: 25000,
     description: 'Champú profesional de reparación intensiva con proteínas y omega-9. Restaura inmediatamente la suavidad y elasticidad del cabello dañado.',
-    image: getImageUrl('loreal_absolut_repair_shampoo.svg'),
+    image: getImageUrl('loreal_absolut_repair_3d_1792945508026.jpg'),
     tag: 'Champú Reconstructor'
   },
   {
@@ -1016,7 +1016,7 @@ export const PRODUCTS: Product[] = [
     price: '₡25,000',
     priceNumber: 25000,
     description: 'Acondicionador renovador de longitudes con Filler-A100 y aminoácidos. Rellena las puntas delgadas y fortalece el cabello largo.',
-    image: getImageUrl('loreal_pro_longer_conditioner.svg'),
+    image: getImageUrl('loreal_pro_longer_3d_1792945614147.jpg'),
     tag: 'Acondicionador Cabello Largo'
   },
   {
@@ -1028,7 +1028,7 @@ export const PRODUCTS: Product[] = [
     price: '₡50,000',
     priceNumber: 50000,
     description: 'Mascarilla profesional renovadora de puntas y longitudes para cabello largo. Formato grande 500 ml con Filler-A100.',
-    image: getImageUrl('loreal_pro_longer_mask_500.svg'),
+    image: getImageUrl('loreal_pro_longer_3d_1792945614147.jpg'),
     tag: 'Mascarilla Cabello Largo 500ml'
   },
   {
@@ -1040,7 +1040,7 @@ export const PRODUCTS: Product[] = [
     price: '₡25,000',
     priceNumber: 25000,
     description: 'Champú alisador intensivo enriquecido con pro-keratina. Disciplina el cabello encrespado o rebelde manteniendo un alisado duradero.',
-    image: getImageUrl('loreal_liss_unlimited_shampoo.svg'),
+    image: getImageUrl('loreal_pro_longer_3d_1792945614147.jpg'),
     tag: 'Champú Alisador Anti-Frizz'
   },
   {
@@ -1052,7 +1052,7 @@ export const PRODUCTS: Product[] = [
     price: '₡34,000',
     priceNumber: 34000,
     description: 'Mascarilla de reparación molecular con péptidos y 5 aminoácidos. Reconstruye la estructura molecular del cabello desde el interior.',
-    image: getImageUrl('loreal_absolut_repair_molecular_mask.svg'),
+    image: getImageUrl('loreal_absolut_repair_3d_1792945508026.jpg'),
     tag: 'Tratamiento Reparación Molecular'
   },
   {
@@ -1064,7 +1064,7 @@ export const PRODUCTS: Product[] = [
     price: '₡26,000',
     priceNumber: 26000,
     description: 'Champú profesional de reparación molecular. Devuelve la fuerza, elasticidad y movimiento al cabello profundamente dañado.',
-    image: getImageUrl('loreal_absolut_repair_molecular_shampoo.svg'),
+    image: getImageUrl('loreal_absolut_repair_3d_1792945508026.jpg'),
     tag: 'Champú Reparación Molecular'
   },
   {
@@ -1076,7 +1076,7 @@ export const PRODUCTS: Product[] = [
     price: '₡18,000',
     priceNumber: 18000,
     description: 'Gel de fijación extrema profesional fuerza 6. Proporciona secado rápido, fijación máxima sin residuos y acabado brillante.',
-    image: getImageUrl('loreal_tecni_art_fix_max.svg'),
+    image: getImageUrl('loreal_pro_longer_3d_1792945614147.jpg'),
     tag: 'Gel Fijación Extrema'
   },
   {
@@ -1088,7 +1088,7 @@ export const PRODUCTS: Product[] = [
     price: '₡22,000',
     priceNumber: 22000,
     description: 'Mousse de fijación extra fuerte fuerza 5. Aporta volumen deslumbrante, cuerpo y fijación duradera sin aportar peso.',
-    image: getImageUrl('loreal_tecni_art_full_volume.svg'),
+    image: getImageUrl('loreal_pro_longer_3d_1792945614147.jpg'),
     tag: 'Mousse Volumen Extra'
   },
   {
@@ -1100,7 +1100,7 @@ export const PRODUCTS: Product[] = [
     price: '₡10,000',
     priceNumber: 10000,
     description: 'Tratamiento sin enjuague que revierte los daños capilares en 4 minutos a nivel molecular. Formato muestra/dosis de 5 ml.',
-    image: getImageUrl('k18_mask_5ml.svg'),
+    image: getImageUrl('k18_biomimetic_3d_1792945530576.jpg'),
     tag: 'Tratamiento Molecular 5ml'
   },
   {
@@ -1112,7 +1112,7 @@ export const PRODUCTS: Product[] = [
     price: '₡31,000',
     priceNumber: 31000,
     description: 'Tratamiento molecular reparador sin enjuague de 15 ml. Repara enlaces de queratina rotos por decoloración, tinte o calor en 4 minutos.',
-    image: getImageUrl('k18_mask_15ml.svg'),
+    image: getImageUrl('k18_biomimetic_3d_1792945530576.jpg'),
     tag: 'Tratamiento Molecular 15ml'
   },
   {
@@ -1124,7 +1124,7 @@ export const PRODUCTS: Product[] = [
     price: '₡18,000',
     priceNumber: 18000,
     description: 'Sérum de reconstrucción instantánea con ácido hialurónico de uso diario para cabello dañado.',
-    image: getImageUrl('rescue_plex_sr_serum.svg'),
+    image: getImageUrl('rescue_plex_serum_3d_1792945579199.jpg'),
     tag: 'Sérum Reconstructor'
   },
   {
@@ -1136,7 +1136,7 @@ export const PRODUCTS: Product[] = [
     price: '₡38,000',
     priceNumber: 38000,
     description: 'Sérum diario anti-caída para cabello debilitado. Con Aminexil, flor de edelweiss y raíz de jengibre.',
-    image: getImageUrl('kerastase_genesis_serum.svg'),
+    image: getImageUrl('kerastase_genesis_serum_3d_1792945280915.jpg'),
     tag: 'Anti-Caída Fortificante'
   },
   {
@@ -1148,7 +1148,7 @@ export const PRODUCTS: Product[] = [
     price: '₡28,000',
     priceNumber: 28000,
     description: 'Acondicionador fortificante anti-caída por rotura para cabello fino o normal a graso.',
-    image: getImageUrl('kerastase_genesis_fondant.svg'),
+    image: getImageUrl('kerastase_genesis_fondant_3d_1792945296075.jpg'),
     tag: 'Acondicionador Fortificante'
   },
   {
@@ -1160,7 +1160,7 @@ export const PRODUCTS: Product[] = [
     price: '₡36,000',
     priceNumber: 36000,
     description: 'Mascarilla fortificante intensa anti-caída para cabello grueso o seco con tendencia a la rotura.',
-    image: getImageUrl('kerastase_genesis_masque.svg'),
+    image: getImageUrl('kerastase_genesis_masque_3d_1792945322794.jpg'),
     tag: 'Mascarilla Anti-Caída'
   },
   {
@@ -1172,7 +1172,7 @@ export const PRODUCTS: Product[] = [
     price: '₡25,000',
     priceNumber: 25000,
     description: 'Shampoo fortificante anti-caída para cabello fino y graso. Limpia suavemente y refuerza la fibra.',
-    image: getImageUrl('kerastase_genesis_bain_hydra.svg'),
+    image: getImageUrl('kerastase_genesis_bain_3d_1792945337218.jpg'),
     tag: 'Shampoo Hydra-Fortificante'
   },
   {
@@ -1184,7 +1184,7 @@ export const PRODUCTS: Product[] = [
     price: '₡25,000',
     priceNumber: 25000,
     description: 'Shampoo fortificante nutritivo anti-caída para cabello seco o grueso. Nutre intensamente y desenreda.',
-    image: getImageUrl('kerastase_genesis_bain_nutri.svg'),
+    image: getImageUrl('kerastase_genesis_bain_3d_1792945337218.jpg'),
     tag: 'Shampoo Nutri-Fortificante'
   },
   {
@@ -1196,7 +1196,7 @@ export const PRODUCTS: Product[] = [
     price: '₡28,000',
     priceNumber: 28000,
     description: 'Spray reactivador de rizos para el segundo día con miel de manuka y ceramida.',
-    image: getImageUrl('kerastase_curl_manifesto_refresh.svg'),
+    image: getImageUrl('kerastase_curl_manifesto_3d_1792945463035.jpg'),
     tag: 'Spray Reactivador de Rizos'
   },
   {
@@ -1208,7 +1208,7 @@ export const PRODUCTS: Product[] = [
     price: '₡29,000',
     priceNumber: 29000,
     description: 'Gel-crema definidor de rizos para potenciar la forma natural del rizo con fijación suave y brillo.',
-    image: getImageUrl('kerastase_curl_manifesto_gelee.svg'),
+    image: getImageUrl('kerastase_curl_manifesto_3d_1792945463035.jpg'),
     tag: 'Gel-Crema Definidor'
   },
   {
@@ -1220,7 +1220,7 @@ export const PRODUCTS: Product[] = [
     price: '₡34,000',
     priceNumber: 34000,
     description: 'Huile nutritiva multiusos para cabello rizado y cuero cabelludo. Hidrata y combate el encrespamiento.',
-    image: getImageUrl('kerastase_curl_manifesto_huile.svg'),
+    image: getImageUrl('kerastase_curl_manifesto_3d_1792945463035.jpg'),
     tag: 'Huile Nutritiva Rizos'
   },
   {
@@ -1232,7 +1232,7 @@ export const PRODUCTS: Product[] = [
     price: '₡28,000',
     priceNumber: 28000,
     description: 'Acondicionador ligero reponedor de humedad para cabello rizado u ondulado.',
-    image: getImageUrl('kerastase_curl_manifesto_fondant.svg'),
+    image: getImageUrl('kerastase_curl_manifesto_3d_1792945463035.jpg'),
     tag: 'Acondicionador Rizos'
   },
   {
@@ -1244,7 +1244,7 @@ export const PRODUCTS: Product[] = [
     price: '₡25,000',
     priceNumber: 25000,
     description: 'Shampoo cremoso e hidratante sin sulfatos para cabello rizado, ondulado y afro.',
-    image: getImageUrl('kerastase_curl_manifesto_bain.svg'),
+    image: getImageUrl('kerastase_curl_manifesto_3d_1792945463035.jpg'),
     tag: 'Shampoo Hidratante Rizos'
   },
   {
@@ -1256,7 +1256,7 @@ export const PRODUCTS: Product[] = [
     price: '₡38,000',
     priceNumber: 38000,
     description: 'Mascarilla infundida con aceites sagrados para aportar brillo sublime y nutrición intensa al cabello apagado.',
-    image: getImageUrl('kerastase_elixir_ultime_masque.svg'),
+    image: getImageUrl('kerastase_elixir_ultime_3d_1792945370983.jpg'),
     tag: 'Mascarilla Brillo Sublime'
   },
   {
@@ -1268,7 +1268,7 @@ export const PRODUCTS: Product[] = [
     price: '₡30,000',
     priceNumber: 30000,
     description: 'Acondicionador sublimador con aceites preciosos para suavizar y dar brillo inmediato al cabello fino a normal.',
-    image: getImageUrl('kerastase_elixir_ultime_fondant.svg'),
+    image: getImageUrl('kerastase_elixir_ultime_3d_1792945370983.jpg'),
     tag: 'Acondicionador Brillo'
   },
   {
@@ -1280,7 +1280,7 @@ export const PRODUCTS: Product[] = [
     price: '₡26,000',
     priceNumber: 26000,
     description: 'Shampoo sublimador infundido con aceite de marula sagrado para devolver el brillo radiante al cabello apagado.',
-    image: getImageUrl('kerastase_elixir_ultime_bain.svg'),
+    image: getImageUrl('kerastase_elixir_ultime_3d_1792945370983.jpg'),
     tag: 'Shampoo Brillo Sublime'
   },
   {
@@ -1292,7 +1292,7 @@ export const PRODUCTS: Product[] = [
     price: '₡32,000',
     priceNumber: 32000,
     description: 'Tratamiento aclarador perfeccionador de superficie con ácido láctico que aporta brillo espejo y protege el color.',
-    image: getImageUrl('kerastase_chroma_absolu_gloss.svg'),
+    image: getImageUrl('kerastase_chroma_3d_1792945448634.jpg'),
     tag: 'Tratamiento Brillo Espejo'
   },
   {
@@ -1304,7 +1304,7 @@ export const PRODUCTS: Product[] = [
     price: '₡38,000',
     priceNumber: 38000,
     description: 'Mascarilla verde perfeccionadora anti-reflejos rojos para cabello castaño oscuro coloreado. Con ácido tartárico y centella asiática.',
-    image: getImageUrl('kerastase_chroma_masque_vert.svg'),
+    image: getImageUrl('kerastase_chroma_3d_1792945448634.jpg'),
     tag: 'Mascarilla Anti-Reflejos Rojos'
   },
   {
@@ -1316,7 +1316,7 @@ export const PRODUCTS: Product[] = [
     price: '₡65,000',
     priceNumber: 65000,
     description: 'Mascarilla rellenadora profunda anti-porosidad para cabello coloreado sensible o dañado de medio a grueso. Con aminoácido y centella asiática.',
-    image: getImageUrl('kerastase_chroma_masque_filler.svg'),
+    image: getImageUrl('kerastase_chroma_3d_1792945448634.jpg'),
     tag: 'Mascarilla Anti-Porosidad'
   },
   {
@@ -1328,7 +1328,7 @@ export const PRODUCTS: Product[] = [
     price: '₡32,000',
     priceNumber: 32000,
     description: 'Shampoo nutritivo protector para cabello coloreado sensibilizado o dañado de medio a grueso. Con ácido láctico y centella asiática.',
-    image: getImageUrl('kerastase_chroma_bain_riche.svg'),
+    image: getImageUrl('kerastase_chroma_3d_1792945448634.jpg'),
     tag: 'Shampoo Nutritivo Protector'
   },
   {
@@ -1340,7 +1340,7 @@ export const PRODUCTS: Product[] = [
     price: '₡32,000',
     priceNumber: 32000,
     description: 'Shampoo hidratante protector para cabello coloreado sensibilizado de fino a medio. Sin sulfatos, con aminoácido y centella asiática.',
-    image: getImageUrl('kerastase_chroma_bain_respect.svg'),
+    image: getImageUrl('kerastase_chroma_3d_1792945448634.jpg'),
     tag: 'Shampoo Hidratante Color'
   },
   {
@@ -1352,7 +1352,7 @@ export const PRODUCTS: Product[] = [
     price: '₡52,000',
     priceNumber: 52000,
     description: 'Acondicionador descalcificante reparador anti-rigidez para todo tipo de cabello dañado. Con ácido cítrico y glicina.',
-    image: getImageUrl('kerastase_premiere_fondant.svg'),
+    image: getImageUrl('kerastase_premiere_3d_1792945477922.jpg'),
     tag: 'Acondicionador Descalcificante'
   },
   {
@@ -1364,7 +1364,7 @@ export const PRODUCTS: Product[] = [
     price: '₡69,000',
     priceNumber: 69000,
     description: 'Mascarilla rellenadora reparadora anti-rotura para todo tipo de cabello dañado. Con péptido y glicina.',
-    image: getImageUrl('kerastase_premiere_masque.svg'),
+    image: getImageUrl('kerastase_premiere_3d_1792945477922.jpg'),
     tag: 'Mascarilla Rellenadora Anti-Rotura'
   },
   {
@@ -1376,7 +1376,7 @@ export const PRODUCTS: Product[] = [
     price: '₡39,000',
     priceNumber: 39000,
     description: 'Shampoo descalcificante reparador para todo tipo de cabello dañado. Elimina la acumulación de calcio y repara la fibra.',
-    image: getImageUrl('kerastase_premiere_bain_250.svg'),
+    image: getImageUrl('kerastase_premiere_3d_1792945477922.jpg'),
     tag: 'Shampoo Descalcificante 250ml'
   },
   {
@@ -1388,7 +1388,7 @@ export const PRODUCTS: Product[] = [
     price: '₡60,000',
     priceNumber: 60000,
     description: 'Shampoo descalcificante reparador en formato profesional de 500 ml con bomba para todo tipo de cabello dañado.',
-    image: getImageUrl('kerastase_premiere_bain_500.svg'),
+    image: getImageUrl('kerastase_premiere_3d_1792945477922.jpg'),
     tag: 'Shampoo Descalcificante 500ml'
   },
   {
@@ -1400,7 +1400,7 @@ export const PRODUCTS: Product[] = [
     price: '₡85,000',
     priceNumber: 85000,
     description: 'Sérum nutritivo de confort intenso para cuero cabelludo seco. Con mezcla de vitaminas y niacinamida.',
-    image: getImageUrl('kerastase_nutritive_scalp_serum.svg'),
+    image: getImageUrl('kerastase_nutritive_3d_1792945402404.jpg'),
     tag: 'Sérum Cuero Cabelludo Seco'
   },
   {
@@ -1412,7 +1412,7 @@ export const PRODUCTS: Product[] = [
     price: '₡50,000',
     priceNumber: 50000,
     description: 'Bruma de belleza desenredante y termoprotectora para cabello seco fino a medio. Con proteínas de origen vegetal y niacinamida.',
-    image: getImageUrl('kerastase_nutritive_lotion_thermique.svg'),
+    image: getImageUrl('kerastase_nutritive_3d_1792945402404.jpg'),
     tag: 'Protector Térmico Nutritivo'
   },
   {
@@ -1424,7 +1424,7 @@ export const PRODUCTS: Product[] = [
     price: '₡52,000',
     priceNumber: 52000,
     description: 'Tratamiento profundo de alta nutrición ultraconcentrado para cabello muy seco fino a medio. Con proteínas vegetales y niacinamida.',
-    image: getImageUrl('kerastase_nutritive_masquintense.svg'),
+    image: getImageUrl('kerastase_nutritive_3d_1792945402404.jpg'),
     tag: 'Mascarilla Nutrición Profunda'
   },
   {
@@ -1436,7 +1436,7 @@ export const PRODUCTS: Product[] = [
     price: '₡49,000',
     priceNumber: 49000,
     description: 'Acondicionador desenredante ultra-ligero de alta nutrición para cabello seco fino a medio.',
-    image: getImageUrl('kerastase_nutritive_lait_vital.svg'),
+    image: getImageUrl('kerastase_nutritive_3d_1792945402404.jpg'),
     tag: 'Acondicionador Ultra-Ligero'
   },
   {
@@ -1448,7 +1448,7 @@ export const PRODUCTS: Product[] = [
     price: '₡32,000',
     priceNumber: 32000,
     description: 'Shampoo rico de alta nutrición con nutrientes esenciales para cabello muy seco. Con proteínas vegetales y niacinamida.',
-    image: getImageUrl('kerastase_nutritive_bain_satin_riche.svg'),
+    image: getImageUrl('kerastase_nutritive_3d_1792945402404.jpg'),
     tag: 'Shampoo Nutritivo Intenso'
   },
   {
@@ -1460,7 +1460,7 @@ export const PRODUCTS: Product[] = [
     price: '₡43,000',
     priceNumber: 43000,
     description: 'Doble tratamiento recreador de fibra nueva para largos y puntas extremadamente dañadas. Con Fibra-Kap y savia de la resurrección.',
-    image: getImageUrl('kerastase_resistance_serum_therapiste.svg'),
+    image: getImageUrl('kerastase_resistance_3d_1792945418460.jpg'),
     tag: 'Sérum Reparador de Puntas'
   },
   {
@@ -1472,7 +1472,7 @@ export const PRODUCTS: Product[] = [
     price: '₡50,000',
     priceNumber: 50000,
     description: 'Mascarilla recreadora de fibra nueva para cabello grueso muy dañado y sobreprocesado.',
-    image: getImageUrl('kerastase_resistance_masque_therapiste.svg'),
+    image: getImageUrl('kerastase_resistance_3d_1792945418460.jpg'),
     tag: 'Mascarilla Fibra Nueva'
   },
   {
@@ -1484,8 +1484,8 @@ export const PRODUCTS: Product[] = [
     price: '₡38,000',
     priceNumber: 38000,
     description: 'Shampoo en bálsamo recreador de fibra nueva para cabello muy dañado y sobreprocesado.',
-    image: getImageUrl('kerastase_resistance_bain_therapiste.svg'),
-    tag: 'Shampoo Bálsamo Reparador'
+    image: getImageUrl('kerastase_resistance_3d_1792945418460.jpg'),
+    tag: 'Shampoo Bálsador Reparador'
   },
   {
     id: 'kerastase-resistance-serum-extentioniste-50',
@@ -1496,7 +1496,7 @@ export const PRODUCTS: Product[] = [
     price: '₡65,000',
     priceNumber: 65000,
     description: 'Sérum activador de cuero cabelludo y cabello para favorecer el crecimiento saludable de largos. Con ceramidas.',
-    image: getImageUrl('kerastase_resistance_serum_extentioniste.svg'),
+    image: getImageUrl('kerastase_resistance_3d_1792945418460.jpg'),
     tag: 'Sérum Crecimiento de Largos'
   },
   {
@@ -1508,7 +1508,7 @@ export const PRODUCTS: Product[] = [
     price: '₡42,000',
     priceNumber: 42000,
     description: 'Gel-crema de peinado con protección térmica para largos saludables y prevención de rotura. Con Creatina R + Taurina.',
-    image: getImageUrl('kerastase_resistance_extentioniste_thermique.svg'),
+    image: getImageUrl('kerastase_resistance_3d_1792945418460.jpg'),
     tag: 'Protector Térmico Largos'
   },
   {
@@ -1520,7 +1520,7 @@ export const PRODUCTS: Product[] = [
     price: '₡36,000',
     priceNumber: 36000,
     description: 'Shampoo potenciador de largos para cabello en busca de una longitud saludable. Con Creatina R + Taurina.',
-    image: getImageUrl('kerastase_resistance_bain_extentioniste.svg'),
+    image: getImageUrl('kerastase_resistance_3d_1792945418460.jpg'),
     tag: 'Shampoo Crecimiento y Fuerza'
   },
   {
@@ -1532,7 +1532,7 @@ export const PRODUCTS: Product[] = [
     price: '₡50,000',
     priceNumber: 50000,
     description: 'Mascarilla reparadora reconstructora para cabello dañado, quebradizo y con puntas abiertas. Nivel de erosión 1-2.',
-    image: getImageUrl('kerastase_resistance_masque_force_architecte.svg'),
+    image: getImageUrl('kerastase_resistance_3d_1792945418460.jpg'),
     tag: 'Mascarilla Reconstructora'
   },
   {
@@ -1544,7 +1544,7 @@ export const PRODUCTS: Product[] = [
     price: '₡43,000',
     priceNumber: 43000,
     description: 'Leche reconstructora resurfijante con termoprotección para cepillado de cabello dañado. Con Vita-Ciment.',
-    image: getImageUrl('kerastase_resistance_ciment_thermique.svg'),
+    image: getImageUrl('kerastase_resistance_3d_1792945418460.jpg'),
     tag: 'Leche Termoprotectora'
   },
   {
@@ -1556,7 +1556,7 @@ export const PRODUCTS: Product[] = [
     price: '₡32,000',
     priceNumber: 32000,
     description: 'Shampoo reparador reconstructor para cabello dañado, quebradizo y con puntas abiertas. Nivel de erosión 1-2.',
-    image: getImageUrl('kerastase_resistance_bain_force_architecte.svg'),
+    image: getImageUrl('kerastase_resistance_3d_1792945418460.jpg'),
     tag: 'Shampoo Reconstructor'
   },
   {
@@ -1568,7 +1568,7 @@ export const PRODUCTS: Product[] = [
     price: '₡48,000',
     priceNumber: 48000,
     description: 'Leche disciplinante alisadora con protección térmica para cabello indisciplinado y encrespado. Con Ceramide 1.000.',
-    image: getImageUrl('kerastase_discipline_keratine_thermique.svg'),
+    image: getImageUrl('kerastase_discipline_3d_1792945432629.jpg'),
     tag: 'Leche Alisadora Anti-Frizz'
   },
   {
@@ -1580,7 +1580,7 @@ export const PRODUCTS: Product[] = [
     price: '₡47,000',
     priceNumber: 47000,
     description: 'Tratamiento integral en spray anti-frizz y termoprotector para todo cabello indisciplinado. Con Morpho-Kératine.',
-    image: getImageUrl('kerastase_discipline_fluidissime.svg'),
+    image: getImageUrl('kerastase_discipline_3d_1792945432629.jpg'),
     tag: 'Spray Anti-Frizz'
   },
   {
@@ -1592,7 +1592,7 @@ export const PRODUCTS: Product[] = [
     price: '₡55,000',
     priceNumber: 55000,
     description: 'Mascarilla de movimiento suave y alta concentración para cabello indisciplinado y rebelde.',
-    image: getImageUrl('kerastase_discipline_maskeratine.svg'),
+    image: getImageUrl('kerastase_discipline_3d_1792945432629.jpg'),
     tag: 'Mascarilla Anti-Frizz Rebelde'
   },
   {
@@ -1604,7 +1604,7 @@ export const PRODUCTS: Product[] = [
     price: '₡49,000',
     priceNumber: 49000,
     description: 'Acondicionador suavizante de movimiento continuo para todo tipo de cabello indisciplinado.',
-    image: getImageUrl('kerastase_discipline_fondant_fluidealiste.svg'),
+    image: getImageUrl('kerastase_discipline_3d_1792945432629.jpg'),
     tag: 'Acondicionador Movimiento Suave'
   },
   {
@@ -1616,7 +1616,7 @@ export const PRODUCTS: Product[] = [
     price: '₡37,000',
     priceNumber: 37000,
     description: 'Shampoo suave alisador sin sulfatos para cabello indisciplinado y sobreprocesado.',
-    image: getImageUrl('kerastase_discipline_bain_fluidealiste.svg'),
+    image: getImageUrl('kerastase_discipline_3d_1792945432629.jpg'),
     tag: 'Shampoo Suave Anti-Frizz'
   },
   {
@@ -1628,7 +1628,7 @@ export const PRODUCTS: Product[] = [
     price: '₡47,000',
     priceNumber: 47000,
     description: 'Aceite concentrado reparador intenso para cabello rubio decolorado o con mechas. Con flor de edelweiss.',
-    image: getImageUrl('kerastase_blond_absolu_huile_cicaextreme.svg'),
+    image: getImageUrl('kerastase_blond_absolu_3d_1792945354923.jpg'),
     tag: 'Aceite Reparador Rubios'
   },
   {
@@ -1640,7 +1640,7 @@ export const PRODUCTS: Product[] = [
     price: '₡60,000',
     priceNumber: 60000,
     description: 'Mascarilla violeta matizadora anti-reflejos cálidos para rubios fríos. Con ácido hialurónico y flor de edelweiss.',
-    image: getImageUrl('kerastase_blond_absolu_masque_uv.svg'),
+    image: getImageUrl('kerastase_blond_absolu_3d_1792945354923.jpg'),
     tag: 'Mascarilla Violeta Matizadora'
   },
   {
@@ -1652,7 +1652,7 @@ export const PRODUCTS: Product[] = [
     price: '₡43,000',
     priceNumber: 43000,
     description: 'Tratamiento fortificante profundo para cabello decolorado o con mechas. Con ácido hialurónico y flor de edelweiss.',
-    image: getImageUrl('kerastase_blond_absolu_cicaflash.svg'),
+    image: getImageUrl('kerastase_blond_absolu_3d_1792945354923.jpg'),
     tag: 'Tratamiento Fortificante Rubios'
   },
   {
@@ -1664,7 +1664,7 @@ export const PRODUCTS: Product[] = [
     price: '₡35,000',
     priceNumber: 35000,
     description: 'Shampoo violeta anti-reflejos cálidos para rubios fríos, mechas o canas. Con ácido hialurónico.',
-    image: getImageUrl('kerastase_blond_absolu_bain_ultra_violet.svg'),
+    image: getImageUrl('kerastase_blond_absolu_3d_1792945354923.jpg'),
     tag: 'Shampoo Violeta Matizador'
   },
   {
@@ -1676,7 +1676,7 @@ export const PRODUCTS: Product[] = [
     price: '₡65,000',
     priceNumber: 65000,
     description: 'Mascarilla revitalizante de juventud para cabello y cuero cabelludo. Con abyssine y ácido hialurónico.',
-    image: getImageUrl('kerastase_chronologiste_masque.svg'),
+    image: getImageUrl('kerastase_chronologiste_3d_1792945387440.jpg'),
     tag: 'Mascarilla Revitalizante Lujo'
   },
   {
@@ -1688,7 +1688,7 @@ export const PRODUCTS: Product[] = [
     price: '₡43,000',
     priceNumber: 43000,
     description: 'Shampooing revitalizante de juventud para cabello y cuero cabelludo. Aporta hidratación profunda y brillo sublime.',
-    image: getImageUrl('kerastase_chronologiste_bain.svg'),
+    image: getImageUrl('kerastase_chronologiste_3d_1792945387440.jpg'),
     tag: 'Shampoo Revitalizante Juventud'
   },
   {
@@ -1700,7 +1700,7 @@ export const PRODUCTS: Product[] = [
     price: '₡55,000',
     priceNumber: 55000,
     description: 'Pré-shampooing purificante revitalizante de juventud para cuero cabelludo y raíces. Con carbón activo y ácido hialurónico.',
-    image: getImageUrl('kerastase_chronologiste_pre_cleanse.svg'),
+    image: getImageUrl('kerastase_chronologiste_3d_1792945387440.jpg'),
     tag: 'Pre-Shampoo Purificante'
   },
   {
@@ -1712,7 +1712,7 @@ export const PRODUCTS: Product[] = [
     price: '₡85,000',
     priceNumber: 85000,
     description: 'Sérum de noche intensivo celular anti-caspa para cuero cabelludo sensible. Con ácido salicílico y piroctona olamina.',
-    image: getImageUrl('kerastase_symbiose_serum_nuit.svg'),
+    image: getImageUrl('kerastase_symbiose_3d_1792945547526.jpg'),
     tag: 'Sérum Noche Anti-Caspa'
   },
   {
@@ -1724,7 +1724,7 @@ export const PRODUCTS: Product[] = [
     price: '₡65,000',
     priceNumber: 65000,
     description: 'Mascarilla ultra-hidratante intensa para cabello dañado propenso a caspa. Con ácido salicílico y escualano.',
-    image: getImageUrl('kerastase_symbiose_masque.svg'),
+    image: getImageUrl('kerastase_symbiose_3d_1792945547526.jpg'),
     tag: 'Mascarilla Anti-Caspa Reparadora'
   },
   {
@@ -1736,7 +1736,7 @@ export const PRODUCTS: Product[] = [
     price: '₡36,000',
     priceNumber: 36000,
     description: 'Shampooing purificante celular anti-caspa para cuero cabelludo graso y sensible. Con ácido salicílico y piroctona olamina.',
-    image: getImageUrl('kerastase_symbiose_bain_purete.svg'),
+    image: getImageUrl('kerastase_symbiose_3d_1792945547526.jpg'),
     tag: 'Shampoo Anti-Caspa Graso'
   },
   {
@@ -1748,7 +1748,7 @@ export const PRODUCTS: Product[] = [
     price: '₡60,000',
     priceNumber: 60000,
     description: 'Tratamiento micro-exfoliante celular para cuero cabelludo sensible con caspa. Con ácido salicílico 1.9%.',
-    image: getImageUrl('kerastase_symbiose_micro_peeling.svg'),
+    image: getImageUrl('kerastase_symbiose_3d_1792945547526.jpg'),
     tag: 'Exfoliante Capilar Anti-Caspa'
   },
   {
@@ -1760,7 +1760,7 @@ export const PRODUCTS: Product[] = [
     price: '₡41,000',
     priceNumber: 41000,
     description: 'Tratamiento diario en spray anti-caída nutri-energético que estimula el crecimiento natural del cabello.',
-    image: getImageUrl('kerastase_specifique_stimuliste.svg'),
+    image: getImageUrl('kerastase_premiere_3d_1792945477922.jpg'),
     tag: 'Spray Anti-Caída Diario'
   },
   {
@@ -1772,7 +1772,7 @@ export const PRODUCTS: Product[] = [
     price: '₡35,000',
     priceNumber: 35000,
     description: 'Shampoo hydra-apaisante para cuero cabelludo sensible y cabello mixto. Con aceite de calophyllum.',
-    image: getImageUrl('kerastase_specifique_bain_vital.svg'),
+    image: getImageUrl('kerastase_premiere_3d_1792945477922.jpg'),
     tag: 'Shampoo Cuero Cabelludo Sensible'
   },
   {
@@ -1784,7 +1784,7 @@ export const PRODUCTS: Product[] = [
     price: '₡36,000',
     priceNumber: 36000,
     description: 'Shampoo normalizante de uso frecuente para cabello con riesgo de caída. Con sistema pro-activo.',
-    image: getImageUrl('kerastase_specifique_bain_prevention.svg'),
+    image: getImageUrl('kerastase_premiere_3d_1792945477922.jpg'),
     tag: 'Shampoo Prevención Caída'
   },
   {
@@ -1796,7 +1796,7 @@ export const PRODUCTS: Product[] = [
     price: '₡58,000',
     priceNumber: 58000,
     description: 'Mascarilla regeneradora para cabello con pérdida visible de densidad. Con Stemoxydine y ácido hialurónico.',
-    image: getImageUrl('kerastase_densifique_masque.svg'),
+    image: getImageUrl('kerastase_nutritive_3d_1792945402404.jpg'),
     tag: 'Mascarilla Densificante'
   },
   {
@@ -1808,7 +1808,7 @@ export const PRODUCTS: Product[] = [
     price: '₡85,000',
     priceNumber: 85000,
     description: 'Sérum defensa universal para cuero cabelludo desequilibrado. Con prebiótico Bífidus y derivado de Vitamina C.',
-    image: getImageUrl('kerastase_specifique_potentialiste.svg'),
+    image: getImageUrl('kerastase_genesis_serum_3d_1792945280915.jpg'),
     tag: 'Sérum Defensa Capilar'
   }
 ];

@@ -120,7 +120,12 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
         ? initialAppointment.durationMinutes
         : optDur;
       setCustomDurationMinutes(effDur);
-      if (initialAppointment.customPhases && initialAppointment.customPhases.length > 0) {
+      const isKeratinaOrBotox = /keratina|queratina|alisad|botox|nanoplastia|taninoplastia|cirugia capilar|cirugía capilar|kerathermique/i.test(
+        `${matchedS.name} ${initialAppointment.serviceName || ''}`
+      );
+      if (isKeratinaOrBotox) {
+        setCustomPhases(getServicePhases(matchedS, effDur));
+      } else if (initialAppointment.customPhases && initialAppointment.customPhases.length > 0) {
         setCustomPhases(JSON.parse(JSON.stringify(initialAppointment.customPhases)));
       } else {
         setCustomPhases(getServicePhases(matchedS, effDur));
@@ -258,7 +263,12 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
       setCustomDurationMinutes(effectiveDuration);
 
       // Initialize phases from appointment if available, or calculate defaults
-      if (initialAppointment.customPhases && initialAppointment.customPhases.length > 0) {
+      const isKeratinaOrBotox = /keratina|queratina|alisad|botox|nanoplastia|taninoplastia|cirugia capilar|cirugía capilar|kerathermique/i.test(
+        `${matchedS.name} ${initialAppointment.serviceName || ''}`
+      );
+      if (isKeratinaOrBotox) {
+        setCustomPhases(getServicePhases(matchedS, effectiveDuration));
+      } else if (initialAppointment.customPhases && initialAppointment.customPhases.length > 0) {
         setCustomPhases(JSON.parse(JSON.stringify(initialAppointment.customPhases)));
       } else {
         setCustomPhases(getServicePhases(matchedS, effectiveDuration));

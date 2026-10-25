@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#211d1c"/>
+      <stop offset="100%" stop-color="#0d0b0a"/>
+    </radialGradient>
+    <linearGradient id="tube" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#695c58"/>
+      <stop offset="35%" stop-color="#9a8c88"/>
+      <stop offset="65%" stop-color="#80726e"/>
+      <stop offset="100%" stop-color="#4a3f3c"/>
+    </linearGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#111111"/>
+      <stop offset="50%" stop-color="#444444"/>
+      <stop offset="100%" stop-color="#111111"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="530" rx="120" ry="20" fill="#000000" opacity="0.6"/>
+  <!-- Tube Cap at bottom -->
+  <rect x="250" y="470" width="100" height="40" rx="4" fill="url(#cap)" stroke="#555555" stroke-width="1"/>
+  <!-- Tube Body -->
+  <path d="M220 110 L380 110 L350 470 L250 470 Z" fill="url(#tube)"/>
+  <!-- Top crimp seal -->
+  <rect x="215" y="100" width="170" height="15" fill="#524845" rx="1"/>
+  <path d="M220 100 H380 M220 103 H380 M220 106 H380 M220 109 H380 M220 112 H380" stroke="#332c2a" stroke-width="1"/>
+  <!-- Texture overlay -->
+  <path d="M220 130 H380 M222 140 H378 M224 150 H376 M226 160 H374 M228 170 H372 M230 180 H370 M232 190 H368 M234 200 H366 M236 210 H364 M238 220 H362 M240 230 H360 M242 240 H358 M244 250 H356 M246 260 H354 M248 270 H352 M250 280 H350 M250 290 H350 M250 300 H350 M250 310 H350 M250 320 H350 M250 330 H350 M250 340 H350 M250 350 H350 M250 360 H350 M250 370 H350 M250 380 H350 M250 390 H350 M250 400 H350 M250 410 H350 M250 420 H350 M250 430 H350 M250 440 H350 M250 450 H350 M250 460 H350" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/>
+  <!-- Text on Tube -->
+  <text x="300" y="200" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="16" fill="#241e1d" text-anchor="middle" letter-spacing="1">FILLER THERAPY</text>
+  <text x="300" y="222" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="300" font-size="15" fill="#ffffff" text-anchor="middle">restorative conditioner</text>
+  <line x1="245" y1="238" x2="355" y2="238" stroke="#3d3330" stroke-width="1"/>
+  <text x="300" y="255" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#241e1d" font-weight="600" text-anchor="middle">MASCHERA CONDIZIONANTE RIGENERANTE E NUTRIENTE</text>
+  <text x="300" y="266" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#241e1d" font-weight="600" text-anchor="middle">PER CAPELLI SPENTI, ARIDI E DANNEGGIATI.</text>
+  <text x="300" y="280" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#241e1d" text-anchor="middle">NOURISHING AND REGENERATING CONDITIONING</text>
+  <text x="300" y="290" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#241e1d" text-anchor="middle">MASK FOR OPAQUE, DRY AND DAMAGED HAIR.</text>
+  <line x1="245" y1="305" x2="355" y2="305" stroke="#3d3330" stroke-width="1"/>
+  <text x="300" y="322" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6" fill="#dedada" text-anchor="middle" letter-spacing="0.5">FREE FROM PHOSPHATES, PARABENS,</text>
+  <text x="300" y="332" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6" fill="#dedada" text-anchor="middle" letter-spacing="0.5">PPG, COLORANTS.</text>
+  <!-- Brand NASHI -->
+  <line x1="285" y1="390" x2="315" y2="390" stroke="#241e1d" stroke-width="2"/>
+  <text x="300" y="412" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="22" fill="#241e1d" text-anchor="middle" letter-spacing="3">NASHI</text>
+  <!-- Specular shine -->
+  <path d="M225 110 L250 110 L270 470 L255 470 Z" fill="#ffffff" opacity="0.12"/>
+</svg>

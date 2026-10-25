@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a2022"/>
+      <stop offset="100%" stop-color="#120c0e"/>
+    </radialGradient>
+    <linearGradient id="bottle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1c1611"/>
+      <stop offset="25%" stop-color="#4d3b28"/>
+      <stop offset="50%" stop-color="#33271a"/>
+      <stop offset="85%" stop-color="#140f0a"/>
+      <stop offset="100%" stop-color="#0a0805"/>
+    </linearGradient>
+    <linearGradient id="label" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f2b6b6"/>
+      <stop offset="50%" stop-color="#fce1e1"/>
+      <stop offset="100%" stop-color="#e89e9e"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="530" rx="120" ry="20" fill="#000000" opacity="0.6"/>
+  <!-- Tall Spray Bottle Body -->
+  <path d="M240 200 Q240 160 270 150 L270 110 L330 110 L330 150 Q360 160 360 200 L360 490 Q360 510 340 515 L260 515 Q240 510 240 490 Z" fill="url(#bottle)"/>
+  <!-- Spray nozzle cap -->
+  <rect x="275" y="70" width="50" height="40" fill="#15120e" stroke="#332a20" stroke-width="2" rx="2"/>
+  <rect x="285" y="50" width="30" height="20" fill="#221c17" rx="2"/>
+  <!-- Label -->
+  <rect x="248" y="200" width="104" height="260" fill="url(#label)" rx="2"/>
+  <!-- Flower illustration -->
+  <path d="M280 390 Q250 330 290 320 Q340 310 350 360 Q360 420 310 440 Q270 420 280 390 Z" fill="#e0536c" opacity="0.65"/>
+  <circle cx="300" cy="365" r="9" fill="#fadc6d"/>
+  <text x="300" y="245" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="24" fill="#382121" text-anchor="middle" letter-spacing="1">nashi</text>
+  <text x="300" y="263" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="400" font-size="14" fill="#382121" text-anchor="middle" letter-spacing="4">ARGAN</text>
+  <text x="300" y="310" font-family="'Georgia', serif" font-style="italic" font-size="18" fill="#382121" text-anchor="middle">instant</text>
+  <text x="300" y="328" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="400" font-size="10" fill="#382121" text-anchor="middle" letter-spacing="1">bloom fragrance</text>
+</svg>

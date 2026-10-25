@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a251e"/>
+      <stop offset="100%" stop-color="#120f0c"/>
+    </radialGradient>
+    <linearGradient id="jar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#edd2a4"/>
+      <stop offset="50%" stop-color="#fce8c7"/>
+      <stop offset="100%" stop-color="#d6b885"/>
+    </linearGradient>
+    <linearGradient id="lid" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#111111"/>
+      <stop offset="50%" stop-color="#333333"/>
+      <stop offset="100%" stop-color="#111111"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="510" rx="200" ry="38" fill="#000000" opacity="0.6"/>
+  <!-- Wide Jar Body 500ml -->
+  <rect x="130" y="210" width="340" height="280" rx="22" fill="url(#jar)"/>
+  <rect x="120" y="160" width="360" height="75" rx="14" fill="url(#lid)" stroke="#444444" stroke-width="1.5"/>
+  <ellipse cx="300" cy="160" rx="180" ry="22" fill="#222222"/>
+  <!-- Label on Jar -->
+  <rect x="160" y="260" width="280" height="190" fill="#ffffff" rx="4" opacity="0.95"/>
+  <text x="180" y="305" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="28" fill="#111111">Absolut Repair</text>
+  <text x="180" y="325" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="10" fill="#776644" letter-spacing="1">PROTEIN + OMEGA-9</text>
+  <text x="180" y="350" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="8.5" fill="#111111">MASQUE PROFESSIONNEL / PROFESSIONAL MASK</text>
+  <text x="180" y="365" font-family="'Helvetica Neue', Arial, sans-serif" font-size="8" fill="#555555">Restructurant instantané pour cheveux secs et abîmés</text>
+  <text x="180" y="378" font-family="'Helvetica Neue', Arial, sans-serif" font-size="8" fill="#555555">Instant resurfacing for dry and damaged hair</text>
+  <text x="180" y="415" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="12" fill="#111111" letter-spacing="1">SERIE EXPERT</text>
+  <text x="180" y="430" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#666666">500 ml 16.9 FL.OZ</text>
+  <!-- L'oreal logo right side -->
+  <text x="420" y="395" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="11" fill="#111111" text-anchor="end">L'ORÉAL</text>
+  <text x="420" y="405" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7" fill="#111111" text-anchor="end">PROFESSIONNEL</text>
+</svg>

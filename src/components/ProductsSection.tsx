@@ -22,6 +22,15 @@ export const ProductsSection: React.FC = () => {
     const matchesBrand = selectedBrand === 'TODOS' || p.brand === selectedBrand;
     const matchesCategory = selectedCategory === 'TODOS' || p.category === selectedCategory;
     return matchesBrand && matchesCategory;
+  }).sort((a, b) => {
+    // En el catálogo general (Todas las Marcas), mostrar Kérastase de primero
+    if (selectedBrand === 'TODOS') {
+      const aIsKerastase = a.brand === 'Kérastase';
+      const bIsKerastase = b.brand === 'Kérastase';
+      if (aIsKerastase && !bIsKerastase) return -1;
+      if (!aIsKerastase && bIsKerastase) return 1;
+    }
+    return 0;
   });
 
   const displayedProducts = filteredProducts.slice(0, visibleCount);
@@ -175,15 +184,16 @@ Por favor me confirman disponibilidad para retiro en el salón o envío. ¡Mucha
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="bg-warm-card border border-gold-champagne/30 transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-2xl relative group hover:border-gold-champagne/60"
+              className="bg-warm-card border border-gold-champagne/30 transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-2xl relative group hover:border-gold-champagne/70 hover:shadow-[0_10px_35px_rgba(212,175,55,0.15)] hover:-translate-y-1"
               id={`product-card-${product.id}`}
             >
-              {/* Image Container */}
-              <div className="relative aspect-square overflow-hidden bg-black/70 flex items-center justify-center p-6">
+              {/* Image Container with 3D depth */}
+              <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-neutral-900/90 via-black/80 to-black flex items-center justify-center">
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter contrast-105"
+                  loading="lazy"
+                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out filter contrast-105 drop-shadow-[0_10px_20px_rgba(0,0,0,0.7)]"
                   referrerPolicy="no-referrer"
                   onError={(e) => {
                     const target = e.currentTarget;
@@ -194,7 +204,8 @@ Por favor me confirman disponibilidad para retiro en el salón o envío. ¡Mucha
                     }
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-warm-card via-transparent to-transparent opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-warm-card via-transparent to-transparent opacity-60 pointer-events-none" />
+                <div className="absolute inset-0 ring-1 ring-inset ring-white/5 pointer-events-none" />
 
                 {/* Tag Badge */}
                 {product.tag && (
@@ -285,7 +296,7 @@ Por favor me confirman disponibilidad para retiro en el salón o envío. ¡Mucha
               <span>¿Tienes dudas sobre los productos de nuestro salón?</span>
             </div>
             <p className="text-xs text-gray-light/70 font-light leading-relaxed">
-              Escríbenos directamente a WhatsApp para verificar disponibilidad o solicitar asesoría sobre la línea ideal para tu tipo de cabello (Moroccanoil, BIOTOP Professional, etc.).
+              Escríbenos directamente a WhatsApp para verificar disponibilidad o solicitar asesoría sobre la línea ideal para tu tipo de cabello (Kérastase Paris, Moroccanoil, BIOTOP Professional, etc.).
             </p>
           </div>
 

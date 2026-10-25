@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#3d2a1c"/>
+      <stop offset="100%" stop-color="#140d08"/>
+    </radialGradient>
+    <linearGradient id="bronze_bottle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#cd7f32"/>
+      <stop offset="40%" stop-color="#e69c54"/>
+      <stop offset="70%" stop-color="#d98c3e"/>
+      <stop offset="100%" stop-color="#a65d1b"/>
+    </linearGradient>
+    <linearGradient id="silver_cap" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#cccccc"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#999999"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="520" rx="90" ry="18" fill="#000000" opacity="0.6"/>
+  <!-- Silver Top Cap -->
+  <rect x="235" y="110" width="130" height="50" rx="6" fill="url(#silver_cap)"/>
+  <!-- Bronze Bottle Body -->
+  <path d="M 235 160 C 235 190, 215 220, 215 280 L 215 480 C 215 510, 385 510, 385 480 L 385 280 C 385 220, 365 190, 365 160 Z" fill="url(#bronze_bottle)"/>
+  <text x="300" y="250" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="16" fill="#ffffff" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="262" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7" fill="#ffffff" text-anchor="middle" letter-spacing="2">PARIS</text>
+  <text x="300" y="285" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="10" fill="#fce4c8" text-anchor="middle" letter-spacing="1.5">DISCIPLINE</text>
+  <text x="300" y="315" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="12" fill="#ffffff" text-anchor="middle">BAIN FLUIDEALISTE</text>
+  <text x="300" y="330" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="9" fill="#ffffff" text-anchor="middle">SANS SULFATES</text>
+  <text x="300" y="350" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#fce4c8" text-anchor="middle">MORPHO-KERATINE™</text>
+  <text x="300" y="380" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#ffffff" text-anchor="middle">Shampooing lisse en-mouvement</text>
+  <text x="300" y="392" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#ffffff" text-anchor="middle">Smooth-in-motion shampoo</text>
+  <text x="300" y="465" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#ffffff" text-anchor="middle">250 ml 8.5 fl.oz.</text>
+</svg>

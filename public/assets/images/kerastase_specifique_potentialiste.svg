@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1e2923"/>
+      <stop offset="100%" stop-color="#090d0b"/>
+    </radialGradient>
+    <linearGradient id="silver_top" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e2e8f0"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+    <linearGradient id="green_bottom" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="510" rx="90" ry="16" fill="#000000" opacity="0.6"/>
+  
+  <!-- Box Body -->
+  <rect x="210" y="110" width="180" height="380" rx="6" fill="url(#silver_top)" stroke="#10b981" stroke-width="2"/>
+  <!-- Green gradient bottom area -->
+  <path d="M 210 280 L 390 280 L 390 484 C 390 487 387 490 384 490 L 216 490 C 213 490 210 487 210 484 Z" fill="url(#green_bottom)" opacity="0.85"/>
+  
+  <text x="300" y="160" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="16" fill="#111111" text-anchor="middle" letter-spacing="1">KÉRASTASE</text>
+  <text x="300" y="172" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="7" fill="#333333" text-anchor="middle" letter-spacing="2">PARIS</text>
+  
+  <!-- Silver/Holo K -->
+  <path d="M 285 190 L 285 230 M 285 210 L 315 190 M 285 210 L 315 230" stroke="#64748b" stroke-width="8" stroke-linecap="square"/>
+  
+  <text x="300" y="260" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="12" fill="#1e293b" text-anchor="middle" letter-spacing="3">SPECIFIQUE</text>
+  <text x="300" y="280" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="12" fill="#047857" text-anchor="middle" letter-spacing="2">POTENTIALISTE</text>
+  
+  <text x="300" y="305" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="6" fill="#ffffff" text-anchor="middle">BIFIDUS PREBIOTIC + VITAMIN-CG</text>
+  <text x="300" y="325" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="7" fill="#ffffff" text-anchor="middle">Sérum défense universel</text>
+  <text x="300" y="338" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#ecfdf5" text-anchor="middle">Pour cuir chevelu déséquilibré</text>
+  <text x="300" y="355" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6.5" fill="#d1fae5" text-anchor="middle">Universal defense serum</text>
+
+  <text x="300" y="420" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6" fill="#ecfdf5" text-anchor="middle">USAGE QUOTIDIEN - DAILY USE</text>
+  <text x="300" y="432" font-family="'Helvetica Neue', Arial, sans-serif" font-size="6" fill="#ecfdf5" text-anchor="middle">SANS RINÇAGE - LEAVE-IN</text>
+  
+  <text x="300" y="468" font-family="'Helvetica Neue', Arial, sans-serif" font-size="7.5" fill="#ffffff" text-anchor="middle">90 ml 3.04 fl.oz.</text>
+</svg>

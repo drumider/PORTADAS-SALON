@@ -2,6 +2,45 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      (function() {
+        try {
+          var rawFetch = window.fetch;
+          var currentFetch = typeof rawFetch === 'function' ? rawFetch.bind(window) : rawFetch;
+          Object.defineProperty(window, 'fetch', {
+            get: function() {
+              return currentFetch;
+            },
+            set: function(fn) {
+              currentFetch = fn;
+            },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {}
+
+        window.addEventListener('error', function(event) {
+          if (
+            event &&
+            ((event.filename && (event.filename.indexOf('chrome-extension://') !== -1 || event.filename.indexOf('moz-extension://') !== -1)) ||
+             (event.message && typeof event.message === 'string' && event.message.indexOf('chrome-extension://') !== -1))
+          ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(event) {
+          var reason = event && event.reason;
+          var stack = reason && (reason.stack || reason.message || String(reason));
+          if (typeof stack === 'string' && (stack.indexOf('chrome-extension://') !== -1 || stack.indexOf('moz-extension://') !== -1)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }, true);
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <link rel="icon" type="image/png" href="/icons/newlogo.png" />
     <link rel="shortcut icon" type="image/png" href="/icons/newlogo.png" />

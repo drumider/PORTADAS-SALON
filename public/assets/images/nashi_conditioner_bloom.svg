@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a2022"/>
+      <stop offset="100%" stop-color="#120c0e"/>
+    </radialGradient>
+    <linearGradient id="bottle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1c1611"/>
+      <stop offset="25%" stop-color="#4d3b28"/>
+      <stop offset="50%" stop-color="#33271a"/>
+      <stop offset="85%" stop-color="#140f0a"/>
+      <stop offset="100%" stop-color="#0a0805"/>
+    </linearGradient>
+    <linearGradient id="label" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f2b6b6"/>
+      <stop offset="50%" stop-color="#fce1e1"/>
+      <stop offset="100%" stop-color="#e89e9e"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <ellipse cx="300" cy="530" rx="140" ry="25" fill="#000000" opacity="0.6"/>
+  <path d="M220 220 Q220 180 270 170 L270 140 L330 140 L330 170 Q380 180 380 220 L380 490 Q380 510 360 515 L240 515 Q220 510 220 490 Z" fill="url(#bottle)"/>
+  <rect x="270" y="100" width="60" height="42" rx="4" fill="#15120e" stroke="#2a2218" stroke-width="2"/>
+  <rect x="230" y="220" width="140" height="240" fill="url(#label)" rx="2"/>
+  <!-- Flower illustration -->
+  <path d="M280 380 Q250 320 290 310 Q340 300 350 350 Q360 410 310 430 Q270 410 280 380 Z" fill="#e0536c" opacity="0.65"/>
+  <circle cx="310" cy="355" r="10" fill="#fadc6d"/>
+  <text x="300" y="260" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="28" fill="#382121" text-anchor="middle" letter-spacing="1">nashi</text>
+  <text x="300" y="280" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="400" font-size="16" fill="#382121" text-anchor="middle" letter-spacing="4">ARGAN</text>
+  <text x="300" y="325" font-family="'Georgia', serif" font-style="italic" font-size="16" fill="#382121" text-anchor="middle">conditioner</text>
+  <text x="300" y="342" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="400" font-size="10" fill="#382121" text-anchor="middle" letter-spacing="1">bloom fragrance</text>
+</svg>
