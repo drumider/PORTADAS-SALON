@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getImageUrl } from './utils/imageUtils';
-import heroBgImage from './assets/images/hero.png';
+import heroBgWebp from './assets/images/hero.webp';
+import heroBgPng from './assets/images/hero.png';
 import { 
   Scissors, 
   Paintbrush, 
@@ -354,30 +355,43 @@ export default function App() {
         id="inicio" 
         className="relative h-screen flex flex-col justify-center items-center text-center px-4 overflow-hidden bg-dark-bg"
       >
-        {/* Background Image with Dark Overlay */}
-        <div className="absolute inset-0 z-0">
-          <img 
-            src={heroBgImage || getImageUrl('hero.png')} 
-            alt="Interior de CF Portadas Salón de Belleza" 
-            className="w-full h-full object-cover object-center filter contrast-105 brightness-[0.45] sepia-[10%]"
-            referrerPolicy="no-referrer"
-            onError={(e) => {
-              const target = e.currentTarget;
-              const base = import.meta.env.BASE_URL || './';
-              const cleanBase = base.endsWith('/') ? base : `${base}/`;
-              if (!target.dataset.fallback1) {
-                target.dataset.fallback1 = 'true';
-                target.src = `${cleanBase}assets/images/hero.png`;
-              } else if (!target.dataset.fallback2) {
-                target.dataset.fallback2 = 'true';
-                target.src = './assets/images/hero.png';
-              }
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/50 to-transparent" />
-          <div className="absolute inset-0 bg-black/45" />
-          {/* Luminous Gold Spot */}
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gold-champagne/10 rounded-full filter blur-[120px] pointer-events-none" />
+        {/* Background Image with Elegant Luxury Overlay */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <picture className="w-full h-full block">
+            <source srcSet={heroBgWebp} type="image/webp" />
+            <source srcSet="./assets/images/hero.webp" type="image/webp" />
+            <source srcSet="./hero.webp" type="image/webp" />
+            <source srcSet={heroBgPng} type="image/png" />
+            <img 
+              src={heroBgWebp || heroBgPng || './assets/images/hero.png' || './hero.png'} 
+              alt="CF Portadas Salón de Belleza" 
+              className="w-full h-full object-cover object-center filter brightness-[0.74] contrast-[1.08] transition-opacity duration-700"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.dataset.tried1) {
+                  target.dataset.tried1 = 'true';
+                  target.src = heroBgPng || './assets/images/hero.png';
+                } else if (!target.dataset.tried2) {
+                  target.dataset.tried2 = 'true';
+                  target.src = './hero.png';
+                } else if (!target.dataset.tried3) {
+                  target.dataset.tried3 = 'true';
+                  target.src = './assets/images/hero.jpg';
+                } else if (!target.dataset.tried4) {
+                  target.dataset.tried4 = 'true';
+                  target.src = './hero.jpg';
+                }
+              }}
+            />
+          </picture>
+
+          {/* Warm Dark Vignette & Gradient Overlay - Keeps Salon Interior Visible & Logo Crystal Clear */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#110e0c]/65 via-[#181310]/45 to-[#0e0b09]/85 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.1)_0%,rgba(0,0,0,0.55)_100%)] pointer-events-none" />
+          
+          {/* Luminous Warm Gold Ambient Center Glow */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gold-champagne/10 rounded-full filter blur-[130px] pointer-events-none" />
         </div>
 
         {/* Content */}
@@ -389,7 +403,7 @@ export default function App() {
             className="flex flex-col items-center"
           >
             {/* BRAND LOGO EXACTLY LIKE THE UPLOADED IMAGE */}
-            <div className="flex flex-col items-center select-none my-4 sm:my-8" id="hero-brand-logo">
+            <div className="flex flex-col items-center select-none my-4 sm:my-8 drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]" id="hero-brand-logo">
               {/* Overlapping text container with generous top padding to ensure the elegant script fits */}
               <div className="relative mb-4 sm:mb-6 pt-16 sm:pt-24 pb-2 px-6 flex flex-col items-center">
                 {/* The "cf" elegant script, perfectly positioned higher up, overlapping the letters 'P' and 'O' */}
