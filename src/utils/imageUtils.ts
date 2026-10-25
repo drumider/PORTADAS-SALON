@@ -1,15 +1,15 @@
 /// <reference types="vite/client" />
 
 // Eagerly glob all images in src/assets/images/ so Vite bundles them cleanly for production builds
-const modules1 = (import.meta as unknown as { glob: Function }).glob('/src/assets/images/*', { eager: true }) as Record<string, any>;
-const modules2 = (import.meta as unknown as { glob: Function }).glob('../assets/images/*', { eager: true }) as Record<string, any>;
+const modules1 = import.meta.glob('/src/assets/images/*', { eager: true }) as Record<string, any>;
+const modules2 = import.meta.glob('../assets/images/*', { eager: true }) as Record<string, any>;
 
 const allModules: Record<string, any> = { ...modules1, ...modules2 };
 
 export function getImageUrl(pathOrFilename: string): string {
   if (!pathOrFilename) return '';
 
-  // Extract pure filename e.g. "biotop_101_spray_clean_1786048941070.jpg"
+  // Extract pure filename e.g. "hero.png"
   const filename = pathOrFilename.split('/').pop() || pathOrFilename;
 
   // Search in bundled Vite modules
@@ -25,7 +25,9 @@ export function getImageUrl(pathOrFilename: string): string {
     }
   }
 
-  // Fallback to static public folder URL
-  return `/assets/images/${filename}`;
+  // Fallback to static public folder URL using base URL so it works on GitHub Pages subpaths
+  const base = import.meta.env.BASE_URL || './';
+  const cleanBase = base.endsWith('/') ? base : `${base}/`;
+  return `${cleanBase}assets/images/${filename}`;
 }
 

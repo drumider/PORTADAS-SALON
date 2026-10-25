@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getImageUrl } from './utils/imageUtils';
+import heroBgImage from './assets/images/hero.png';
 import { 
   Scissors, 
   Paintbrush, 
@@ -356,15 +357,20 @@ export default function App() {
         {/* Background Image with Dark Overlay */}
         <div className="absolute inset-0 z-0">
           <img 
-            src={getImageUrl('hero.png')} 
+            src={heroBgImage || getImageUrl('hero.png')} 
             alt="Interior de CF Portadas Salón de Belleza" 
             className="w-full h-full object-cover object-center filter contrast-105 brightness-[0.45] sepia-[10%]"
             referrerPolicy="no-referrer"
             onError={(e) => {
               const target = e.currentTarget;
-              if (!target.dataset.failed) {
-                target.dataset.failed = 'true';
-                target.src = '/assets/images/hero.png';
+              const base = import.meta.env.BASE_URL || './';
+              const cleanBase = base.endsWith('/') ? base : `${base}/`;
+              if (!target.dataset.fallback1) {
+                target.dataset.fallback1 = 'true';
+                target.src = `${cleanBase}assets/images/hero.png`;
+              } else if (!target.dataset.fallback2) {
+                target.dataset.fallback2 = 'true';
+                target.src = './assets/images/hero.png';
               }
             }}
           />
