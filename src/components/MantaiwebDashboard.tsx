@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Lock, BarChart3, Users, Calendar, TrendingUp } from 'lucide-react';
-import { getStoredAppointments, subscribeToWebBookingAnalytics } from '../utils/storage';
-import { Appointment } from '../types';
+import { X, Lock, BarChart3, Users, Calendar, TrendingUp, Video } from 'lucide-react';
+import { getStoredAppointments, subscribeToWebBookingAnalytics, subscribeToMarketingVisits } from '../utils/storage';
+import { Appointment, MarketingVisit } from '../types';
+import { MarketingVisitsModal } from './MarketingVisitsModal';
 
 interface MantaiwebDashboardProps {
   isOpen: boolean;
@@ -13,9 +14,12 @@ export const MantaiwebDashboard: React.FC<MantaiwebDashboardProps> = ({ isOpen, 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState('');
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [marketingVisits, setMarketingVisits] = useState<MarketingVisit[]>([]);
+  const [isMarketingPortalOpen, setIsMarketingPortalOpen] = useState(false);
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
+    let unsubMarketing: (() => void) | undefined;
     if (isAuthenticated) {
       // First, get any active non-deleted web appointments from standard cache
       const currentData = getStoredAppointments();
@@ -32,10 +36,15 @@ export const MantaiwebDashboard: React.FC<MantaiwebDashboardProps> = ({ isOpen, 
         
         setAppointments(Array.from(mergedMap.values()));
       });
+
+      unsubMarketing = subscribeToMarketingVisits((visits) => {
+        setMarketingVisits(visits);
+      });
     }
     
     return () => {
       if (unsubscribe) unsubscribe();
+      if (unsubMarketing) unsubMarketing();
     };
   }, [isAuthenticated, isOpen]);
 
@@ -143,6 +152,36 @@ export const MantaiwebDashboard: React.FC<MantaiwebDashboardProps> = ({ isOpen, 
                 </div>
               </div>
               
+              {/* Marketing Video Notice Quick Trigger (Hidden exclusively inside Mantai Web Analytics) */}
+              <div className="bg-violet-950/40 border border-violet-500/40 rounded-xl p-4 text-center space-y-2.5">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xs font-bold text-violet-200 uppercase tracking-wider font-serif-luxury">
+                    🎬 Aviso Grabación Marketing
+                  </span>
+                </div>
+                <p className="text-[11px] text-neutral-300 leading-relaxed">
+                  Envía avisos exclusivos de Mantai a la agenda del salón cuando vayan a grabar videos y revisa si ya fueron aprobados.
+                </p>
+                {marketingVisits.length > 0 && (
+                  <div className="flex items-center justify-center gap-2 text-[10px] font-mono">
+                    <span className="px-2 py-0.5 rounded bg-violet-900/70 text-violet-200 border border-violet-500/40">
+                      {marketingVisits.filter(v => v.status === 'Pendiente').length} pendientes
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-900/60 text-emerald-300 border border-emerald-500/40">
+                      {marketingVisits.filter(v => v.status === 'Aprobada').length} aprobadas
+                    </span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsMarketingPortalOpen(true)}
+                  className="w-full py-2.5 px-4 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                >
+                  <Video className="w-4 h-4" />
+                  <span>Aviso Grabación Marketing</span>
+                </button>
+              </div>
+              
               <div className="pt-4 border-t border-neutral-800 text-center">
                 <p className="text-[10px] text-neutral-500 font-mono">
                   Desarrollado y mantenido por <strong className="text-emerald-400">Mantaiweb.com</strong>
@@ -152,6 +191,13 @@ export const MantaiwebDashboard: React.FC<MantaiwebDashboardProps> = ({ isOpen, 
           </div>
         )}
       </div>
+
+      <MarketingVisitsModal
+        isOpen={isMarketingPortalOpen}
+        onClose={() => setIsMarketingPortalOpen(false)}
+        mode="marketing_portal"
+        bypassAuth={true}
+      />
     </div>
   );
 };

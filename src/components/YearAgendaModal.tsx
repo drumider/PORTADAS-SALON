@@ -17,10 +17,11 @@ import {
   Search,
   Filter,
   CheckCheck,
-  CalendarRange
+  CalendarRange,
+  Video
 } from 'lucide-react';
-import { Appointment, Stylist } from '../types';
-import { formatTimeTo12h } from '../utils/timeUtils';
+import { Appointment, Stylist, MarketingVisit } from '../types';
+import { formatTimeTo12h, minutesToTime24, timeToMinutes } from '../utils/timeUtils';
 
 interface YearAgendaModalProps {
   isOpen: boolean;
@@ -30,7 +31,9 @@ interface YearAgendaModalProps {
   onScheduleNewForDate: (dateStr: string) => void;
   appointments: Appointment[];
   stylists: Stylist[];
+  marketingVisits?: MarketingVisit[];
   onOpenAppointment?: (appointment: Appointment) => void;
+  onOpenMarketingModal?: () => void;
 }
 
 const MONTH_NAMES = [
@@ -53,7 +56,9 @@ export const YearAgendaModal: React.FC<YearAgendaModalProps> = ({
   onScheduleNewForDate,
   appointments,
   stylists,
-  onOpenAppointment
+  marketingVisits = [],
+  onOpenAppointment,
+  onOpenMarketingModal
 }) => {
   // Year navigation state
   const [currentYear, setCurrentYear] = useState<number>(() => selectedDate.getFullYear());
@@ -132,10 +137,26 @@ export const YearAgendaModal: React.FC<YearAgendaModalProps> = ({
     return { total, confirmed, pending };
   }, [appointments, currentYear]);
 
+  // Map marketing visits by date string
+  const marketingByDate = useMemo(() => {
+    const map = new Map<string, MarketingVisit[]>();
+    marketingVisits.forEach(v => {
+      if (!v.date || v.status === 'Rechazada') return;
+      const list = map.get(v.date) || [];
+      list.push(v);
+      map.set(v.date, list);
+    });
+    return map;
+  }, [marketingVisits]);
+
   // Appointments for inspected date
   const inspectedAppointments = useMemo(() => {
     return appointmentsByDate.get(inspectedDateStr) || [];
   }, [appointmentsByDate, inspectedDateStr]);
+
+  const inspectedMarketingVisits = useMemo(() => {
+    return marketingByDate.get(inspectedDateStr) || [];
+  }, [marketingByDate, inspectedDateStr]);
 
   // Formatted inspected date title
   const formattedInspectedDate = useMemo(() => {
@@ -544,10 +565,13 @@ export const YearAgendaModal: React.FC<YearAgendaModalProps> = ({
                             const dayNum = i + 1;
                             const dateStr = `${currentYear}-${String(monthIndex + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
                             const dayApps = appointmentsByDate.get(dateStr) || [];
+                            const dayMarketing = marketingByDate.get(dateStr) || [];
                             const isTodayDay = dateStr === todayStr;
                             const isInspected = dateStr === inspectedDateStr;
                             const hasPending = dayApps.some(a => a.status === 'Pendiente');
                             const hasConfirmed = dayApps.some(a => a.status === 'Confirmada');
+                            const hasMarketing = dayMarketing.length > 0;
+                            const hasPendingMarketing = dayMarketing.some(v => v.status === 'Pendiente');
 
                             return (
                               <button
@@ -560,38 +584,55 @@ export const YearAgendaModal: React.FC<YearAgendaModalProps> = ({
                                     ? 'bg-[#8C6B4D] text-white font-bold ring-2 ring-[#8C6B4D]/50 shadow-xs'
                                     : isTodayDay
                                     ? 'bg-amber-100/90 text-amber-950 font-bold border border-amber-400'
+                                    : hasMarketing && dayApps.length === 0
+                                    ? 'bg-violet-50 hover:bg-violet-100 text-violet-950 border border-violet-300 font-semibold'
                                     : dayApps.length > 0
                                     ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300 font-semibold'
                                     : 'hover:bg-[#FAF5EE] text-neutral-800'
                                 }`}
-                                title={`${dateStr}: ${dayApps.length} citas. Doble clic para abrir en la agenda.`}
+                                title={`${dateStr}: ${dayApps.length} citas${hasMarketing ? ` · ${dayMarketing.length} grabación marketing` : ''}. Doble clic para abrir en la agenda.`}
                               >
                                 <span className="text-[11px] leading-none font-mono">
                                   {dayNum}
                                 </span>
 
-                                {/* Appointments Indicator Dot / Count */}
-                                {dayApps.length > 0 && (
+                                {/* Appointments & Marketing Indicator Dot / Count */}
+                                {(dayApps.length > 0 || hasMarketing) && (
                                   <div className="flex items-center gap-0.5 mt-0.5">
-                                    <span
-                                      className={`w-1.5 h-1.5 rounded-full ${
-                                        isInspected
-                                          ? 'bg-white'
-                                          : hasPending
-                                          ? 'bg-red-500 animate-pulse'
-                                          : hasConfirmed
-                                          ? 'bg-emerald-600'
-                                          : 'bg-neutral-500'
-                                      }`}
-                                    />
-                                    {dayApps.length > 1 && (
+                                    {dayApps.length > 0 && (
+                                      <>
+                                        <span
+                                          className={`w-1.5 h-1.5 rounded-full ${
+                                            isInspected
+                                              ? 'bg-white'
+                                              : hasPending
+                                              ? 'bg-red-500 animate-pulse'
+                                              : hasConfirmed
+                                              ? 'bg-emerald-600'
+                                              : 'bg-neutral-500'
+                                          }`}
+                                        />
+                                        {dayApps.length > 1 && (
+                                          <span
+                                            className={`text-[8px] font-mono leading-none ${
+                                              isInspected ? 'text-white font-bold' : 'text-emerald-800 font-bold'
+                                            }`}
+                                          >
+                                            {dayApps.length}
+                                          </span>
+                                        )}
+                                      </>
+                                    )}
+                                    {hasMarketing && (
                                       <span
-                                        className={`text-[8px] font-mono leading-none ${
-                                          isInspected ? 'text-white font-bold' : 'text-emerald-800 font-bold'
+                                        className={`w-1.5 h-1.5 rounded-full ${
+                                          isInspected
+                                            ? 'bg-violet-200'
+                                            : hasPendingMarketing
+                                            ? 'bg-violet-600 animate-ping'
+                                            : 'bg-violet-600'
                                         }`}
-                                      >
-                                        {dayApps.length}
-                                      </span>
+                                      />
                                     )}
                                   </div>
                                 )}
@@ -773,8 +814,50 @@ export const YearAgendaModal: React.FC<YearAgendaModalProps> = ({
                 </button>
               </div>
 
-              {/* Day's Appointments List */}
+              {/* Day's Marketing Visits & Appointments List */}
               <div className="flex-1 py-3 space-y-2.5 min-h-[140px]">
+                {inspectedMarketingVisits.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    <h4 className="text-xs font-bold text-violet-900 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                      <Video className="w-3.5 h-3.5 text-violet-700" />
+                      <span>Grabación Marketing ({inspectedMarketingVisits.length})</span>
+                    </h4>
+                    {inspectedMarketingVisits.map(visit => (
+                      <div
+                        key={visit.id}
+                        onClick={() => {
+                          if (onOpenMarketingModal) {
+                            onClose();
+                            onOpenMarketingModal();
+                          }
+                        }}
+                        className="p-2.5 rounded-lg border border-violet-300 bg-violet-50 hover:bg-violet-100/80 transition-all cursor-pointer shadow-2xs"
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-xs font-mono font-bold text-violet-900">
+                            {formatTimeTo12h(visit.time)} - {formatTimeTo12h(minutesToTime24(timeToMinutes(visit.time) + visit.durationMinutes))}
+                          </span>
+                          <span className={`text-[9px] font-bold font-mono px-1.5 py-0.2 rounded border ${
+                            visit.status === 'Aprobada'
+                              ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                              : visit.status === 'Pendiente'
+                              ? 'bg-violet-200 text-violet-950 border-violet-400 animate-pulse'
+                              : 'bg-blue-100 text-blue-900 border-blue-300'
+                          }`}>
+                            {visit.status}
+                          </span>
+                        </div>
+                        <p className="text-xs font-bold text-violet-950 truncate uppercase font-serif-luxury mt-1">
+                          🎬 {visit.title}
+                        </p>
+                        <p className="text-[10px] text-violet-800 font-mono truncate">
+                          {visit.marketingPerson} · {visit.targetStylistName || 'Todo el Salón'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <h4 className="text-xs font-bold text-neutral-700 uppercase tracking-wider font-mono">
                   Horarios Ocupados:
                 </h4>

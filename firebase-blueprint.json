@@ -41,6 +41,25 @@
         "replacesDate": { "type": "string", "required": false },
         "createdAt": { "type": "string", "required": true }
       }
+    },
+    "MarketingVisit": {
+      "collectionName": "marketing_visits",
+      "fields": {
+        "title": { "type": "string", "required": true },
+        "marketingPerson": { "type": "string", "required": true },
+        "contactPhone": { "type": "string", "required": false },
+        "date": { "type": "string", "required": true },
+        "time": { "type": "string", "required": true },
+        "durationMinutes": { "type": "number", "required": true },
+        "targetStylistId": { "type": "string", "required": false },
+        "targetStylistName": { "type": "string", "required": false },
+        "videoTopics": { "type": "string", "required": false },
+        "notes": { "type": "string", "required": false },
+        "status": { "type": "string", "required": true },
+        "rejectionReason": { "type": "string", "required": false },
+        "approvedAt": { "type": "string", "required": false },
+        "createdAt": { "type": "string", "required": true }
+      }
     }
   }
 }

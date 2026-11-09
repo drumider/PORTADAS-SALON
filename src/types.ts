@@ -93,3 +93,23 @@ export interface GalleryItem {
   stylist: string;
   image: string;
 }
+
+export type MarketingVisitStatus = 'Pendiente' | 'Aprobada' | 'Rechazada' | 'Completada';
+
+export interface MarketingVisit {
+  id: string;
+  title: string;
+  marketingPerson: string;
+  contactPhone?: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  durationMinutes: number;
+  targetStylistId?: string; // 'todo_salon' or specific stylistId
+  targetStylistName?: string;
+  videoTopics?: string;
+  notes?: string;
+  status: MarketingVisitStatus;
+  rejectionReason?: string;
+  approvedAt?: string;
+  createdAt: string;
+}

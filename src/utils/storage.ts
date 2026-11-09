@@ -1,4 +1,4 @@
-import { Appointment, Client, StylistScheduleException, Stylist } from '../types';
+import { Appointment, Client, StylistScheduleException, Stylist, MarketingVisit } from '../types';
 import { db } from '../lib/firebase';
 import { DEFAULT_SCHEDULE_EXCEPTIONS, STYLISTS } from '../constants';
 import {
@@ -13,10 +13,13 @@ import {
 const APPOINTMENTS_STORAGE_KEY = 'cf_portadas_appointments_v1';
 const CLIENTS_STORAGE_KEY = 'cf_portadas_clients_v1';
 const SCHEDULE_EXCEPTIONS_STORAGE_KEY = 'cf_portadas_schedule_exceptions_v1';
+const MARKETING_VISITS_STORAGE_KEY = 'cf_portadas_marketing_visits_v1';
 const ADMIN_AUTH_KEY = 'cf_portadas_admin_auth_v1';
+const MARKETING_AUTH_KEY = 'cf_portadas_marketing_auth_v1';
 const DELETED_APP_IDS_KEY = 'cf_portadas_deleted_app_ids_v1';
 const DELETED_CLIENT_IDS_KEY = 'cf_portadas_deleted_client_ids_v1';
 const DELETED_EXC_IDS_KEY = 'cf_portadas_deleted_exc_ids_v1';
+const DELETED_MARKETING_IDS_KEY = 'cf_portadas_deleted_marketing_ids_v1';
 
 // Tombstones to prevent deleted documents from being resurrected by snapshots or offline sync
 const getDeletedAppIds = (): Set<string> => {
@@ -65,6 +68,23 @@ const recordDeletedExcId = (id: string) => {
   deletedExcIds.add(id);
   try {
     localStorage.setItem(DELETED_EXC_IDS_KEY, JSON.stringify(Array.from(deletedExcIds)));
+  } catch (e) {}
+};
+
+const getDeletedMarketingIds = (): Set<string> => {
+  try {
+    const raw = localStorage.getItem(DELETED_MARKETING_IDS_KEY);
+    if (raw) return new Set(JSON.parse(raw));
+  } catch (e) {}
+  return new Set<string>();
+};
+
+const deletedMarketingIds = getDeletedMarketingIds();
+
+const recordDeletedMarketingId = (id: string) => {
+  deletedMarketingIds.add(id);
+  try {
+    localStorage.setItem(DELETED_MARKETING_IDS_KEY, JSON.stringify(Array.from(deletedMarketingIds)));
   } catch (e) {}
 };
 
@@ -211,6 +231,10 @@ if (typeof window !== 'undefined') {
     if (e.key === SCHEDULE_EXCEPTIONS_STORAGE_KEY) {
       cachedScheduleExceptions = getLocalStorageScheduleExceptions();
       notifyScheduleExceptionSubscribers();
+    }
+    if (e.key === MARKETING_VISITS_STORAGE_KEY) {
+      cachedMarketingVisits = getLocalStorageMarketingVisits();
+      notifyMarketingVisitSubscribers();
     }
   });
 
@@ -909,3 +933,190 @@ export const subscribeToWebBookingAnalytics = (callback: (apps: any[]) => void) 
   );
   return unsubscribe;
 };
+
+// ============================================================================
+// MARKETING VIDEO VISITS (Notices, Salon Approval & Agenda Integration)
+// ============================================================================
+
+const getLocalStorageMarketingVisits = (): MarketingVisit[] => {
+  try {
+    const data = localStorage.getItem(MARKETING_VISITS_STORAGE_KEY);
+    if (data !== null) {
+      const parsed: MarketingVisit[] = JSON.parse(data);
+      return parsed.filter(v => !deletedMarketingIds.has(v.id));
+    }
+  } catch (e) {
+    console.error('Error reading marketing visits from local storage:', e);
+  }
+  return [];
+};
+
+let cachedMarketingVisits: MarketingVisit[] = getLocalStorageMarketingVisits();
+type MarketingVisitCallback = (visits: MarketingVisit[]) => void;
+const marketingVisitSubscribers = new Set<MarketingVisitCallback>();
+
+const notifyMarketingVisitSubscribers = () => {
+  const filtered = cachedMarketingVisits.filter(v => !deletedMarketingIds.has(v.id));
+  const sorted = [...filtered].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  cachedMarketingVisits = sorted;
+  marketingVisitSubscribers.forEach((cb) => {
+    try {
+      cb(sorted);
+    } catch (e) {
+      console.error('Error in marketing visit subscriber callback:', e);
+    }
+  });
+};
+
+export const getStoredMarketingVisits = (): MarketingVisit[] => {
+  return cachedMarketingVisits.filter(v => !deletedMarketingIds.has(v.id));
+};
+
+export const subscribeToMarketingVisits = (callback: (visits: MarketingVisit[]) => void): (() => void) => {
+  marketingVisitSubscribers.add(callback);
+  callback([...cachedMarketingVisits].filter(v => !deletedMarketingIds.has(v.id)).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)));
+
+  const colRef = collection(db, 'marketing_visits');
+  const unsubscribe = onSnapshot(
+    colRef,
+    (snapshot) => {
+      const visitsMap = new Map<string, MarketingVisit>();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as MarketingVisit;
+        const visitId = docSnap.id || data.id;
+        if (!deletedMarketingIds.has(visitId)) {
+          visitsMap.set(visitId, { ...data, id: visitId });
+        }
+      });
+
+      const list = Array.from(visitsMap.values()).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+      cachedMarketingVisits = list;
+      try {
+        localStorage.setItem(MARKETING_VISITS_STORAGE_KEY, JSON.stringify(list));
+      } catch (e) {}
+
+      notifyMarketingVisitSubscribers();
+    },
+    (error) => {
+      console.warn('Firestore marketing_visits subscription fallback to cache:', error);
+      notifyMarketingVisitSubscribers();
+    }
+  );
+
+  return () => {
+    marketingVisitSubscribers.delete(callback);
+    unsubscribe();
+  };
+};
+
+export const saveMarketingVisit = (
+  visit: Omit<MarketingVisit, 'id' | 'createdAt'> & { id?: string; createdAt?: string }
+): MarketingVisit => {
+  const now = new Date().toISOString();
+  const id = visit.id || 'mkt-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+
+  const finalVisit: MarketingVisit = {
+    ...visit,
+    id,
+    createdAt: visit.createdAt || cachedMarketingVisits.find(v => v.id === id)?.createdAt || now
+  };
+
+  deletedMarketingIds.delete(id);
+  try {
+    localStorage.setItem(DELETED_MARKETING_IDS_KEY, JSON.stringify(Array.from(deletedMarketingIds)));
+  } catch (e) {}
+
+  const idx = cachedMarketingVisits.findIndex(v => v.id === id);
+  if (idx !== -1) {
+    cachedMarketingVisits[idx] = finalVisit;
+  } else {
+    cachedMarketingVisits.push(finalVisit);
+  }
+
+  try {
+    localStorage.setItem(MARKETING_VISITS_STORAGE_KEY, JSON.stringify(cachedMarketingVisits));
+  } catch (e) {}
+
+  notifyMarketingVisitSubscribers();
+
+  setDoc(doc(db, 'marketing_visits', id), sanitizeForFirestore(finalVisit), { merge: true }).catch((err) => {
+    console.error('Error writing marketing visit to Firestore:', JSON.stringify({
+      error: err instanceof Error ? err.message : String(err),
+      operationType: 'write',
+      path: `marketing_visits/${id}`
+    }));
+  });
+
+  return finalVisit;
+};
+
+export const updateMarketingVisitDetails = (id: string, updates: Partial<MarketingVisit>): void => {
+  const idx = cachedMarketingVisits.findIndex(v => v.id === id);
+  if (idx !== -1) {
+    cachedMarketingVisits[idx] = {
+      ...cachedMarketingVisits[idx],
+      ...updates
+    };
+    try {
+      localStorage.setItem(MARKETING_VISITS_STORAGE_KEY, JSON.stringify(cachedMarketingVisits));
+    } catch (e) {}
+    notifyMarketingVisitSubscribers();
+  }
+
+  updateDoc(doc(db, 'marketing_visits', id), sanitizeForFirestore(updates)).catch((err) => {
+    console.error('Error updating marketing visit in Firestore:', JSON.stringify({
+      error: err instanceof Error ? err.message : String(err),
+      operationType: 'update',
+      path: `marketing_visits/${id}`
+    }));
+  });
+};
+
+export const approveMarketingVisit = (id: string, adjustments?: Partial<MarketingVisit>): void => {
+  const now = new Date().toISOString();
+  updateMarketingVisitDetails(id, {
+    ...adjustments,
+    status: 'Aprobada',
+    approvedAt: now,
+    rejectionReason: ''
+  });
+};
+
+export const rejectMarketingVisit = (id: string, reason?: string): void => {
+  updateMarketingVisitDetails(id, {
+    status: 'Rechazada',
+    rejectionReason: reason?.trim() || 'Horario no disponible en salón'
+  });
+};
+
+export const deleteMarketingVisit = (id: string): void => {
+  if (!id) return;
+  recordDeletedMarketingId(id);
+  cachedMarketingVisits = cachedMarketingVisits.filter(v => v.id !== id);
+  try {
+    localStorage.setItem(MARKETING_VISITS_STORAGE_KEY, JSON.stringify(cachedMarketingVisits));
+  } catch (e) {}
+
+  notifyMarketingVisitSubscribers();
+
+  deleteDoc(doc(db, 'marketing_visits', id)).catch((err) => {
+    console.error('Error deleting marketing visit from Firestore:', JSON.stringify({
+      error: err instanceof Error ? err.message : String(err),
+      operationType: 'delete',
+      path: `marketing_visits/${id}`
+    }));
+  });
+};
+
+export const setMarketingAuthenticated = (isAuth: boolean) => {
+  if (isAuth) {
+    localStorage.setItem(MARKETING_AUTH_KEY, 'true');
+  } else {
+    localStorage.removeItem(MARKETING_AUTH_KEY);
+  }
+};
+
+export const isMarketingAuthenticated = (): boolean => {
+  return localStorage.getItem(MARKETING_AUTH_KEY) === 'true' || isAdminAuthenticated();
+};
+

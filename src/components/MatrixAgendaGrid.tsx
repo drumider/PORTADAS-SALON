@@ -49,9 +49,11 @@ import {
   CalendarRange,
   ArrowLeftRight,
   Sun,
-  Ban
+  Ban,
+  Video,
+  Film
 } from 'lucide-react';
-import { Appointment, AppointmentStatus, Stylist, Client, StylistScheduleException } from '../types';
+import { Appointment, AppointmentStatus, Stylist, Client, StylistScheduleException, MarketingVisit } from '../types';
 import { STYLISTS as DEFAULT_STYLISTS, SERVICES } from '../constants';
 import { 
   getStoredAppointments, 
@@ -65,7 +67,9 @@ import {
   subscribeToClients,
   getStoredScheduleExceptions,
   subscribeToScheduleExceptions,
-  getStylistAvailabilityOnDate
+  getStylistAvailabilityOnDate,
+  subscribeToMarketingVisits,
+  approveMarketingVisit
 } from '../utils/storage';
 import { 
   normalizeTimeTo24h, 
@@ -84,6 +88,7 @@ import { CancelAppointmentModal } from './CancelAppointmentModal';
 import { ExpandDurationModal } from './ExpandDurationModal';
 import { YearAgendaModal } from './YearAgendaModal';
 import { ScheduleExceptionsModal } from './ScheduleExceptionsModal';
+import { MarketingVisitsModal } from './MarketingVisitsModal';
 
 export interface SlotAppointmentEntry {
   appointment: Appointment;
@@ -294,6 +299,31 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
     return () => unsub();
   }, []);
 
+  // Marketing Video Visits state
+  const [marketingVisits, setMarketingVisits] = useState<MarketingVisit[]>([]);
+  const [isMarketingModalOpen, setIsMarketingModalOpen] = useState(false);
+  const [marketingModalInitialTab, setMarketingModalInitialTab] = useState<'pending' | 'approved' | 'create'>('pending');
+  const prevMarketingPendingRef = useRef<number>(0);
+  const isMarketingInitRef = useRef<boolean>(true);
+
+  useEffect(() => {
+    const unsub = subscribeToMarketingVisits((list) => {
+      setMarketingVisits(list);
+      const pendingList = list.filter(v => v.status === 'Pendiente');
+      if (!isMarketingInitRef.current && pendingList.length > prevMarketingPendingRef.current) {
+        const latest = pendingList[pendingList.length - 1];
+        setNotificationToast({
+          id: 'toast-mkt-' + Date.now(),
+          message: `🎬 ¡Aviso de Marketing! ${latest?.marketingPerson || 'Marketing'} solicita grabar "${latest?.title || 'Videos'}" el ${latest?.date || ''} a las ${formatTimeTo12h(latest?.time || '')}.`,
+          type: 'warning'
+        });
+      }
+      prevMarketingPendingRef.current = pendingList.length;
+      isMarketingInitRef.current = false;
+    });
+    return () => unsub();
+  }, []);
+
   // Bottom action bar modals
   const [activeBottomModal, setActiveBottomModal] = useState<
     'help' | 'list' | 'pending' | 'add_stylist' | null
@@ -452,6 +482,53 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
       .filter(a => a.date === selectedDateStr)
       .sort((a, b) => a.time.localeCompare(b.time));
   }, [appointments, selectedDateStr]);
+
+  // Marketing visits helpers
+  const pendingMarketingVisits = useMemo(() => {
+    return marketingVisits.filter(v => v.status === 'Pendiente');
+  }, [marketingVisits]);
+
+  const approvedMarketingVisits = useMemo(() => {
+    return marketingVisits.filter(v => v.status === 'Aprobada');
+  }, [marketingVisits]);
+
+  const dayMarketingVisits = useMemo(() => {
+    return marketingVisits
+      .filter(v => v.date === selectedDateStr && v.status !== 'Rechazada')
+      .sort((a, b) => a.time.localeCompare(b.time));
+  }, [marketingVisits, selectedDateStr]);
+
+  const dayApprovedMarketingVisits = useMemo(() => {
+    return dayMarketingVisits.filter(v => v.status === 'Aprobada');
+  }, [dayMarketingVisits]);
+
+  const getMarketingVisitsAtSlot = (stylistId: string, timeSlot24: string): MarketingVisit[] => {
+    if (dayMarketingVisits.length === 0) return [];
+    const slotMin = timeToMinutes(timeSlot24);
+    return dayMarketingVisits.filter(v => {
+      const vStart = timeToMinutes(normalizeTimeTo24h(v.time));
+      const vEnd = vStart + (v.durationMinutes || 60);
+      const overlapsTime = slotMin >= vStart && slotMin < vEnd;
+      if (!overlapsTime) return false;
+      const target = (v.targetStylistId || 'todo_salon').toLowerCase();
+      return target === 'todo_salon' || target === stylistId.toLowerCase();
+    });
+  };
+
+  const handleQuickApproveMarketing = (visit: MarketingVisit) => {
+    approveMarketingVisit(visit.id);
+    try {
+      const [y, m, d] = visit.date.split('-').map(Number);
+      if (y && m && d) {
+        setSelectedDate(new Date(y, m - 1, d));
+      }
+    } catch (e) {}
+    setNotificationToast({
+      id: 'toast-mkt-ok-' + Date.now(),
+      message: `✅ Grabación de Marketing "${visit.title}" aprobada y agregada a la agenda del ${visit.date} (${formatTimeTo12h(visit.time)}).`,
+      type: 'success'
+    });
+  };
 
   // Map appointments by stylistId and time with normalized times, covering full service duration and phase state (busy vs reposo/free)
   const appointmentMatrix = useMemo(() => {
@@ -1053,6 +1130,42 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
             </button>
           )}
 
+          {/* Pending Marketing Recording Alert Button */}
+          {pendingMarketingVisits.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setMarketingModalInitialTab('pending');
+                setIsMarketingModalOpen(true);
+              }}
+              className="px-2.5 py-1 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1.5 transition-all shadow-md animate-pulse cursor-pointer ring-2 ring-violet-300"
+              title={`${pendingMarketingVisits.length} Aviso(s) de grabación de Marketing pendiente(s) por aprobar`}
+            >
+              <Video className="w-3.5 h-3.5 animate-bounce" />
+              <span className="font-mono font-bold">{pendingMarketingVisits.length} Grabación</span>
+            </button>
+          )}
+
+          {/* Marketing Visits Manager Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setMarketingModalInitialTab(pendingMarketingVisits.length > 0 ? 'pending' : 'approved');
+              setIsMarketingModalOpen(true);
+            }}
+            className="px-2.5 py-1 bg-white hover:bg-violet-50 border border-[#D9CEC2] hover:border-violet-400 text-[#2C221C] text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            title="Avisos y agenda de grabaciones de video de Marketing"
+            id="admin-topbar-marketing-btn"
+          >
+            <Film className="w-3.5 h-3.5 text-violet-700" />
+            <span className="hidden lg:inline">Marketing</span>
+            {approvedMarketingVisits.length > 0 && (
+              <span className="bg-violet-100 text-violet-900 border border-violet-300 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full">
+                {approvedMarketingVisits.length}
+              </span>
+            )}
+          </button>
+
           {/* Quick Tools Trigger: Permutas y Cierre de Días */}
           <button
             type="button"
@@ -1141,6 +1254,90 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
               <span>Revisar Todas ({pendingAppointments.length})</span>
             </button>
           </div>
+        </div>
+      )}
+
+      {/* PROMINENT MARKETING VIDEO RECORDING NOTICE BANNER (PENDING APPROVAL) */}
+      {pendingMarketingVisits.length > 0 && (
+        <div className="bg-gradient-to-r from-violet-50 via-indigo-50/90 to-violet-50 border-b border-violet-300 px-3 sm:px-5 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2.5 shadow-xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-full bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-xs ring-2 ring-violet-200">
+              <Video className="w-3.5 h-3.5 animate-bounce" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-violet-950 font-serif-luxury uppercase tracking-wide">
+                  🎬 Aviso de Marketing: Grabación de Videos
+                </span>
+                <span className="bg-violet-600 text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded-full uppercase shadow-xs animate-pulse">
+                  {pendingMarketingVisits.length} Por Aprobar
+                </span>
+              </div>
+              <p className="text-[11px] text-violet-900 truncate mt-0.5">
+                <strong className="text-violet-950 font-bold">{pendingMarketingVisits[0].marketingPerson}</strong> avisó que irá a grabar <strong>"{pendingMarketingVisits[0].title}"</strong> el <strong>{pendingMarketingVisits[0].date}</strong> a las <strong>{formatTimeTo12h(pendingMarketingVisits[0].time)}</strong> ({pendingMarketingVisits[0].targetStylistName || 'Todo el Salón'}).
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
+            <button
+              type="button"
+              onClick={() => handleQuickApproveMarketing(pendingMarketingVisits[0])}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+              title="Aprobar visita de marketing y tenerla en la agenda"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Aprobar y Agendar</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setMarketingModalInitialTab('pending');
+                setIsMarketingModalOpen(true);
+              }}
+              className="px-2.5 py-1.5 bg-white hover:bg-violet-100 border border-violet-400 text-violet-950 rounded text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+            >
+              <span>Revisar ({pendingMarketingVisits.length})</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* APPROVED MARKETING SHOOT ON SELECTED DATE BANNER */}
+      {dayApprovedMarketingVisits.length > 0 && (
+        <div className="bg-gradient-to-r from-indigo-950 via-[#2B2040] to-violet-950 text-white border-b border-violet-400/40 px-3 sm:px-5 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-full bg-violet-500/30 border border-violet-300/50 text-violet-200 flex items-center justify-center shrink-0">
+              <Film className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0 text-xs">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-serif-luxury font-bold uppercase tracking-wide text-gold-champagne">
+                  🎬 Hoy Marketing Graba Videos en el Salón (Aprobado en Agenda)
+                </span>
+              </div>
+              <p className="text-[11px] text-violet-100 truncate mt-0.5">
+                {dayApprovedMarketingVisits.map((v, i) => (
+                  <span key={v.id}>
+                    {i > 0 && ' · '}
+                    <strong className="text-white">{formatTimeTo12h(v.time)} - {formatTimeTo12h(minutesToTime24(timeToMinutes(normalizeTimeTo24h(v.time)) + v.durationMinutes))}</strong>: {v.title} ({v.targetStylistName || 'Todo el Salón'} · {v.marketingPerson})
+                  </span>
+                ))}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMarketingModalInitialTab('approved');
+              setIsMarketingModalOpen(true);
+            }}
+            className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-violet-300/40 text-white rounded text-[11px] font-mono font-bold transition-colors shrink-0 self-start sm:self-auto cursor-pointer"
+          >
+            Ver / Gestionar
+          </button>
         </div>
       )}
 
@@ -1316,6 +1513,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                 const cleanTime = timeSlot;
                 const appKey = `${selectedStylistObj.id}_${cleanTime}`;
                 const slotAppointments = appointmentMatrix.get(appKey) || [];
+                const slotMarketingVisits = getMarketingVisitsAtSlot(selectedStylistObj.id, cleanTime);
                 const [slotH, slotM] = timeSlot.split(':').map(Number);
                 const now = new Date();
                 const isCurrentHourSlot = isToday && now.getHours() === slotH && Math.abs(now.getMinutes() - slotM) < 15;
@@ -1342,7 +1540,60 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                     </div>
 
                     {/* Slot Content */}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      {slotMarketingVisits.map((mVisit) => {
+                        const isPendingMkt = mVisit.status === 'Pendiente';
+                        const mEnd = minutesToTime24(timeToMinutes(normalizeTimeTo24h(mVisit.time)) + mVisit.durationMinutes);
+                        return (
+                          <div
+                            key={`mkt_${mVisit.id}_${timeSlot}`}
+                            onClick={() => {
+                              setMarketingModalInitialTab(isPendingMkt ? 'pending' : 'approved');
+                              setIsMarketingModalOpen(true);
+                            }}
+                            className={`p-2 rounded-md border flex flex-wrap items-center justify-between gap-2 cursor-pointer transition-all ${
+                              isPendingMkt
+                                ? 'bg-violet-50 border-violet-400 border-dashed text-violet-950'
+                                : 'bg-indigo-50/90 border-indigo-400 text-indigo-950'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Video className="w-3.5 h-3.5 text-violet-700 shrink-0" />
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-xs font-bold uppercase font-serif-luxury truncate">
+                                    🎬 {mVisit.title}
+                                  </span>
+                                  <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border ${
+                                    isPendingMkt
+                                      ? 'bg-violet-600 text-white border-violet-700 animate-pulse'
+                                      : 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                                  }`}>
+                                    {isPendingMkt ? 'Aviso Marketing · Por Aprobar' : 'Grabación Marketing Aprobada'}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] font-mono text-violet-800 truncate">
+                                  {formatTimeTo12h(mVisit.time)} - {formatTimeTo12h(mEnd)} · {mVisit.marketingPerson} ({mVisit.targetStylistName || 'Todo el Salón'})
+                                </p>
+                              </div>
+                            </div>
+                            {isPendingMkt && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleQuickApproveMarketing(mVisit);
+                                }}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer shrink-0"
+                              >
+                                <Check className="w-3 h-3" />
+                                <span>Aprobar</span>
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+
                       {slotAppointments.length > 0 ? (
                         <div className="space-y-2">
                           {slotAppointments.map((entry) => {
@@ -1650,11 +1901,83 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                 Cronograma de {formattedSelectedDate}
               </span>
               <span className="text-xs font-mono text-[#8C6B4D]">
-                Total: {dayAppointments.length} citas registradas
+                Total: {dayAppointments.length} citas{dayMarketingVisits.length > 0 ? ` · ${dayMarketingVisits.length} grabación marketing` : ''}
               </span>
             </div>
 
-            {dayAppointments.length === 0 ? (
+            {dayMarketingVisits.length > 0 && (
+              <div className="space-y-2">
+                {dayMarketingVisits.map(mVisit => {
+                  const isPendingMkt = mVisit.status === 'Pendiente';
+                  const mEnd = minutesToTime24(timeToMinutes(normalizeTimeTo24h(mVisit.time)) + mVisit.durationMinutes);
+                  return (
+                    <div
+                      key={mVisit.id}
+                      className={`border rounded-lg p-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        isPendingMkt
+                          ? 'bg-violet-50 border-violet-400'
+                          : 'bg-indigo-50/90 border-indigo-400'
+                      }`}
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-base font-bold font-mono text-violet-950">
+                            {formatTimeTo12h(mVisit.time)}
+                          </span>
+                          <span className="text-[10px] bg-white/90 border border-violet-300 font-mono font-bold text-violet-900 px-1.5 py-0.5 rounded">
+                            🎬 {formatTimeTo12h(mVisit.time)} - {formatTimeTo12h(mEnd)} ({formatDurationText(mVisit.durationMinutes)})
+                          </span>
+                          <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                            isPendingMkt
+                              ? 'bg-violet-600 text-white border-violet-700 animate-pulse'
+                              : mVisit.status === 'Aprobada'
+                              ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                              : 'bg-blue-100 text-blue-900 border-blue-300'
+                          }`}>
+                            {isPendingMkt ? 'Aviso Marketing · Por Aprobar' : mVisit.status === 'Aprobada' ? 'Grabación En Agenda' : 'Completada'}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-violet-950 uppercase font-serif-luxury">
+                          🎬 {mVisit.title}
+                        </h4>
+                        <p className="text-xs text-violet-900">
+                          Marketing: <strong>{mVisit.marketingPerson}</strong> · Área: <strong>{mVisit.targetStylistName || 'Todo el Salón'}</strong>
+                        </p>
+                        {(mVisit.videoTopics || mVisit.notes) && (
+                          <p className="text-[11px] text-neutral-700 italic">
+                            {mVisit.videoTopics} {mVisit.notes && `· "${mVisit.notes}"`}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isPendingMkt && (
+                          <button
+                            type="button"
+                            onClick={() => handleQuickApproveMarketing(mVisit)}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold rounded uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Aprobar y Agendar</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMarketingModalInitialTab(isPendingMkt ? 'pending' : 'approved');
+                            setIsMarketingModalOpen(true);
+                          }}
+                          className="px-2.5 py-1.5 bg-white hover:bg-violet-100 border border-violet-300 text-violet-950 text-[11px] font-bold rounded uppercase cursor-pointer"
+                        >
+                          Gestionar
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {dayAppointments.length === 0 && dayMarketingVisits.length === 0 ? (
               <div className="bg-white border border-[#E2D8CC] rounded-lg p-10 text-center space-y-3">
                 <CalendarCheck className="w-10 h-10 text-neutral-300 mx-auto" />
                 <p className="text-sm text-neutral-600 font-serif-luxury">
@@ -1853,6 +2176,7 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                           const cleanTime = timeSlot;
                           const appKey = `${stylist.id}_${cleanTime}`;
                           const slotAppointments = appointmentMatrix.get(appKey) || [];
+                          const slotMarketing = stylist.id !== 'cualquiera' ? getMarketingVisitsAtSlot(stylist.id, cleanTime) : [];
                           const avail = getStylistAvailabilityOnDate(stylist, selectedDate, scheduleExceptions, stylists);
                           const isOff = avail.isOff;
 
@@ -1861,6 +2185,52 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
                               key={stylist.id}
                               className="px-2 py-1.5 border-r-2 border-[#8C7A68] last:border-r-0 align-middle text-center"
                             >
+                              {slotMarketing.length > 0 && (
+                                <div className="space-y-1 mb-1">
+                                  {slotMarketing.map(mVisit => {
+                                    const isPendingMkt = mVisit.status === 'Pendiente';
+                                    return (
+                                      <div
+                                        key={`cell_mkt_${mVisit.id}_${stylist.id}`}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setMarketingModalInitialTab(isPendingMkt ? 'pending' : 'approved');
+                                          setIsMarketingModalOpen(true);
+                                        }}
+                                        className={`px-1.5 py-1 rounded text-left border cursor-pointer transition-all ${
+                                          isPendingMkt
+                                            ? 'bg-violet-50 border-violet-400 border-dashed text-violet-950'
+                                            : 'bg-indigo-100/90 border-indigo-400 text-indigo-950'
+                                        }`}
+                                        title={`🎬 Marketing: ${mVisit.title} (${formatTimeTo12h(mVisit.time)}) - ${mVisit.marketingPerson}`}
+                                      >
+                                        <div className="flex items-center justify-between gap-1">
+                                          <span className="text-[9px] font-bold truncate font-serif-luxury">
+                                            🎬 {mVisit.title}
+                                          </span>
+                                          {isPendingMkt ? (
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleQuickApproveMarketing(mVisit);
+                                              }}
+                                              className="text-[8px] bg-emerald-600 hover:bg-emerald-700 text-white px-1 py-0.2 rounded font-bold uppercase shrink-0 cursor-pointer"
+                                              title="Aprobar grabación de marketing"
+                                            >
+                                              Aprobar
+                                            </button>
+                                          ) : (
+                                            <span className="text-[8px] bg-indigo-600 text-white px-1 rounded font-mono font-bold shrink-0">
+                                              Video
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                               {slotAppointments.length > 0 ? (
                                 <div className="space-y-1">
                                   {slotAppointments.map((entry) => {
@@ -2687,9 +3057,14 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         onScheduleNewForDate={handleScheduleForDateFromYear}
         appointments={appointments}
         stylists={stylists}
+        marketingVisits={marketingVisits}
         onOpenAppointment={(app) => {
           setEditingAppointment(app);
           setIsAppointmentModalOpen(true);
+        }}
+        onOpenMarketingModal={() => {
+          setMarketingModalInitialTab(pendingMarketingVisits.length > 0 ? 'pending' : 'approved');
+          setIsMarketingModalOpen(true);
         }}
       />
 
@@ -2705,6 +3080,32 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
         selectedDate={selectedDateStr}
         initialStylistId={scheduleExceptionsModalStylistId}
         initialMode={scheduleExceptionsModalMode}
+      />
+
+      {/* MARKETING VIDEO VISITS MODAL (ADMIN APPROVAL & SCHEDULING) */}
+      <MarketingVisitsModal
+        isOpen={isMarketingModalOpen}
+        onClose={() => setIsMarketingModalOpen(false)}
+        mode="admin"
+        stylists={stylists}
+        initialDate={selectedDateStr}
+        initialTab={marketingModalInitialTab}
+        bypassAuth={true}
+        onJumpToDate={(dateStr) => {
+          try {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            if (y && m && d) {
+              setSelectedDate(new Date(y, m - 1, d));
+            }
+          } catch (e) {}
+        }}
+        onNotify={(msg, type = 'success') => {
+          setNotificationToast({
+            id: 'toast-mkt-' + Date.now(),
+            message: msg,
+            type
+          });
+        }}
       />
 
       {/* 5. BOTTOM COMMAND DOCK (Identical to original desktop layout) */}
@@ -2727,6 +3128,24 @@ export const MatrixAgendaGrid: React.FC<MatrixAgendaGridProps> = ({ onClose, isA
 
         {/* Right: Quick Action Buttons */}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setMarketingModalInitialTab(pendingMarketingVisits.length > 0 ? 'pending' : 'approved');
+              setIsMarketingModalOpen(true);
+            }}
+            className="px-2.5 py-1 text-violet-900 hover:bg-violet-50 border border-violet-300 rounded transition-colors flex items-center gap-1.5 font-mono text-xs cursor-pointer shadow-2xs font-semibold"
+            title="Gestionar avisos y grabaciones de video de Marketing"
+          >
+            <Video className="w-3.5 h-3.5 text-violet-700" />
+            <span>Grabaciones Marketing</span>
+            {pendingMarketingVisits.length > 0 && (
+              <span className="bg-violet-600 text-white text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full animate-pulse">
+                {pendingMarketingVisits.length}
+              </span>
+            )}
+          </button>
+
           <button
             onClick={() => handleOpenScheduleSwap(undefined, 'close')}
             className="px-2.5 py-1 text-[#2C221C] hover:text-[#8C6B4D] hover:bg-[#FAF8F5] border border-[#D9CEC2] rounded transition-colors flex items-center gap-1.5 font-mono text-xs cursor-pointer shadow-2xs font-semibold"

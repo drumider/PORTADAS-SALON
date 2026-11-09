@@ -13,5 +13,8 @@ service cloud.firestore {
     match /analytics_web_bookings/{analyticsId} {
       allow read, create, update, delete: if true;
     }
+    match /marketing_visits/{visitId} {
+      allow read, create, update, delete: if true;
+    }
   }
 }
