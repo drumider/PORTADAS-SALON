@@ -1039,20 +1039,46 @@ export default function App() {
           {/* Center - Simple social presence */}
           <div className="flex flex-col items-center">
             <span className="text-[10px] tracking-[0.2em] text-white/40 uppercase font-light mb-4">SÍGUENOS EN REDES</span>
-            <div className="flex gap-6">
+            <div className="flex gap-5">
               <a 
                 href="https://instagram.com/cfportadas" 
                 target="_blank" 
                 rel="noopener noreferrer"
+                aria-label="Instagram"
+                title="Instagram"
                 className="w-10 h-10 border border-neutral-900 hover:border-gold-champagne flex items-center justify-center text-gray-light hover:text-gold-champagne transition-all duration-300"
                 id="social-instagram"
               >
                 <Instagram className="w-4 h-4" strokeWidth={1.5} />
               </a>
               <a 
+                href="https://www.tiktok.com/@portadasalon" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                aria-label="TikTok @portadasalon"
+                title="TikTok @portadasalon"
+                className="w-10 h-10 border border-neutral-900 hover:border-gold-champagne flex items-center justify-center text-gray-light hover:text-gold-champagne transition-all duration-300"
+                id="social-tiktok"
+              >
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+                </svg>
+              </a>
+              <a 
                 href="https://facebook.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
+                aria-label="Facebook"
+                title="Facebook"
                 className="w-10 h-10 border border-neutral-900 hover:border-gold-champagne flex items-center justify-center text-gray-light hover:text-gold-champagne transition-all duration-300"
                 id="social-facebook"
               >
