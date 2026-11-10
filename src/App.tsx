@@ -132,6 +132,14 @@ export default function App() {
   const [isMantaiwebDashboardOpen, setIsMantaiwebDashboardOpen] = useState<boolean>(false);
   const mantaiClickTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (mantaiClickTimeout.current) {
+        clearTimeout(mantaiClickTimeout.current);
+      }
+    };
+  }, []);
+
   // Search, Category Filters & Expand Bar for Services
   const [isServicesExpanded, setIsServicesExpanded] = useState<boolean>(false);
   const [servicesSearch, setServicesSearch] = useState<string>('');
@@ -169,7 +177,7 @@ export default function App() {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -1106,7 +1114,7 @@ export default function App() {
                   mantaiClickTimeout.current = setTimeout(() => {
                     window.open('https://mantaiweb.com', '_blank');
                     mantaiClickTimeout.current = null;
-                  }, 250);
+                  }, 320);
                 }
               }}
               title=""

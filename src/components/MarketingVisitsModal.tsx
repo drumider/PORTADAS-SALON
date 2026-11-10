@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   Video,
   X,
@@ -28,6 +27,7 @@ import { MarketingVisit, Stylist } from '../types';
 import { STYLISTS as DEFAULT_STYLISTS } from '../constants';
 import {
   subscribeToMarketingVisits,
+  getStoredMarketingVisits,
   saveMarketingVisit,
   approveMarketingVisit,
   rejectMarketingVisit,
@@ -131,17 +131,30 @@ export const MarketingVisitsModal: React.FC<MarketingVisitsModalProps> = ({
     [stylists]
   );
 
-  // Sync real-time marketing visits from Firestore
+  // Lock background page scroll while modal is open to avoid GPU compositing lag
   useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
+  // Sync real-time marketing visits from Firestore only while modal is open
+  useEffect(() => {
+    if (!isOpen) return;
     const unsub = subscribeToMarketingVisits((list) => {
       setVisits(list);
     });
     return () => unsub();
-  }, []);
+  }, [isOpen]);
 
   // Reset state when modal opens
   useEffect(() => {
     if (!isOpen) return;
+    const currentCached = getStoredMarketingVisits();
+    setVisits(currentCached);
     setIsAuth(bypassAuth || mode === 'admin' || isMarketingAuthenticated());
     setAuthError('');
     setSubmitStatusMessage('');
@@ -156,7 +169,7 @@ export const MarketingVisitsModal: React.FC<MarketingVisitsModalProps> = ({
       setActiveTab('create');
     } else {
       // In admin mode, open pending tab if there are pending visits, otherwise approved
-      const hasPending = visits.some(v => v.status === 'Pendiente');
+      const hasPending = currentCached.some(v => v.status === 'Pendiente');
       setActiveTab(hasPending ? 'pending' : 'approved');
     }
   }, [isOpen, mode, bypassAuth, initialDate, initialTab]);
@@ -319,20 +332,18 @@ export const MarketingVisitsModal: React.FC<MarketingVisitsModalProps> = ({
   const isLightTheme = mode === 'admin';
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 12 }}
-          transition={{ duration: 0.2 }}
-          onClick={(e) => e.stopPropagation()}
-          className={`w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-left border ${
-            isLightTheme
-              ? 'bg-white border-[#D9CEC2] text-neutral-900'
-              : 'bg-[#161412] border-gold-champagne/30 text-neutral-100'
-          }`}
-        >
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-5 bg-black/80"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-left border ${
+          isLightTheme
+            ? 'bg-white border-[#D9CEC2] text-neutral-900'
+            : 'bg-[#161412] border-gold-champagne/30 text-neutral-100'
+        }`}
+      >
           {/* AUTH GATE FOR EXTERNAL MARKETING PORTAL */}
           {!isAuth && mode === 'marketing_portal' ? (
             <div className="p-6 sm:p-8 relative">
@@ -1248,8 +1259,7 @@ export const MarketingVisitsModal: React.FC<MarketingVisitsModalProps> = ({
               </div>
             </>
           )}
-        </motion.div>
       </div>
-    </AnimatePresence>
+    </div>
   );
 };

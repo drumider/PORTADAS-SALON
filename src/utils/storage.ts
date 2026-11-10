@@ -915,7 +915,12 @@ export const recordWebBookingAnalytics = async (appointment: any) => {
   }
 };
 
+let cachedWebBookingAnalytics: any[] = [];
+
 export const subscribeToWebBookingAnalytics = (callback: (apps: any[]) => void) => {
+  if (cachedWebBookingAnalytics.length > 0) {
+    callback(cachedWebBookingAnalytics);
+  }
   const colRef = collection(db, 'analytics_web_bookings');
   const unsubscribe = onSnapshot(
     colRef,
@@ -924,11 +929,12 @@ export const subscribeToWebBookingAnalytics = (callback: (apps: any[]) => void) 
       snapshot.forEach((docSnap) => {
         apps.push(docSnap.data());
       });
+      cachedWebBookingAnalytics = apps;
       callback(apps);
     },
     (error) => {
       console.error('Error fetching analytics:', error);
-      callback([]);
+      callback(cachedWebBookingAnalytics);
     }
   );
   return unsubscribe;
